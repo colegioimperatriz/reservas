@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Simulador Reserva de Chromebooks - Colégio Imperatriz</title>
+<title>Sistema de Reservas - Colégio Imperatriz</title>
 <style>
   body { font-family: Arial, sans-serif; margin:0; padding:0; background:#ece5dd; }
   .chat-container { display:flex; flex-direction:column; max-width:480px; height:100vh; margin:0 auto; border:1px solid #ccc; background:#fff; }
@@ -42,7 +42,8 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const headers = {
   "Content-Type": "application/json",
   "apikey": SUPABASE_KEY,
-  "Authorization": `Bearer ${SUPABASE_KEY}`
+  "Authorization": `Bearer ${SUPABASE_KEY}`,
+  "Prefer": "return=representation"
 };
 
 const MAX_CHROMEBOOKS = 86;
@@ -60,113 +61,36 @@ async function fetchProfessores(){ const r=await fetch(`${SUPABASE_URL}/rest/v1/
 async function saveProfessor(p){ await fetch(`${SUPABASE_URL}/rest/v1/professores`,{method:"POST",headers,body:JSON.stringify(p)}); }
 async function saveReserva(r){ await fetch(`${SUPABASE_URL}/rest/v1/reservas`,{method:"POST",headers,body:JSON.stringify(r)}); }
 
-function addMessage(text, from='system'){
-  const div = document.createElement('div');
-  div.classList.add('message', from === 'system' ? 'from-system' : 'from-user');
-  div.innerText = text;
-  messagesEl.appendChild(div);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-}
+function addMessage(text, from='system'){ const div=document.createElement('div'); div.classList.add('message', from==='system'?'from-system':'from-user'); div.innerText=text; messagesEl.appendChild(div); messagesEl.scrollTop=messagesEl.scrollHeight; }
 
-function createInput(placeholder, callback){
-  chatInput.disabled = false;
-  chatInput.value = '';
-  chatInput.placeholder = placeholder;
-  sendBtn.disabled = false;
-  sendBtn.onclick = () => {
-    if(chatInput.value.trim() === '') return;
-    const val = chatInput.value.trim();
-    chatInput.value = '';
-    chatInput.disabled = true;
-    sendBtn.disabled = true;
-    callback(val);
-  };
-  chatInput.focus();
-}
+function createInput(placeholder, callback){ chatInput.disabled=false; chatInput.value=''; chatInput.placeholder=placeholder; sendBtn.disabled=false; sendBtn.onclick=()=>{ if(chatInput.value.trim()==='') return; const val=chatInput.value.trim(); chatInput.value=''; chatInput.disabled=true; sendBtn.disabled=true; callback(val); }; chatInput.focus(); }
 
 function onlyDigits(s){ return (s||'').replace(/\D/g,''); }
-function formatCPF(digits){ return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'); }
+function formatCPF(digits){ return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4'); }
 function brToISO(dateStr){ const [d,m,y]=dateStr.split('/'); return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
-function isoToBR(iso){ if(!iso) return ''; const p=iso.split('-'); if(p.length!==3) return iso; return `${p[2]}/${p[1]}/${p[0]}`; }
+function isoToBR(iso){ if(!iso) return ''; const p=iso.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; }
 
-async function cpfInput(cpfRaw){
-  const digits = onlyDigits(cpfRaw);
-  if (digits.length !== 11) { addMessage('CPF inválido. Deve conter 11 dígitos.'); createInput('CPF', cpfInput); return; }
-  const maskedCPF = formatCPF(digits);
-  let professores = await fetchProfessores();
-  const profExistente = professores.find(p => onlyDigits(p.cpf||'')===digits);
-  if(profExistente){
-    professor = {...profExistente};
-    addMessage(`Olá ${professor.nome}! Vamos continuar.`);
-    showProfessorReservations(digits);
-    askSelectAmbiente();
-  } else {
-    professor.cpf = maskedCPF;
-    addMessage(`${maskedCPF}`, 'user');
-    addMessage('Você não está cadastrado. Digite seu nome completo:');
-    state = 11;
-    createInput('Nome completo', nome => nextStep(nome));
-  }
-}
+async function cpfInput(cpfRaw){ const digits=onlyDigits(cpfRaw); if(digits.length!==11){ addMessage('CPF inválido.'); createInput('CPF',cpfInput); return; } const maskedCPF=formatCPF(digits); let professores=await fetchProfessores(); const profExistente=professores.find(p=>onlyDigits(p.cpf||'')===digits); if(profExistente){ professor={...profExistente}; addMessage(`Olá ${professor.nome}!`); showProfessorReservations(digits); askSelectAmbiente(); } else { professor.cpf=maskedCPF; addMessage(maskedCPF,'user'); addMessage('Você não está cadastrado. Nome completo:'); state=11; createInput('Nome', nome=>nextStep(nome)); } }
 
-function nextStep(input){
-  switch(state){
-    case 11:
-      professor.nome=input; addMessage(input,'user');
-      addMessage('Digite seu telefone:');
-      state=12;
-      createInput('Telefone', tel => { professor.telefone=tel; addMessage(tel,'user'); addMessage('Digite seu e-mail:'); state=13;
-        createInput('E-mail', async email => { professor.email=email; addMessage(email,'user'); addMessage('Cadastro concluído!'); await saveProfessor(professor); showProfessorReservations(onlyDigits(professor.cpf)); askSelectAmbiente(); });
-      });
-      break;
-  }
-}
+function nextStep(input){ switch(state){ case 11: professor.nome=input; addMessage(input,'user'); addMessage('Telefone:'); state=12; createInput('Telefone', tel=>{ professor.telefone=tel; addMessage(tel,'user'); addMessage('E-mail:'); state=13; createInput('E-mail', async email=>{ professor.email=email; addMessage(email,'user'); addMessage('Cadastro concluído!'); await saveProfessor(professor); showProfessorReservations(onlyDigits(professor.cpf)); askSelectAmbiente(); }); }); break; } }
 
-async function showProfessorReservations(cpfDigits){
-  const reservas = await fetchReservas();
-  const matches = reservas.filter(r=> (r.cpf && onlyDigits(r.cpf)===cpfDigits) || (r.professor===professor.nome));
-  if(matches.length===0){ addMessage('Você ainda não possui reservas.'); return; }
-  let text='Você já possui:
-';
-  matches.forEach(r=>{ text+=`${r.ambiente}: ${r.quantidade||1} em ${isoToBR(r.dataFim)} - ${(r.horarios||[]).join(', ')}
-`; });
-  addMessage(text);
-}
+async function showProfessorReservations(cpfDigits){ const reservas=await fetchReservas(); const matches=reservas.filter(r=> (r.cpf && onlyDigits(r.cpf)===cpfDigits)||(r.professor===professor.nome)); if(matches.length===0){ addMessage('Você ainda não possui reservas.'); return; } let text='Suas reservas:\n'; matches.forEach(r=>{ text+=`${r.ambiente}: ${r.quantidade||1} em ${isoToBR(r.dataFim)} - ${(r.horarios||[]).join(', ')}\n`; }); addMessage(text); }
 
-function askSelectAmbiente(){
-  addMessage('Selecione o ambiente:');
-  const container=document.createElement('div'); container.classList.add('option-container');
-  AMBIENTES.forEach(a=>{ const btn=document.createElement('button'); btn.classList.add('option-btn'); btn.innerText=a; btn.onclick=()=>{ addMessage(a,'user'); selectedAmbiente=a; reserva={quantidade:0,dataFim:'',horarios:[],ambiente:a}; if(a==='Chromebooks') askDate(); else askDateAmbiente(); }; container.appendChild(btn); });
-  messagesEl.appendChild(container); messagesEl.scrollTop=messagesEl.scrollHeight;
-}
+function askSelectAmbiente(){ addMessage('Selecione o ambiente:'); const container=document.createElement('div'); container.classList.add('option-container'); AMBIENTES.forEach(a=>{ const btn=document.createElement('button'); btn.classList.add('option-btn'); btn.innerText=a; btn.onclick=()=>{ addMessage(a,'user'); selectedAmbiente=a; reserva={quantidade:0,dataFim:'',horarios:[],ambiente:a}; if(a==='Chromebooks') askDate(); else askDateAmbiente(); }; container.appendChild(btn); }); messagesEl.appendChild(container); messagesEl.scrollTop=messagesEl.scrollHeight; }
 
 function askDate(){ addMessage('Digite a data (dd/mm/yyyy):'); createInput('Data', d=>{ reserva.dataFim=brToISO(d); addMessage(d); if(selectedAmbiente==='Chromebooks') askQuantity(); else askHorariosAmbiente(); }); }
 function askDateAmbiente(){ askDate(); }
 
 function askQuantity(){ addMessage('Quantidade de Chromebooks:'); createInput('Quantidade', q=>{ reserva.quantidade=parseInt(q); addMessage(q); askHorarios(); }); }
 
-function askHorarios(){
-  addMessage('Selecione horários:');
-  const container=document.createElement('div'); container.classList.add('option-container');
-  reserva.horariosSelecionados=new Set();
-  horarios.forEach(h=>{ const btn=document.createElement('button'); btn.classList.add('option-btn'); btn.innerText=h; btn.onclick=()=>{ if(reserva.horariosSelecionados.has(h)){reserva.horariosSelecionados.delete(h); btn.style.backgroundColor='#25d366';} else{reserva.horariosSelecionados.add(h); btn.style.backgroundColor='#128c5e';} }; container.appendChild(btn); });
-  const confirm=document.createElement('button'); confirm.classList.add('option-btn'); confirm.innerText='Confirmar'; confirm.style.backgroundColor='#075E54'; confirm.onclick=()=>{ reserva.horarios=Array.from(reserva.horariosSelecionados); confirmReservation(); }; container.appendChild(confirm);
-  messagesEl.appendChild(container);
-}
+function askHorarios(){ addMessage('Selecione horários:'); const container=document.createElement('div'); container.classList.add('option-container'); reserva.horariosSelecionados=new Set(); horarios.forEach(h=>{ const btn=document.createElement('button'); btn.classList.add('option-btn'); btn.innerText=h; btn.onclick=()=>{ if(reserva.horariosSelecionados.has(h)){reserva.horariosSelecionados.delete(h); btn.style.backgroundColor='#25d366';} else{reserva.horariosSelecionados.add(h); btn.style.backgroundColor='#128c5e';} }; container.appendChild(btn); }); const confirm=document.createElement('button'); confirm.classList.add('option-btn'); confirm.innerText='Confirmar'; confirm.style.backgroundColor='#075E54'; confirm.onclick=()=>{ reserva.horarios=Array.from(reserva.horariosSelecionados); confirmReservation(); }; container.appendChild(confirm); messagesEl.appendChild(container); }
 
 function askHorariosAmbiente(){ askHorarios(); }
 
-async function confirmReservation(){
-  reserva.professor=professor.nome; reserva.cpf=professor.cpf; reserva.telefone=professor.telefone; reserva.ambiente=selectedAmbiente; if(reserva.quantidade===0) reserva.quantidade=1;
-  await saveReserva(reserva);
-  addMessage('Reserva confirmada!');
-  askSelectAmbiente();
-}
+async function confirmReservation(){ reserva.professor=professor.nome; reserva.cpf=professor.cpf; reserva.telefone=professor.telefone; reserva.ambiente=selectedAmbiente; if(reserva.quantidade===0) reserva.quantidade=1; await saveReserva(reserva); addMessage('Reserva confirmada!'); askSelectAmbiente(); }
 
-addMessage('Olá, eu sou a Leopoldina, sua assistente virtual de reservas. Para iniciar, digite seu CPF:');
-state=0; createInput('CPF', cpfInput);
-chatInput.addEventListener('keydown', e=>{ if(e.key==='Enter'&&!sendBtn.disabled){ sendBtn.click(); e.preventDefault(); }});
+addMessage('Olá, eu sou a Leopoldina. Digite seu CPF para começar:');
+state=0; createInput('CPF',cpfInput); chatInput.addEventListener('keydown', e=>{ if(e.key==='Enter'&&!sendBtn.disabled){ sendBtn.click(); e.preventDefault(); }});
 </script>
-
 </body>
 </html>
