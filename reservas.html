@@ -31,8 +31,7 @@ const headers={"Content-Type":"application/json","apikey":SUPABASE_KEY,"Authoriz
 
 async function fetchReservas(){ const r=await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*`,{headers}); return await r.json(); }
 async function fetchBloqueios(){ const r=await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*`,{headers}); return await r.json(); }
-
-function isoToBR(iso){ if(!iso) return ''; const p=iso.split('-'); if(p.length!==3) return iso; return `${p[2]}/${p[1]}/${p[0]}`; }
+function isoToBR(iso){ if(!iso) return ''; const p=iso.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; }
 
 async function montarCalendario(){
   const reservas=await fetchReservas(); const bloqueios=await fetchBloqueios();
