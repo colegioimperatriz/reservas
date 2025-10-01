@@ -19,36 +19,240 @@ td { background:#e5ddd5; }
 .reserva.amb-Sala\ de\ Atendimento\ I { background:#2980b9; }
 .reserva.amb-Sala\ de\ Reuniões { background:#d35400; }
 .reserva.bloqueio { background:#555; opacity:0.9; }
+.scroll-container { overflow-x:auto; }
+#totalsBar { text-align:center; margin-bottom:10px; display:flex; flex-direction:column; gap:8px; align-items:center; }
+.badge { display:inline-block; padding:8px 12px; border-radius:8px; background:#25d366; color:#fff; margin:0 6px; min-width:220px; }
+.badge.secondary { background:#888; }
+.controls { text-align:center; margin-bottom:10px; }
+.btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; }
+.btn.primary { background:#075E54; color:#fff; }
+.btn.warn { background:#f39c12; color:#fff; }
+.modal { display:none; position:fixed; z-index:50; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.4); padding-top:40px; }
+.modal-content { background-color:#fefefe; margin:30px auto; padding:20px; border:1px solid #888; width:90%; max-width:720px; }
+.close { color:#aaa; float:right; font-size:28px; font-weight:bold; cursor:pointer; }
+.close:hover { color:black; }
+.field { margin:8px 0; }
+.field label { display:block; margin-bottom:4px; }
+.field input[type="date"], .field input[type="number"] { padding:8px; width:100%; box-sizing:border-box; }
+.option-container { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.option-btn { padding:8px 10px; border-radius:6px; border:none; cursor:pointer; background:#25d366; color:#fff; }
+.option-btn.selected { background:#128c5e; }
+.small { font-size:13px; color:#333; margin-top:6px; }
+.list-item { padding:6px 8px; background:#f5f5f5; border-radius:6px; margin:6px 0; display:flex; justify-content:space-between; align-items:center; }
+.del-btn { background:#d9534f; color:#fff; border:none; padding:6px 8px; border-radius:6px; cursor:pointer; }
 </style>
 </head>
 <body>
+
 <h2>Calendário de Reservas</h2>
-<div class="scroll-container"><table><thead><tr><th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th></tr></thead><tbody id="calendarBody"></tbody></table></div>
+
+<div id="totalsBar">
+  <span class="badge">Total reservados (hoje): <strong id="totalReservados">0</strong></span>
+  <span class="badge secondary">Total livres (hoje): <strong id="totalLivres">0</strong></span>
+</div>
+
+<div class="controls">
+  <button id="openManualBtn" class="btn warn">Liberar Chromebooks Manualmente?</button>
+</div>
+
+<div class="calendar-header" id="calendarHeader"></div>
+
+<div class="scroll-container">
+<table>
+<thead>
+<tr><th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th></tr>
+</thead>
+<tbody id="calendarBody"></tbody>
+</table>
+</div>
+
+<!-- Modal detalhes -->
+<div id="reservationModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeModal">&times;</span>
+    <h3>Detalhes</h3>
+    <p><strong>Ambiente:</strong> <span id="modalAmbiente"></span></p>
+    <p><strong>Professor:</strong> <span id="modalProfessor"></span></p>
+    <p><strong>Data:</strong> <span id="modalData"></span></p>
+    <p><strong>Horários:</strong> <span id="modalHorarios"></span></p>
+    <p><strong>Quantidade:</strong> <span id="modalQuantidade"></span></p>
+    <div id="modalPerHorario"></div>
+    <div style="margin-top:12px;">
+      <button id="cancelReservationBtn" class="btn primary">Cancelar Reserva</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal bloqueio manual -->
+<div id="manualReleaseModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeManual">&times;</span>
+    <h3>Liberar Chromebooks Manualmente (bloquear estoque)</h3>
+    <div class="field">
+      <label>Data</label>
+      <input type="date" id="manualDate" />
+    </div>
+    <div class="field">
+      <label>Horários (selecione um ou mais)</label>
+      <div id="manualHorarios" class="option-container"></div>
+    </div>
+    <div class="field">
+      <label>Quantidade a bloquear (por horário)</label>
+      <input type="number" id="manualQuantidade" min="1" value="1" />
+    </div>
+    <div style="margin-top:8px;">
+      <button id="confirmManual" class="btn primary">Confirmar bloqueio</button>
+    </div>
+    <hr style="margin:14px 0;" />
+    <h4>Bloqueios existentes</h4>
+    <div id="bloqueiosList" class="small"></div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL="https://oufiieqxyyqnqpcbuyms.supabase.co";
 const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91ZmlpZXF4eXlxbnFwY2J1eW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNDMwNDgsImV4cCI6MjA3NDkxOTA0OH0.-4QPA1R5y24daAt-WsZuWc8-2bJxCJGhdTR1nq4RnHc";
-const headers={"Content-Type":"application/json","apikey":SUPABASE_KEY,"Authorization":`Bearer ${SUPABASE_KEY}`};
+const headers = { "Content-Type":"application/json", "apikey":SUPABASE_KEY, "Authorization":`Bearer ${SUPABASE_KEY}` };
+
+const MAX_CHROMEBOOKS = 86;
+const horarios = ['07:20','08:05','08:50','09:55','10:40','11:25','13:45','14:30','15:35','16:20','17:05'];
+
+let reservas=[], bloqueios=[];
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
+
+function hojeStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function isoToBR(iso){ return iso.split('T')[0].split('-').reverse().join('/'); }
+function gerarCor(nome){ let h=0; for(let i=0;i<nome.length;i++) h=nome.charCodeAt(i)+((h<<5)-h); return `hsl(${h%360},60%,35%)`; }
 
 async function fetchReservas(){ const r=await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*`,{headers}); return await r.json(); }
 async function fetchBloqueios(){ const r=await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*`,{headers}); return await r.json(); }
-function normalizeDate(d){ return (d||'').split('T')[0]; }
-function isoToBR(iso){ if(!iso) return ''; return normalizeDate(iso).split('-').reverse().join('/'); }
+async function criarBloqueio(b){ await fetch(`${SUPABASE_URL}/rest/v1/bloqueios`,{method:'POST',headers,body:JSON.stringify(b)}); }
+async function deleteReserva(id){ await fetch(`${SUPABASE_URL}/rest/v1/reservas?id=eq.${id}`,{method:'DELETE',headers}); }
 
-async function montarCalendario(){
-  const reservas=await fetchReservas(); const bloqueios=await fetchBloqueios();
+function buildReservasPorDataHorarioPara(dataISO){
+  const mapa={};
+  reservas.filter(r=>r.dataFim.startsWith(dataISO) && r.ambiente==='Chromebooks').forEach(r=>{(r.horarios||[]).forEach(h=>{ const key=`${r.dataFim}-${h}`; mapa[key]=(mapa[key]||0)+(r.quantidade||0); });});
+  bloqueios.filter(b=>b.dataFim.startsWith(dataISO)).forEach(b=>{(b.horarios||[]).forEach(h=>{ const key=`${b.dataFim}-${h}`; mapa[key]=(mapa[key]||0)+b.quantidade; });});
+  return mapa;
+}
+
+function atualizarTotaisDia(){
+  const mapa=buildReservasPorDataHorarioPara(hojeStr());
+  let reservedHoje=0; Object.values(mapa).forEach(v=>reservedHoje+=v);
+  document.getElementById('totalReservados').textContent=reservedHoje;
+  document.getElementById('totalLivres').textContent=Math.max(0,MAX_CHROMEBOOKS-reservedHoje);
+}
+
+function openModal(r){
+  document.getElementById('modalAmbiente').textContent=r.ambiente;
+  document.getElementById('modalProfessor').textContent=r.professor;
+  document.getElementById('modalData').textContent=isoToBR(r.dataFim);
+  document.getElementById('modalHorarios').textContent=(r.horarios||[]).join(', ');
+  document.getElementById('modalQuantidade').textContent=r.quantidade||1;
+  const div=document.getElementById('modalPerHorario'); div.innerHTML='';
+  const mapa=buildReservasPorDataHorarioPara(r.dataFim.split('T')[0]);
+  (r.horarios||[]).forEach(h=>{
+    const reserved=mapa[`${r.dataFim}-${h}`]||0;
+    const p=document.createElement('p');
+    p.innerHTML=`<strong>${h}:</strong> Reservados: ${reserved} — Livres: ${MAX_CHROMEBOOKS-reserved}`;
+    div.appendChild(p);
+  });
+  const btn=document.getElementById('cancelReservationBtn');
+  btn.onclick=async ()=>{ if(confirm('Cancelar reserva?')){ await deleteReserva(r.id); montarCalendario(); document.getElementById('reservationModal').style.display='none'; } };
+  document.getElementById('reservationModal').style.display='block';
+}
+
+document.getElementById('closeModal').onclick=()=>document.getElementById('reservationModal').style.display='none';
+
+async function montarCalendario(ano=currentYear, mes=currentMonth){
+  currentYear=ano; currentMonth=mes;
+  reservas = await fetchReservas(); bloqueios = await fetchBloqueios();
+
   const tbody=document.getElementById('calendarBody'); tbody.innerHTML='';
-  const ano=new Date().getFullYear(); const mes=new Date().getMonth();
   const primeiroDia=new Date(ano,mes,1); const ultimoDia=new Date(ano,mes+1,0); const diasNoMes=ultimoDia.getDate();
   let tr=document.createElement('tr'); for(let i=0;i<primeiroDia.getDay();i++) tr.appendChild(document.createElement('td'));
-  for(let dia=1;dia<=diasNoMes;dia++){ if(tr.children.length===7){tbody.appendChild(tr); tr=document.createElement('tr');}
-    const td=document.createElement('td'); const dataStr=`${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+
+  for(let dia=1;dia<=diasNoMes;dia++){
+    if(tr.children.length===7){tbody.appendChild(tr); tr=document.createElement('tr');}
+    const td=document.createElement('td');
+    const dataStr=`${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
     const divDia=document.createElement('div'); divDia.style.fontWeight='bold'; divDia.textContent=dia; td.appendChild(divDia);
-    reservas.filter(r=>normalizeDate(r.dataFim)===dataStr).forEach(r=>{ (r.horarios||[]).forEach(h=>{ const div=document.createElement('div'); div.classList.add('reserva'); div.classList.add('amb-'+r.ambiente.replace(/ /g,'\\ ')); div.innerText=`${h} ${r.ambiente} — ${r.professor}`; td.appendChild(div); }); });
-    bloqueios.filter(b=>normalizeDate(b.dataFim)===dataStr).forEach(b=>{ (b.horarios||[]).forEach(h=>{ const div=document.createElement('div'); div.classList.add('reserva','bloqueio'); div.innerText=`${h} BLOQUEIO (${b.quantidade})`; td.appendChild(div); }); });
-    tr.appendChild(td); }
-  while(tr.children.length<7) tr.appendChild(document.createElement('td')); tbody.appendChild(tr);
+
+    reservas.filter(r=>r.dataFim.startsWith(dataStr)).forEach(r=>{
+      (r.horarios||[]).forEach(h=>{
+        const div=document.createElement('div'); div.classList.add('reserva','amb-'+r.ambiente.replace(/ /g,'\\ '));
+        div.innerText=`${h} ${r.ambiente} — ${r.professor} (${r.quantidade||1})`;
+        div.style.backgroundColor=gerarCor(r.ambiente+r.professor); div.onclick=()=>openModal(r); td.appendChild(div);
+      });
+    });
+
+    bloqueios.filter(b=>b.dataFim.startsWith(dataStr)).forEach(b=>{(b.horarios||[]).forEach(h=>{ const div=document.createElement('div'); div.classList.add('reserva','bloqueio'); div.innerText=`${h} BLOQUEIO (${b.quantidade})`; td.appendChild(div); });});
+
+    tr.appendChild(td);
+  }
+  while(tr.children.length<7) tr.appendChild(document.createElement('td'));
+  tbody.appendChild(tr); atualizarTotaisDia();
+
+  // Dropdown meses
+  const header=document.getElementById('calendarHeader'); header.innerHTML='';
+  const mesesDisponiveis=new Set([...reservas,...bloqueios].map(r=>r.dataFim.split('-').slice(0,2).join('-')));
+  mesesDisponiveis.add(`${ano}-${String(mes+1).padStart(2,'0')}`);
+  const select=document.createElement('select');
+  Array.from(mesesDisponiveis).sort().forEach(val=>{
+    const [y,m]=val.split('-'); const option=document.createElement('option');
+    option.value=val; option.textContent=`${new Date(y,parseInt(m)-1).toLocaleString('pt-BR',{month:'long'})} ${y}`;
+    if(parseInt(y)===ano && parseInt(m)-1===mes) option.selected=true;
+    select.appendChild(option);
+  });
+  select.onchange=function(){ const [y,m]=this.value.split('-'); montarCalendario(parseInt(y),parseInt(m)-1); };
+  header.appendChild(select);
 }
+
+// Modal manual
+const openManualBtn=document.getElementById('openManualBtn');
+const manualModal=document.getElementById('manualReleaseModal');
+const closeManual=document.getElementById('closeManual');
+const manualHorarios=document.getElementById('manualHorarios');
+const manualDate=document.getElementById('manualDate');
+const manualQuantidade=document.getElementById('manualQuantidade');
+const confirmManual=document.getElementById('confirmManual');
+const bloqueiosList=document.getElementById('bloqueiosList');
+
+openManualBtn.onclick=async ()=>{
+  manualHorarios.innerHTML=''; horarios.forEach(h=>{
+    const btn=document.createElement('button'); btn.classList.add('option-btn'); btn.innerText=h; btn.dataset.h=h;
+    btn.onclick=()=>btn.classList.toggle('selected');
+    manualHorarios.appendChild(btn);
+  });
+  manualDate.value=hojeStr();
+  manualQuantidade.value=1;
+  await carregarBloqueios(); manualModal.style.display='block';
+};
+closeManual.onclick=()=>manualModal.style.display='none';
+
+async function carregarBloqueios(){
+  bloqueiosList.innerHTML='';
+  bloqueios = await fetchBloqueios();
+  bloqueios.forEach((b,i)=>{
+    const div=document.createElement('div'); div.classList.add('list-item');
+    div.textContent=`${isoToBR(b.dataFim)} — ${b.horarios.join(', ')} — Qtde: ${b.quantidade}`;
+    const del=document.createElement('button'); del.textContent='Remover'; del.classList.add('del-btn');
+    del.onclick=async ()=>{ if(confirm('Deseja remover?')){ await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?id=eq.${b.id}`,{method:'DELETE',headers}); montarCalendario(); await carregarBloqueios(); } };
+    div.appendChild(del); bloqueiosList.appendChild(div);
+  });
+}
+
+confirmManual.onclick=async ()=>{
+  const selected = Array.from(manualHorarios.querySelectorAll('.selected')).map(b=>b.dataset.h);
+  if(selected.length===0){alert('Selecione ao menos um horário'); return;}
+  const data=manualDate.value; const quantidade=parseInt(manualQuantidade.value)||1;
+  await criarBloqueio({dataFim:data,horarios:selected,quantidade});
+  alert('Bloqueio adicionado'); manualModal.style.display='none'; montarCalendario();
+};
+
 montarCalendario();
 </script>
+
 </body>
 </html>
