@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Calendário de Reservas</title>
+<style>
+body { font-family: Arial, sans-serif; background:#f0f0f0; margin:0; padding:20px; }
+h2 { text-align:center; margin-bottom:10px; }
+table { border-collapse:collapse; width:100%; max-width:1200px; margin:0 auto; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+thead { background:#075E54; color:white; }
+th,td { border:1px solid #ccc; padding:4px; text-align:left; vertical-align:top; font-size:12px; min-width:80px; height:100px; }
+td { background:#e5ddd5; }
+.reserva { color:white; border-radius:4px; margin:1px 0; padding:1px 4px; font-size:11px; cursor:pointer; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.reserva:hover { opacity:0.9; }
+.reserva.amb-Chromebooks { background:#2e7d32; }
+.reserva.amb-Cozinha { background:#f39c12; }
+.reserva.amb-Tele\ Sala { background:#8e44ad; }
+.reserva.amb-Sala\ de\ Atendimento\ I { background:#2980b9; }
+.reserva.amb-Sala\ de\ Reuniões { background:#d35400; }
+.reserva.bloqueio { background:#555; opacity:0.9; }
+</style>
+</head>
+<body>
+<h2>Calendário de Reservas</h2>
+<div class="scroll-container"><table><thead><tr><th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th></tr></thead><tbody id="calendarBody"></tbody></table></div>
+<script>
+const SUPABASE_URL="https://oufiieqxyyqnqpcbuyms.supabase.co";
+const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91ZmlpZXF4eXlxbnFwY2J1eW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNDMwNDgsImV4cCI6MjA3NDkxOTA0OH0.-4QPA1R5y24daAt-WsZuWc8-2bJxCJGhdTR1nq4RnHc";
+const headers={"Content-Type":"application/json","apikey":SUPABASE_KEY,"Authorization":`Bearer ${SUPABASE_KEY}`};
+
+async function fetchReservas(){ const r=await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*`,{headers}); return await r.json(); }
+async function fetchBloqueios(){ const r=await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*`,{headers}); return await r.json(); }
+
+function isoToBR(iso){ if(!iso) return ''; const p=iso.split('-'); if(p.length!==3) return iso; return `${p[2]}/${p[1]}/${p[0]}`; }
+
+async function montarCalendario(){
+  const reservas=await fetchReservas(); const bloqueios=await fetchBloqueios();
+  const tbody=document.getElementById('calendarBody'); tbody.innerHTML='';
+  const ano=new Date().getFullYear(); const mes=new Date().getMonth();
+  const primeiroDia=new Date(ano,mes,1); const ultimoDia=new Date(ano,mes+1,0); const diasNoMes=ultimoDia.getDate();
+  let tr=document.createElement('tr'); for(let i=0;i<primeiroDia.getDay();i++) tr.appendChild(document.createElement('td'));
+  for(let dia=1;dia<=diasNoMes;dia++){ if(tr.children.length===7){tbody.appendChild(tr); tr=document.createElement('tr');}
+    const td=document.createElement('td'); const dataStr=`${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+    const divDia=document.createElement('div'); divDia.style.fontWeight='bold'; divDia.textContent=dia; td.appendChild(divDia);
+    reservas.filter(r=>r.dataFim===dataStr).forEach(r=>{ (r.horarios||[]).forEach(h=>{ const div=document.createElement('div'); div.classList.add('reserva'); div.classList.add('amb-'+r.ambiente.replace(/ /g,'\\ ')); div.innerText=`${h} ${r.ambiente} — ${r.professor}`; td.appendChild(div); }); });
+    bloqueios.filter(b=>b.dataFim===dataStr).forEach(b=>{ (b.horarios||[]).forEach(h=>{ const div=document.createElement('div'); div.classList.add('reserva','bloqueio'); div.innerText=`${h} BLOQUEIO (${b.quantidade})`; td.appendChild(div); }); });
+    tr.appendChild(td); }
+  while(tr.children.length<7) tr.appendChild(document.createElement('td')); tbody.appendChild(tr);
+}
+montarCalendario();
+</script>
+</body>
+</html>
