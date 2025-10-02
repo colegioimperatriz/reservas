@@ -3,27 +3,21 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Calendário de Reservas</title>
+<title>Calendário de Reservas — Revisado</title>
 <style>
 body { font-family: Arial, sans-serif; background:#f0f0f0; margin:0; padding:20px; }
 h2 { text-align:center; margin-bottom:10px; }
 table { border-collapse:collapse; width:100%; max-width:1200px; margin:0 auto; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
 thead { background:#075E54; color:white; }
-th,td { border:1px solid #ccc; padding:4px; text-align:left; vertical-align:top; font-size:12px; min-width:80px; height:100px; }
+th,td { border:1px solid #ccc; padding:6px; text-align:left; vertical-align:top; font-size:13px; min-width:90px; }
 td { background:#e5ddd5; }
-.reserva { color:white; border-radius:4px; margin:1px 0; padding:1px 4px; font-size:11px; cursor:pointer; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.reserva:hover { opacity:0.9; }
-.reserva.amb-Chromebooks { background:#2e7d32; }
-.reserva.amb-Cozinha { background:#f39c12; }
-.reserva.amb-Tele\ Sala { background:#8e44ad; }
-.reserva.amb-Sala\ de\ Atendimento\ I { background:#2980b9; }
-.reserva.amb-Sala\ de\ Reuniões { background:#d35400; }
-.reserva.bloqueio { background:#555; opacity:0.9; }
+.reserva { color:white; border-radius:6px; margin:4px 0; padding:4px 6px; font-size:12px; cursor:pointer; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.reserva.bloqueio { background:#555 !important; opacity:0.95; }
 .scroll-container { overflow-x:auto; }
 #totalsBar { text-align:center; margin-bottom:10px; display:flex; flex-direction:column; gap:8px; align-items:center; }
 .badge { display:inline-block; padding:8px 12px; border-radius:8px; background:#25d366; color:#fff; margin:0 6px; min-width:220px; }
 .badge.secondary { background:#888; }
-.controls { text-align:center; margin-bottom:10px; }
+.controls { text-align:center; margin-bottom:10px; display:flex; gap:10px; justify-content:center; align-items:center; }
 .btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; }
 .btn.primary { background:#075E54; color:#fff; }
 .btn.warn { background:#f39c12; color:#fff; }
@@ -40,6 +34,8 @@ td { background:#e5ddd5; }
 .small { font-size:13px; color:#333; margin-top:6px; }
 .list-item { padding:6px 8px; background:#f5f5f5; border-radius:6px; margin:6px 0; display:flex; justify-content:space-between; align-items:center; }
 .del-btn { background:#d9534f; color:#fff; border:none; padding:6px 8px; border-radius:6px; cursor:pointer; }
+.calendar-header { text-align:center; margin-bottom:12px; }
+.calendar-header select { padding:6px 8px; border-radius:6px; }
 </style>
 </head>
 <body>
@@ -52,6 +48,7 @@ td { background:#e5ddd5; }
 </div>
 
 <div class="controls">
+  <button id="refreshBtn" class="btn primary">Atualizar</button>
   <button id="openManualBtn" class="btn warn">Liberar Chromebooks Manualmente?</button>
 </div>
 
@@ -110,152 +107,179 @@ td { background:#e5ddd5; }
 </div>
 
 <script>
-const SUPABASE_URL="https://oufiieqxyyqnqpcbuyms.supabase.co";
-const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91ZmlpZXF4eXlxbnFwY2J1eW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNDMwNDgsImV4cCI6MjA3NDkxOTA0OH0.-4QPA1R5y24daAt-WsZuWc8-2bJxCJGhdTR1nq4RnHc";
-
+// === CONFIGURE AQUI SUA INSTÂNCIA DO SUPABASE ===
+const SUPABASE_URL = "https://oufiieqxyyqnqpcbuyms.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91ZmlpZXF4eXlxbnFwY2J1eW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNDMwNDgsImV4cCI6MjA3NDkxOTA0OH0.-4QPA1R5y24daAt-WsZuWc8-2bJxCJGhdTR1nq4RnHc";
 const headers = { "Content-Type":"application/json", "apikey":SUPABASE_KEY, "Authorization":`Bearer ${SUPABASE_KEY}` };
 const MAX_CHROMEBOOKS = 86;
 const horarios = ['07:20','08:05','08:50','09:55','10:40','11:25','13:45','14:30','15:35','16:20','17:05'];
 
-let reservas=[], bloqueios=[];
+let reservas = [], bloqueios = [];
 let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth();
 
 function hojeStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-function isoToBR(iso){ return iso.split('T')[0].split('-').reverse().join('/'); }
-function gerarCor(nome){ let h=0; for(let i=0;i<nome.length;i++) h=nome.charCodeAt(i)+((h<<5)-h); return `hsl(${h%360},60%,35%)`; }
+function isoToBR(iso){ if(!iso) return '---'; const part = (iso||'').split('T')[0]; return part.split('-').reverse().join('/'); }
+function gerarCor(nome){ let h=0; for(let i=0;i<nome.length;i++) h=nome.charCodeAt(i)+((h<<5)-h); return `hsl(${Math.abs(h)%360},60%,35%)`; }
+function toArray(val){ if(!val) return []; if(Array.isArray(val)) return val; try{ return JSON.parse(val); }catch(e){ if(typeof val === 'string') return val.split(',').map(s=>s.trim()).filter(Boolean); return []; } }
 
-async function fetchReservas(){ const r=await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*`,{headers}); return await r.json(); }
-async function fetchBloqueios(){ const r=await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*`,{headers}); return await r.json(); }
-async function criarBloqueio(b){ await fetch(`${SUPABASE_URL}/rest/v1/bloqueios`,{method:'POST',headers,body:JSON.stringify(b)}); }
-async function deleteReserva(id){ await fetch(`${SUPABASE_URL}/rest/v1/reservas?id=eq.${id}`,{method:'DELETE',headers}); }
+async function fetchReservas(){ try{ const r = await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*`,{headers}); if(!r.ok){ console.error('fetchReservas status', r.status); return []; } return await r.json(); }catch(e){ console.error(e); return []; } }
+async function fetchBloqueios(){ try{ const r = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*`,{headers}); if(!r.ok){ console.error('fetchBloqueios status', r.status); return []; } return await r.json(); }catch(e){ console.error(e); return []; } }
+async function criarBloqueio(b){ try{ const res = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios`,{method:'POST',headers,body:JSON.stringify(b)}); if(!res.ok){ const txt = await res.text(); console.error('criarBloqueio erro', res.status, txt); throw new Error('Erro criando bloqueio'); } return await res.json(); }catch(e){ console.error(e); throw e; } }
+async function deleteReserva(id){ try{ await fetch(`${SUPABASE_URL}/rest/v1/reservas?id=eq.${id}`,{method:'DELETE',headers}); }catch(e){ console.error(e); } }
 
-function buildReservasPorDataHorarioPara(dataISO){
-  const mapa={};
-  reservas.filter(r=>r.dataFim.startsWith(dataISO) && r.ambiente==='Chromebooks').forEach(r=>{(r.horarios||[]).forEach(h=>{ const key=`${r.dataFim}-${h}`; mapa[key]=(mapa[key]||0)+(r.quantidade||0); });});
-  bloqueios.filter(b=>b.dataFim.startsWith(dataISO)).forEach(b=>{(b.horarios||[]).forEach(h=>{ const key=`${b.dataFim}-${h}`; mapa[key]=(mapa[key]||0)+b.quantidade; });});
+// Constrói mapa quantidade reservada por data-horário (usado para calcular sobrando)
+function buildReservasPorDataHorarioPara(dataISO){ const mapa = {};
+  reservas.filter(r=>{ const d = r.datafim || r.dataFim || ''; return d && d.startsWith(dataISO) && (r.ambiente === 'Chromebooks' || !r.ambiente); }).forEach(r=>{ const arr = toArray(r.horarios); arr.forEach(h=>{ const key = `${(r.datafim||r.dataFim)}-${h}`; mapa[key] = (mapa[key]||0) + (Number(r.quantidade)||0); }); });
+  bloqueios.filter(b=>{ const d = b.datafim || b.dataFim || ''; return d && d.startsWith(dataISO); }).forEach(b=>{ const arr = toArray(b.horarios); arr.forEach(h=>{ const key = `${(b.datafim||b.dataFim)}-${h}`; mapa[key] = (mapa[key]||0) + (Number(b.quantidade)||0); }); });
   return mapa;
 }
 
-async function montarCalendario(ano=currentYear,mes=currentMonth){
-  currentYear=ano; currentMonth=mes;
+async function montarCalendario(ano=currentYear, mes=currentMonth){
+  currentYear = ano; currentMonth = mes;
   reservas = await fetchReservas(); bloqueios = await fetchBloqueios();
-  const tbody=document.getElementById('calendarBody'); tbody.innerHTML='';
-  const primeiroDia=new Date(ano,mes,1); const ultimoDia=new Date(ano,mes+1,0); const diasNoMes=ultimoDia.getDate();
 
-  // Header meses
-  const mesesDisponiveis = new Set([...reservas,...bloqueios].map(r=>r.dataFim.split('-').slice(0,2).join('-')));
-  mesesDisponiveis.add(`${ano}-${String(mes+1).padStart(2,'0')}`);
-  const header=document.getElementById('calendarHeader'); header.innerHTML='';
-  const select=document.createElement('select');
-  Array.from(mesesDisponiveis).sort().forEach(val=>{
-    const [y,m]=val.split('-'); const option=document.createElement('option');
-    option.value=val; option.textContent=`${new Date(y,parseInt(m)-1).toLocaleString('pt-BR',{month:'long'})} ${y}`;
-    if(parseInt(y)===ano && parseInt(m)-1===mes) option.selected=true;
+  const tbody = document.getElementById('calendarBody'); tbody.innerHTML='';
+  const primeiroDia = new Date(ano, mes, 1);
+  const ultimoDia = new Date(ano, mes+1, 0);
+  const diasNoMes = ultimoDia.getDate();
+
+  // monta dropdown de meses (somente meses que existem nas reservas/bloqueios + o mês atual)
+  const mesesSet = new Set();
+  reservas.concat(bloqueios).forEach(r=>{ const d = r.datafim || r.dataFim || ''; if(d){ const parts = d.split('-'); if(parts.length>=2) mesesSet.add(`${parts[0]}-${parts[1].padStart(2,'0')}`); } });
+  mesesSet.add(`${ano}-${String(mes+1).padStart(2,'0')}`);
+  const mesesArray = Array.from(mesesSet).sort((a,b)=>{ const [ay,am]=a.split('-').map(Number); const [by,bm]=b.split('-').map(Number); return ay - by || am - bm; });
+
+  const header = document.getElementById('calendarHeader'); header.innerHTML='';
+  const select = document.createElement('select');
+  mesesArray.forEach(val=>{
+    const [y,mth] = val.split('-');
+    const option = document.createElement('option');
+    option.value = val;
+    option.textContent = `${new Date(Number(y), Number(mth)-1).toLocaleString('pt-BR',{month:'long'})} ${y}`;
+    if(Number(y) === ano && Number(mth)-1 === mes) option.selected = true;
     select.appendChild(option);
   });
-  select.onchange=function(){ const [y,m]=this.value.split('-'); montarCalendario(parseInt(y),parseInt(m)-1); };
+  select.onchange = function(){ const [y,m] = this.value.split('-').map(Number); montarCalendario(y, m-1); };
   header.appendChild(select);
 
-  let tr=document.createElement('tr'); for(let i=0;i<primeiroDia.getDay();i++) tr.appendChild(document.createElement('td'));
+  // gerar células do mês
+  let tr = document.createElement('tr');
+  for(let i=0;i<primeiroDia.getDay();i++) tr.appendChild(document.createElement('td'));
 
-  for(let dia=1;dia<=diasNoMes;dia++){
-    if(tr.children.length===7){tbody.appendChild(tr); tr=document.createElement('tr');}
-    const td=document.createElement('td'); const dataStr=`${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
-    const divDia=document.createElement('div'); divDia.style.fontWeight='bold'; divDia.textContent=dia; td.appendChild(divDia);
+  for(let dia=1; dia<=diasNoMes; dia++){
+    if(tr.children.length===7){ tbody.appendChild(tr); tr = document.createElement('tr'); }
+    const td = document.createElement('td');
+    const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+    const divDia = document.createElement('div'); divDia.style.fontWeight='bold'; divDia.textContent = dia; td.appendChild(divDia);
 
-    reservas.filter(r=>r.dataFim.startsWith(dataStr)).forEach(r=>{
-      (r.horarios||[]).forEach(h=>{
-        const div=document.createElement('div'); div.classList.add('reserva');
-        const amb=r.ambiente||'Chromebooks'; div.innerText=amb==='Chromebooks'?`${h} ${r.professor} (${r.quantidade})`:`${h} ${amb} — ${r.professor}`;
-        div.style.backgroundColor=gerarCor(amb+(r.professor||'')); div.style.color='#fff';
-        div.onclick=()=>openModal(r); td.appendChild(div);
+    // reservas
+    reservas.filter(r=>{ const d = r.datafim || r.dataFim || ''; return d && d.startsWith(dataStr); }).forEach(r=>{
+      const arr = toArray(r.horarios);
+      arr.forEach(h=>{
+        const div = document.createElement('div'); div.classList.add('reserva');
+        const amb = r.ambiente || 'Chromebooks';
+        const prof = r.professor || r.professor || '---';
+        div.innerText = amb === 'Chromebooks' ? `${h} ${prof} (${r.quantidade||1})` : `${h} ${amb} — ${prof}`;
+        div.style.backgroundColor = gerarCor(amb + (prof||'')); div.style.color = '#fff';
+        div.onclick = ()=> openModal(r);
+        td.appendChild(div);
       });
     });
 
-    bloqueios.filter(b=>b.dataFim.startsWith(dataStr)).forEach(b=>{
-      (b.horarios||[]).forEach(h=>{
-        const div=document.createElement('div'); div.classList.add('reserva','bloqueio');
-        div.innerText=`${h} BLOQUEIO (${b.quantidade})`;
+    // bloqueios
+    bloqueios.filter(b=>{ const d = b.datafim || b.dataFim || ''; return d && d.startsWith(dataStr); }).forEach(b=>{
+      const arr = toArray(b.horarios);
+      arr.forEach(h=>{
+        const div = document.createElement('div'); div.classList.add('reserva','bloqueio');
+        div.innerText = `${h} BLOQUEIO (${b.quantidade})`;
         td.appendChild(div);
       });
     });
 
     tr.appendChild(td);
   }
-  while(tr.children.length<7) tr.appendChild(document.createElement('td')); tbody.appendChild(tr);
+  while(tr.children.length<7) tr.appendChild(document.createElement('td'));
+  tbody.appendChild(tr);
+
   atualizarTotaisDia();
 }
 
 function atualizarTotaisDia(){
   const hoje = hojeStr();
-  const reservado = reservas.filter(r=>r.dataFim.startsWith(hoje) && r.ambiente==='Chromebooks').reduce((acc,r)=>acc+(r.quantidade||0),0);
-  const bloqueado = bloqueios.filter(b=>b.dataFim.startsWith(hoje)).reduce((acc,b)=>(acc+(b.quantidade||0)),0);
-  document.getElementById('totalReservados').textContent=reservado+bloqueado;
-  document.getElementById('totalLivres').textContent=Math.max(0,MAX_CHROMEBOOKS-(reservado+bloqueado));
+  const reservado = reservas.filter(r=>{ const d = r.datafim || r.dataFim || ''; return d && d.startsWith(hoje) && r.ambiente==='Chromebooks'; }).reduce((acc,r)=> acc + (Number(r.quantidade)||0), 0);
+  const bloqueado = bloqueios.filter(b=>{ const d = b.datafim || b.dataFim || ''; return d && d.startsWith(hoje); }).reduce((acc,b)=> acc + (Number(b.quantidade)||0), 0);
+  document.getElementById('totalReservados').textContent = reservado + bloqueado;
+  document.getElementById('totalLivres').textContent = Math.max(0, MAX_CHROMEBOOKS - (reservado + bloqueado));
 }
 
 // Modais
 function openModal(r){
-  document.getElementById('modalAmbiente').textContent=r.ambiente||'Chromebooks';
-  document.getElementById('modalProfessor').textContent=r.professor||'---';
-  document.getElementById('modalData').textContent=isoToBR(r.dataFim);
-  document.getElementById('modalHorarios').textContent=(r.horarios||[]).join(', ');
-  document.getElementById('modalQuantidade').textContent=r.quantidade||1;
+  document.getElementById('modalAmbiente').textContent = r.ambiente || 'Chromebooks';
+  document.getElementById('modalProfessor').textContent = r.professor || '---';
+  document.getElementById('modalData').textContent = isoToBR(r.datafim || r.dataFim);
+  document.getElementById('modalHorarios').textContent = toArray(r.horarios).join(', ');
+  document.getElementById('modalQuantidade').textContent = r.quantidade || 1;
 
-  const perHorarioDiv=document.getElementById('modalPerHorario'); perHorarioDiv.innerHTML='';
-  const counts=buildReservasPorDataHorarioPara(r.dataFim);
-  (r.horarios||[]).forEach(h=>{
-    const key=`${r.dataFim}-${h}`;
-    const reserved=counts[key]||0;
-    const free=Math.max(0,MAX_CHROMEBOOKS-reserved);
-    const p=document.createElement('p'); p.innerHTML=`<strong>${h}:</strong> Reservados: ${reserved} — Livres: ${free}`;
+  const perHorarioDiv = document.getElementById('modalPerHorario'); perHorarioDiv.innerHTML = '';
+  const counts = buildReservasPorDataHorarioPara(r.datafim || r.dataFim);
+  toArray(r.horarios).forEach(h=>{
+    const key = `${(r.datafim||r.dataFim)}-${h}`;
+    const reserved = counts[key] || 0;
+    const free = Math.max(0, MAX_CHROMEBOOKS - reserved);
+    const p = document.createElement('p'); p.innerHTML = `<strong>${h}:</strong> Reservados: ${reserved} — Livres: ${free}`;
     perHorarioDiv.appendChild(p);
   });
 
-  const cancelBtn=document.getElementById('cancelReservationBtn');
-  cancelBtn.onclick=async ()=>{ if(confirm('Cancelar reserva?')){ await deleteReserva(r.id); montarCalendario(); document.getElementById('reservationModal').style.display='none'; }};
+  const cancelBtn = document.getElementById('cancelReservationBtn');
+  cancelBtn.onclick = async ()=>{ if(confirm('Cancelar reserva?')){ await deleteReserva(r.id); await montarCalendario(); document.getElementById('reservationModal').style.display='none'; }};
   document.getElementById('reservationModal').style.display='block';
 }
-document.getElementById('closeModal').onclick=()=>document.getElementById('reservationModal').style.display='none';
+document.getElementById('closeModal').onclick = ()=> document.getElementById('reservationModal').style.display='none';
 
 // Modal manual
-const openManualBtn=document.getElementById('openManualBtn');
-const manualModal=document.getElementById('manualReleaseModal');
-const closeManual=document.getElementById('closeManual');
-const manualHorarios=document.getElementById('manualHorarios');
-const manualDate=document.getElementById('manualDate');
-const manualQuantidade=document.getElementById('manualQuantidade');
-const confirmManual=document.getElementById('confirmManual');
-const bloqueiosList=document.getElementById('bloqueiosList');
+const openManualBtn = document.getElementById('openManualBtn');
+const manualModal = document.getElementById('manualReleaseModal');
+const closeManual = document.getElementById('closeManual');
+const manualHorarios = document.getElementById('manualHorarios');
+const manualDate = document.getElementById('manualDate');
+const manualQuantidade = document.getElementById('manualQuantidade');
+const confirmManual = document.getElementById('confirmManual');
+const bloqueiosList = document.getElementById('bloqueiosList');
 
-openManualBtn.onclick=async ()=>{
-  manualHorarios.innerHTML=''; horarios.forEach(h=>{ const btn=document.createElement('button'); btn.classList.add('option-btn'); btn.innerText=h; btn.dataset.h=h; btn.onclick=()=>btn.classList.toggle('selected'); manualHorarios.appendChild(btn); });
-  manualDate.value=hojeStr(); manualQuantidade.value=1;
-  await carregarBloqueios(); manualModal.style.display='block';
+openManualBtn.onclick = async ()=>{
+  manualHorarios.innerHTML = '';
+  horarios.forEach(h=>{ const btn = document.createElement('button'); btn.classList.add('option-btn'); btn.innerText = h; btn.dataset.h = h; btn.onclick = ()=> btn.classList.toggle('selected'); manualHorarios.appendChild(btn); });
+  manualDate.value = hojeStr(); manualQuantidade.value = 1;
+  await carregarBloqueios(); manualModal.style.display = 'block';
 };
-closeManual.onclick=()=>manualModal.style.display='none';
+closeManual.onclick = ()=> manualModal.style.display = 'none';
 
 async function carregarBloqueios(){
-  bloqueios = await fetchBloqueios(); bloqueiosList.innerHTML='';
+  bloqueios = await fetchBloqueios(); bloqueiosList.innerHTML = '';
   bloqueios.forEach((b,i)=>{
-    const div=document.createElement('div'); div.classList.add('list-item');
-    div.textContent=`${isoToBR(b.dataFim)} — ${b.horarios.join(', ')} — Qtde: ${b.quantidade}`;
-    const del=document.createElement('button'); del.textContent='Remover'; del.classList.add('del-btn');
-    del.onclick=async ()=>{ if(confirm('Remover bloqueio?')){ await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?id=eq.${b.id}`,{method:'DELETE',headers}); montarCalendario(); await carregarBloqueios(); } };
+    const div = document.createElement('div'); div.classList.add('list-item');
+    const arr = toArray(b.horarios);
+    div.textContent = `${isoToBR(b.datafim || b.dataFim)} — ${arr.join(', ')} — Qtde: ${b.quantidade}`;
+    const del = document.createElement('button'); del.textContent = 'Remover'; del.classList.add('del-btn');
+    del.onclick = async ()=>{ if(confirm('Remover bloqueio?')){ await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?id=eq.${b.id}`,{method:'DELETE',headers}); await montarCalendario(); await carregarBloqueios(); } };
     div.appendChild(del); bloqueiosList.appendChild(div);
   });
 }
 
-confirmManual.onclick=async ()=>{
+confirmManual.onclick = async ()=>{
   const selected = Array.from(manualHorarios.querySelectorAll('.selected')).map(b=>b.dataset.h);
   if(selected.length===0){ alert('Selecione ao menos um horário'); return; }
-  const data = manualDate.value; const quantidade = parseInt(manualQuantidade.value)||1;
-  const payload = { dataFim:data, horarios:selected, quantidade };
-  try{ await criarBloqueio(payload); alert('Bloqueio adicionado'); manualModal.style.display='none'; montarCalendario(); }
-  catch(e){ console.error(e); alert('Erro ao criar bloqueio'); }
+  const data = manualDate.value; const quantidade = parseInt(manualQuantidade.value) || 1;
+  const payload = { datafim: data, horarios: selected, quantidade };
+  try{ await criarBloqueio(payload); alert('Bloqueio adicionado'); manualModal.style.display='none'; await montarCalendario(); }
+  catch(e){ console.error(e); alert('Erro ao criar bloqueio (ver console)'); }
 };
 
+// Refresh button
+document.getElementById('refreshBtn').onclick = ()=> montarCalendario();
+
+// inicia
 montarCalendario();
 </script>
 
