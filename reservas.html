@@ -1,176 +1,239 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Calendário de Reservas — Revisado</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>v1.0 - Calendário de Reservas — Completo (com Liberação Manual, Tooltips e Legenda)</title>
 <style>
-body { font-family: Arial, sans-serif; background:#f0f0f0; margin:0; padding:20px; }
-h2 { text-align:center; margin-bottom:10px; }
-table { border-collapse:collapse; width:100%; max-width:1200px; margin:0 auto; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
-thead { background:#075E54; color:white; }
-th,td { border:1px solid #ccc; padding:6px; text-align:left; vertical-align:top; font-size:13px; min-width:90px; }
-td { background:#e5ddd5; }
-.reserva { color:white; border-radius:6px; margin:4px 0; padding:4px 6px; font-size:12px; cursor:pointer; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.reserva.bloqueio { background:#555 !important; opacity:0.95; }
-.scroll-container { overflow-x:auto; }
-#totalsBar { text-align:center; margin-bottom:10px; display:flex; flex-direction:column; gap:8px; align-items:center; }
-.badge { display:inline-block; padding:8px 12px; border-radius:8px; background:#25d366; color:#fff; margin:0 6px; min-width:220px; }
-.badge.secondary { background:#888; }
-.controls { text-align:center; margin-bottom:10px; display:flex; gap:10px; justify-content:center; align-items:center; }
-.btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; }
-.btn.primary { background:#075E54; color:#fff; }
-.btn.warn { background:#f39c12; color:#fff; }
-.modal { display:none; position:fixed; z-index:50; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.4); padding-top:40px; }
-.modal-content { background-color:#fefefe; margin:30px auto; padding:20px; border:1px solid #888; width:90%; max-width:720px; }
-.close { color:#aaa; float:right; font-size:28px; font-weight:bold; cursor:pointer; }
-.close:hover { color:black; }
-.field { margin:8px 0; }
-.field label { display:block; margin-bottom:4px; }
-.field input[type="date"], .field input[type="number"] { padding:8px; width:100%; box-sizing:border-box; }
-.option-container { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
-.option-btn { padding:8px 10px; border-radius:6px; border:none; cursor:pointer; background:#25d366; color:#fff; }
-.option-btn.selected { background:#128c5e; }
-.small { font-size:13px; color:#333; margin-top:6px; }
-.list-item { padding:6px 8px; background:#f5f5f5; border-radius:6px; margin:6px 0; display:flex; justify-content:space-between; align-items:center; }
-.del-btn { background:#d9534f; color:#fff; border:none; padding:6px 8px; border-radius:6px; cursor:pointer; }
-.calendar-header { text-align:center; margin-bottom:12px; }
-.calendar-header select { padding:6px 8px; border-radius:6px; }
+  :root{
+    --primary:#075E54;
+    --accent:#25d366;
+    --bg:#f0f0f0;
+    --chromebooks:#1e88e5;    /* azul */
+    --cozinha:#f39c12;       /* laranja */
+    --telesala:#2e7d32;      /* verde */
+    --salaatendimento:#8e44ad;/* roxo */
+    --salareunioes:#d35400;  /* vermelho */
+    --bloqueio:#555;
+  }
+  body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);margin:0;padding:20px}
+  .container{max-width:1200px;margin:0 auto}
+  h2{text-align:center;margin:6px 0 12px}
+  #topBar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap}
+  .controls{display:flex;gap:8px;align-items:center}
+  .btn{padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+  .btn.primary{background:var(--primary);color:#fff}
+  .btn.warn{background:#f39c12;color:#fff}
+  .badge{display:inline-block;padding:8px 12px;border-radius:8px;background:var(--accent);color:#fff}
+  .badge.secondary{background:#888}
+  .calendar{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,.06)}
+  table{border-collapse:collapse;width:100%}
+  thead{background:var(--primary);color:#fff}
+  th,td{border:1px solid #ddd;padding:6px;vertical-align:top;font-size:13px;min-width:110px;height:120px;position:relative}
+  td{background:#e5ddd5}
+  .reserva{display:block;padding:4px 6px;border-radius:6px;margin:4px 0;color:#fff;font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:default}
+  .reserva.bloqueio{background:var(--bloqueio);opacity:0.95}
+  /* cores por ambiente */
+  .amb-Chromebooks{background:var(--chromebooks) !important}
+  .amb-Cozinha{background:var(--cozinha) !important}
+  .amb-TeleSala{background:var(--telesala) !important}
+  .amb-SalaAtendimentoI{background:var(--salaatendimento) !important}
+  .amb-SalaReunioes{background:var(--salareunioes) !important}
+
+  .scroll-container{overflow-x:auto}
+  .modal{display:none;position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.45);z-index:50;padding-top:40px}
+  .modal-content{background:#fff;margin:20px auto;padding:16px;border-radius:8px;max-width:720px;position:relative}
+  .close{position:absolute;right:12px;top:8px;font-size:22px;cursor:pointer;color:#666}
+  .field{margin:8px 0}
+  .field label{display:block;margin-bottom:6px;font-weight:600}
+  input[type="date"], input[type="number"], select{padding:8px;width:100%;box-sizing:border-box;border-radius:6px;border:1px solid #ccc}
+  .option-container{display:flex;flex-wrap:wrap;gap:6px}
+  .option-btn{padding:8px 10px;border-radius:6px;border:none;background:var(--accent);color:#fff;cursor:pointer}
+  .option-btn.selected{background:#128c5e}
+  .list-item{padding:8px;background:#fafafa;border-radius:6px;margin:6px 0;display:flex;justify-content:space-between;align-items:center}
+  .del-btn{background:#d9534f;color:#fff;border:none;padding:6px 8px;border-radius:6px;cursor:pointer}
+  .small{font-size:13px;color:#333}
+  .legend{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+  .legend-item{display:flex;gap:6px;align-items:center;padding:6px 8px;background:#fff;border-radius:6px;border:1px solid #eee}
+  .swatch{width:16px;height:16px;border-radius:4px;display:inline-block}
+
+  /* tooltip */
+  .tooltip{position:fixed;pointer-events:none;background:#111;color:#fff;padding:8px;border-radius:6px;font-size:13px;z-index:9999;opacity:0;transform:translateY(-6px);transition:opacity .12s,transform .12s;max-width:260px;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+  .tooltip.show{opacity:1;transform:translateY(0)}
+  .tooltip b{display:block;margin-bottom:4px}
+  @media (max-width:900px){ th,td{font-size:12px;min-width:90px;height:110px} }
 </style>
 </head>
 <body>
+<div class="container">
+  <h2>Calendário de Reservas — Colégio Imperatriz</h2>
 
-<h2>Calendário de Reservas</h2>
+  <div id="topBar">
+    <div class="controls">
+      <button id="refreshBtn" class="btn primary">Atualizar</button>
+      <button id="openManualBtn" class="btn warn">Liberar Manualmente</button>
+    </div>
 
-<div id="totalsBar">
-  <span class="badge">Total reservados (hoje): <strong id="totalReservados">0</strong></span>
-  <span class="badge secondary">Total livres (hoje): <strong id="totalLivres">0</strong></span>
-</div>
+    <div id="totalsBar">
+      <span class="badge">Total reservados (hoje): <strong id="totalReservados">0</strong></span>
+      <span class="badge secondary">Total livres (hoje): <strong id="totalLivres">0</strong></span>
+    </div>
+  </div>
 
-<div class="controls">
-  <button id="refreshBtn" class="btn primary">Atualizar</button>
-  <button id="openManualBtn" class="btn warn">Liberar Chromebooks Manualmente?</button>
-</div>
+  <!-- legenda fixa -->
+  <div class="legend" id="legend">
+    <div class="legend-item"><span class="swatch" style="background:var(--chromebooks)"></span> Chromebooks</div>
+    <div class="legend-item"><span class="swatch" style="background:var(--cozinha)"></span> Cozinha</div>
+    <div class="legend-item"><span class="swatch" style="background:var(--telesala)"></span> Tele Sala</div>
+    <div class="legend-item"><span class="swatch" style="background:var(--salaatendimento)"></span> Sala de Atendimento I</div>
+    <div class="legend-item"><span class="swatch" style="background:var(--salareunioes)"></span> Sala de Reuniões</div>
+    <div class="legend-item"><span class="swatch" style="background:var(--bloqueio)"></span> Bloqueio</div>
+  </div>
 
-<div class="calendar-header" id="calendarHeader"></div>
+  <div style="height:12px"></div>
 
-<div class="scroll-container">
-<table>
-<thead>
-<tr><th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th></tr>
-</thead>
-<tbody id="calendarBody"></tbody>
-</table>
-</div>
+  <div class="calendar">
+    <div style="padding:8px 12px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px">
+      <div id="calendarHeader" style="flex:1"></div>
+    </div>
 
-<!-- Modal detalhes -->
-<div id="reservationModal" class="modal">
-  <div class="modal-content">
-    <span class="close" id="closeModal">&times;</span>
-    <h3>Detalhes</h3>
-    <p><strong>Ambiente:</strong> <span id="modalAmbiente"></span></p>
-    <p><strong>Professor:</strong> <span id="modalProfessor"></span></p>
-    <p><strong>Data:</strong> <span id="modalData"></span></p>
-    <p><strong>Horários:</strong> <span id="modalHorarios"></span></p>
-    <p><strong>Quantidade:</strong> <span id="modalQuantidade"></span></p>
-    <div id="modalPerHorario"></div>
-    <div style="margin-top:12px;">
-      <button id="cancelReservationBtn" class="btn primary">Cancelar Reserva</button>
+    <div class="scroll-container">
+      <table>
+        <thead>
+          <tr id="theadRow"><th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th></tr>
+        </thead>
+        <tbody id="calendarBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- modal de detalhes -->
+  <div id="reservationModal" class="modal">
+    <div class="modal-content">
+      <span id="closeModal" class="close">&times;</span>
+      <h3>Detalhes da Reserva</h3>
+      <p><strong>Ambiente:</strong> <span id="modalAmbiente"></span></p>
+      <p><strong>Professor:</strong> <span id="modalProfessor"></span></p>
+      <p><strong>Data:</strong> <span id="modalData"></span></p>
+      <p><strong>Horários:</strong> <span id="modalHorarios"></span></p>
+      <p><strong>Quantidade:</strong> <span id="modalQuantidade"></span></p>
+      <div id="modalPerHorario"></div>
+      <div style="margin-top:12px;">
+        <button id="cancelReservationBtn" class="btn primary">Cancelar Reserva</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- modal liberar manualmente (top button) -->
+  <div id="manualReleaseModal" class="modal">
+    <div class="modal-content">
+      <span id="closeManual" class="close">&times;</span>
+      <h3>Liberação Manual de Recursos</h3>
+
+      <div class="field">
+        <label>Ambiente</label>
+        <select id="manualAmbiente">
+          <option>Chromebooks</option>
+          <option>Cozinha</option>
+          <option>Tele Sala</option>
+          <option>Sala de Atendimento I</option>
+          <option>Sala de Reuniões</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Data</label>
+        <input type="date" id="manualDate" />
+      </div>
+
+      <div class="field">
+        <label>Horários (selecione um ou mais)</label>
+        <div id="manualHorarios" class="option-container"></div>
+      </div>
+
+      <div class="field">
+        <label>Quantidade (por horário)</label>
+        <input type="number" id="manualQuantidade" min="1" value="1" />
+      </div>
+
+      <div style="margin-top:8px;">
+        <button id="confirmManual" class="btn primary">Confirmar liberação</button>
+      </div>
+
+      <hr style="margin:12px 0" />
+      <h4>Bloqueios existentes</h4>
+      <div id="bloqueiosList" class="small"></div>
     </div>
   </div>
 </div>
 
-<!-- Modal bloqueio manual -->
-<div id="manualReleaseModal" class="modal">
-  <div class="modal-content">
-    <span class="close" id="closeManual">&times;</span>
-    <h3>Liberar Chromebooks Manualmente (bloquear estoque)</h3>
-    <div class="field">
-      <label>Data</label>
-      <input type="date" id="manualDate" />
-    </div>
-    <div class="field">
-      <label>Horários (selecione um ou mais)</label>
-      <div id="manualHorarios" class="option-container"></div>
-    </div>
-    <div class="field">
-      <label>Quantidade a bloquear (por horário)</label>
-      <input type="number" id="manualQuantidade" min="1" value="1" />
-    </div>
-    <div style="margin-top:8px;">
-      <button id="confirmManual" class="btn primary">Confirmar bloqueio</button>
-    </div>
-    <hr style="margin:14px 0;" />
-    <h4>Bloqueios existentes</h4>
-    <div id="bloqueiosList" class="small"></div>
-  </div>
-</div>
+<!-- tooltip -->
+<div id="tooltip" class="tooltip" aria-hidden="true"></div>
 
 <script>
-// === CONFIGURE AQUI SUA INSTÂNCIA DO SUPABASE ===
+/* =============== CONFIGURAÇÃO SUPABASE =============== */
 const SUPABASE_URL = "https://oufiieqxyyqnqpcbuyms.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91ZmlpZXF4eXlxbnFwY2J1eW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNDMwNDgsImV4cCI6MjA3NDkxOTA0OH0.-4QPA1R5y24daAt-WsZuWc8-2bJxCJGhdTR1nq4RnHc";
 const headers = { "Content-Type":"application/json", "apikey":SUPABASE_KEY, "Authorization":`Bearer ${SUPABASE_KEY}` };
-const MAX_CHROMEBOOKS = 86;
+/* ==================================================== */
+
+const MAX_CHROMEBOOKS = 85;
+const MAX_DEFAULT = 1;
 const horarios = ['07:20','08:05','08:50','09:55','10:40','11:25','13:45','14:30','15:35','16:20','17:05'];
 
 let reservas = [], bloqueios = [];
 let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth();
 
+/* ------------- helpers ------------- */
 function hojeStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-function isoToBR(iso){ if(!iso) return '---'; const part = (iso||'').split('T')[0]; return part.split('-').reverse().join('/'); }
+function isoToBR(iso){ if(!iso) return '---'; const part=(iso||'').split('T')[0]; return part.split('-').reverse().join('/'); }
 function gerarCor(nome){ let h=0; for(let i=0;i<nome.length;i++) h=nome.charCodeAt(i)+((h<<5)-h); return `hsl(${Math.abs(h)%360},60%,35%)`; }
-function toArray(val){ if(!val) return []; if(Array.isArray(val)) return val; try{ return JSON.parse(val); }catch(e){ if(typeof val === 'string') return val.split(',').map(s=>s.trim()).filter(Boolean); return []; } }
+function toArray(val){ if(!val) return []; if(Array.isArray(val)) return val; try{ return JSON.parse(val); }catch(e){ if(typeof val==='string') return val.split(',').map(s=>s.trim()).filter(Boolean); return []; } }
 
-async function fetchReservas(){ try{ const r = await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*`,{headers}); if(!r.ok){ console.error('fetchReservas status', r.status); return []; } return await r.json(); }catch(e){ console.error(e); return []; } }
-async function fetchBloqueios(){ try{ const r = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*`,{headers}); if(!r.ok){ console.error('fetchBloqueios status', r.status); return []; } return await r.json(); }catch(e){ console.error(e); return []; } }
-async function criarBloqueio(b){ try{ const res = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios`,{method:'POST',headers,body:JSON.stringify(b)}); if(!res.ok){ const txt = await res.text(); console.error('criarBloqueio erro', res.status, txt); throw new Error('Erro criando bloqueio'); } return await res.json(); }catch(e){ console.error(e); throw e; } }
+/* ------------- supabase calls ------------- */
+async function fetchReservas(){ try{ const r=await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*`,{headers}); if(!r.ok){ console.error('fetchReservas',r.status); return []; } return await r.json(); }catch(e){ console.error(e); return []; } }
+async function fetchBloqueios(){ try{ const r=await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*`,{headers}); if(!r.ok){ console.error('fetchBloqueios',r.status); return []; } return await r.json(); }catch(e){ console.error(e); return []; } }
+async function criarBloqueio(b){ try{ const r=await fetch(`${SUPABASE_URL}/rest/v1/bloqueios`,{method:'POST',headers,body:JSON.stringify(b)}); if(!r.ok){ const txt=await r.text(); console.error('criarBloqueio',r.status,txt); throw new Error('Erro criando bloqueio'); } return await r.json(); }catch(e){ console.error(e); throw e; } }
+async function criarReserva(r){ try{ const res=await fetch(`${SUPABASE_URL}/rest/v1/reservas`,{method:'POST',headers,body:JSON.stringify(r)}); if(!res.ok){ const txt=await res.text(); console.error('criarReserva',res.status,txt); throw new Error('Erro criando reserva'); } return await res.json(); }catch(e){ console.error(e); throw e; } }
 async function deleteReserva(id){ try{ await fetch(`${SUPABASE_URL}/rest/v1/reservas?id=eq.${id}`,{method:'DELETE',headers}); }catch(e){ console.error(e); } }
 
-// Constrói mapa quantidade reservada por data-horário (usado para calcular sobrando)
-function buildReservasPorDataHorarioPara(dataISO){ const mapa = {};
-  reservas.filter(r=>{ const d = r.datafim || r.dataFim || ''; return d && d.startsWith(dataISO) && (r.ambiente === 'Chromebooks' || !r.ambiente); }).forEach(r=>{ const arr = toArray(r.horarios); arr.forEach(h=>{ const key = `${(r.datafim||r.dataFim)}-${h}`; mapa[key] = (mapa[key]||0) + (Number(r.quantidade)||0); }); });
-  bloqueios.filter(b=>{ const d = b.datafim || b.dataFim || ''; return d && d.startsWith(dataISO); }).forEach(b=>{ const arr = toArray(b.horarios); arr.forEach(h=>{ const key = `${(b.datafim||b.dataFim)}-${h}`; mapa[key] = (mapa[key]||0) + (Number(b.quantidade)||0); }); });
+/* ------------- mapa por data-horário ------------- */
+function buildReservasPorDataHorarioPara(dataISO){
+  const mapa = {};
+  reservas.filter(r=>{ const d=r.datafim||r.dataFim||''; return d && d.startsWith(dataISO); })
+    .forEach(r=>{ const arr=toArray(r.horarios); arr.forEach(h=>{ const key=`${(r.datafim||r.dataFim)}-${h}`; mapa[key]=(mapa[key]||0)+ (Number(r.quantidade)||0); }); });
+  bloqueios.filter(b=>{ const d=b.datafim||b.dataFim||''; return d && d.startsWith(dataISO); })
+    .forEach(b=>{ const arr=toArray(b.horarios); arr.forEach(h=>{ const key=`${(b.datafim||b.dataFim)}-${h}`; mapa[key]=(mapa[key]||0)+ (Number(b.quantidade)||0); }); });
   return mapa;
 }
 
+/* ------------- montar calendário ------------- */
 async function montarCalendario(ano=currentYear, mes=currentMonth){
-  currentYear = ano; currentMonth = mes;
+  currentYear=ano; currentMonth=mes;
   reservas = await fetchReservas(); bloqueios = await fetchBloqueios();
 
   const tbody = document.getElementById('calendarBody'); tbody.innerHTML='';
-  const primeiroDia = new Date(ano, mes, 1);
-  const ultimoDia = new Date(ano, mes+1, 0);
-  const diasNoMes = ultimoDia.getDate();
+  const primeiroDia = new Date(ano,mes,1); const ultimoDia = new Date(ano,mes+1,0); const diasNoMes = ultimoDia.getDate();
 
-  // monta dropdown de meses (somente meses que existem nas reservas/bloqueios + o mês atual)
-  const mesesSet = new Set();
-  reservas.concat(bloqueios).forEach(r=>{ const d = r.datafim || r.dataFim || ''; if(d){ const parts = d.split('-'); if(parts.length>=2) mesesSet.add(`${parts[0]}-${parts[1].padStart(2,'0')}`); } });
-  mesesSet.add(`${ano}-${String(mes+1).padStart(2,'0')}`);
-  const mesesArray = Array.from(mesesSet).sort((a,b)=>{ const [ay,am]=a.split('-').map(Number); const [by,bm]=b.split('-').map(Number); return ay - by || am - bm; });
-
+  // header meses
+  const mesesDisponiveis = new Set([...reservas,...bloqueios].map(r=>{ const d = r.datafim || r.dataFim || ''; if(!d) return null; const p=d.split('-'); return p.length>=2? `${p[0]}-${p[1].padStart(2,'0')}`: null;}).filter(Boolean));
+  mesesDisponiveis.add(`${ano}-${String(mes+1).padStart(2,'0')}`);
   const header = document.getElementById('calendarHeader'); header.innerHTML='';
   const select = document.createElement('select');
-  mesesArray.forEach(val=>{
-    const [y,mth] = val.split('-');
-    const option = document.createElement('option');
-    option.value = val;
-    option.textContent = `${new Date(Number(y), Number(mth)-1).toLocaleString('pt-BR',{month:'long'})} ${y}`;
-    if(Number(y) === ano && Number(mth)-1 === mes) option.selected = true;
-    select.appendChild(option);
+  Array.from(mesesDisponiveis).sort((a,b)=>{ const [ay,am]=a.split('-').map(Number); const [by,bm]=b.split('-').map(Number); return ay-by || am-bm; }).forEach(val=>{
+    const [y,m]=val.split('-'); const option=document.createElement('option'); option.value=val; option.textContent=`${new Date(Number(y),Number(m)-1).toLocaleString('pt-BR',{month:'long'})} ${y}`;
+    if(Number(y)===ano && Number(m)-1===mes) option.selected=true; select.appendChild(option);
   });
-  select.onchange = function(){ const [y,m] = this.value.split('-').map(Number); montarCalendario(y, m-1); };
+  select.onchange = function(){ const [y,m]=this.value.split('-').map(Number); montarCalendario(y,m-1); };
   header.appendChild(select);
 
-  // gerar células do mês
-  let tr = document.createElement('tr');
-  for(let i=0;i<primeiroDia.getDay();i++) tr.appendChild(document.createElement('td'));
+  // montar dias
+  let tr = document.createElement('tr'); for(let i=0;i<primeiroDia.getDay();i++) tr.appendChild(document.createElement('td'));
 
-  for(let dia=1; dia<=diasNoMes; dia++){
-    if(tr.children.length===7){ tbody.appendChild(tr); tr = document.createElement('tr'); }
-    const td = document.createElement('td');
-    const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+  for(let dia=1;dia<=diasNoMes;dia++){
+    if(tr.children.length===7){ tbody.appendChild(tr); tr=document.createElement('tr'); }
+    const td = document.createElement('td'); const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
     const divDia = document.createElement('div'); divDia.style.fontWeight='bold'; divDia.textContent = dia; td.appendChild(divDia);
 
     // reservas
@@ -178,10 +241,25 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
       const arr = toArray(r.horarios);
       arr.forEach(h=>{
         const div = document.createElement('div'); div.classList.add('reserva');
-        const amb = r.ambiente || 'Chromebooks';
-        const prof = r.professor || r.professor || '---';
-        div.innerText = amb === 'Chromebooks' ? `${h} ${prof} (${r.quantidade||1})` : `${h} ${amb} — ${prof}`;
-        div.style.backgroundColor = gerarCor(amb + (prof||'')); div.style.color = '#fff';
+        const amb = (r.ambiente||'Chromebooks');
+        // normalize class names
+        const cls = 'amb-' + amb.replace(/\s+/g,'').replace(/[^a-zA-Z0-9]/g,'');
+        div.classList.add(cls);
+        const prof = r.professor || '---';
+        // text truncated in cell
+        div.innerText = amb==='Chromebooks' ? `${h} ${prof} (${r.quantidade||1})` : `${h} ${amb} — ${prof}`;
+        // attach dataset for tooltip
+        div.dataset.prof = prof;
+        div.dataset.quant = r.quantidade || 1;
+        div.dataset.horarios = h;
+        div.dataset.data = dataStr;
+        div.dataset.ambiente = amb;
+        // color - use CSS classes, but fallback bg color computed if needed
+        div.style.backgroundColor = window.getComputedStyle(document.documentElement).getPropertyValue('--'+(amb==='Chromebooks'?'chromebooks':amb.replace(/\s+/g,'').toLowerCase())) || gerarCor(amb + prof);
+        // tooltip handlers
+        div.addEventListener('mouseenter', showTooltip);
+        div.addEventListener('mousemove', moveTooltip);
+        div.addEventListener('mouseleave', hideTooltip);
         div.onclick = ()=> openModal(r);
         td.appendChild(div);
       });
@@ -193,6 +271,15 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
       arr.forEach(h=>{
         const div = document.createElement('div'); div.classList.add('reserva','bloqueio');
         div.innerText = `${h} BLOQUEIO (${b.quantidade})`;
+        // tooltip data
+        div.dataset.prof = 'Sistema (bloqueio)';
+        div.dataset.quant = b.quantidade || 0;
+        div.dataset.horarios = h;
+        div.dataset.data = dataStr;
+        div.dataset.ambiente = b.ambiente || 'Chromebooks';
+        div.addEventListener('mouseenter', showTooltip);
+        div.addEventListener('mousemove', moveTooltip);
+        div.addEventListener('mouseleave', hideTooltip);
         td.appendChild(div);
       });
     });
@@ -201,19 +288,19 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
   }
   while(tr.children.length<7) tr.appendChild(document.createElement('td'));
   tbody.appendChild(tr);
-
   atualizarTotaisDia();
 }
 
+/* ------------- totais ------------- */
 function atualizarTotaisDia(){
   const hoje = hojeStr();
-  const reservado = reservas.filter(r=>{ const d = r.datafim || r.dataFim || ''; return d && d.startsWith(hoje) && r.ambiente==='Chromebooks'; }).reduce((acc,r)=> acc + (Number(r.quantidade)||0), 0);
-  const bloqueado = bloqueios.filter(b=>{ const d = b.datafim || b.dataFim || ''; return d && d.startsWith(hoje); }).reduce((acc,b)=> acc + (Number(b.quantidade)||0), 0);
+  const reservado = reservas.filter(r=>{ const d=r.datafim||r.dataFim||''; return d && d.startsWith(hoje) && (r.ambiente==='Chromebooks' || !r.ambiente); }).reduce((acc,r)=>acc+(Number(r.quantidade)||0),0);
+  const bloqueado = bloqueios.filter(b=>{ const d=b.datafim||b.dataFim||''; return d && d.startsWith(hoje); }).reduce((acc,b)=>acc+(Number(b.quantidade)||0),0);
   document.getElementById('totalReservados').textContent = reservado + bloqueado;
   document.getElementById('totalLivres').textContent = Math.max(0, MAX_CHROMEBOOKS - (reservado + bloqueado));
 }
 
-// Modais
+/* ------------- modal detalhes ------------- */
 function openModal(r){
   document.getElementById('modalAmbiente').textContent = r.ambiente || 'Chromebooks';
   document.getElementById('modalProfessor').textContent = r.professor || '---';
@@ -221,7 +308,7 @@ function openModal(r){
   document.getElementById('modalHorarios').textContent = toArray(r.horarios).join(', ');
   document.getElementById('modalQuantidade').textContent = r.quantidade || 1;
 
-  const perHorarioDiv = document.getElementById('modalPerHorario'); perHorarioDiv.innerHTML = '';
+  const perHorarioDiv = document.getElementById('modalPerHorario'); perHorarioDiv.innerHTML='';
   const counts = buildReservasPorDataHorarioPara(r.datafim || r.dataFim);
   toArray(r.horarios).forEach(h=>{
     const key = `${(r.datafim||r.dataFim)}-${h}`;
@@ -232,12 +319,12 @@ function openModal(r){
   });
 
   const cancelBtn = document.getElementById('cancelReservationBtn');
-  cancelBtn.onclick = async ()=>{ if(confirm('Cancelar reserva?')){ await deleteReserva(r.id); await montarCalendario(); document.getElementById('reservationModal').style.display='none'; }};
+  cancelBtn.onclick = async ()=>{ if(confirm('Cancelar reserva?')){ await deleteReserva(r.id); montarCalendario(); document.getElementById('reservationModal').style.display='none'; } };
   document.getElementById('reservationModal').style.display='block';
 }
 document.getElementById('closeModal').onclick = ()=> document.getElementById('reservationModal').style.display='none';
 
-// Modal manual
+/* ------------- modal manual (top button) ------------- */
 const openManualBtn = document.getElementById('openManualBtn');
 const manualModal = document.getElementById('manualReleaseModal');
 const closeManual = document.getElementById('closeManual');
@@ -246,42 +333,136 @@ const manualDate = document.getElementById('manualDate');
 const manualQuantidade = document.getElementById('manualQuantidade');
 const confirmManual = document.getElementById('confirmManual');
 const bloqueiosList = document.getElementById('bloqueiosList');
+const manualAmbiente = document.getElementById('manualAmbiente');
 
 openManualBtn.onclick = async ()=>{
-  manualHorarios.innerHTML = '';
-  horarios.forEach(h=>{ const btn = document.createElement('button'); btn.classList.add('option-btn'); btn.innerText = h; btn.dataset.h = h; btn.onclick = ()=> btn.classList.toggle('selected'); manualHorarios.appendChild(btn); });
-  manualDate.value = hojeStr(); manualQuantidade.value = 1;
-  await carregarBloqueios(); manualModal.style.display = 'block';
+  manualHorarios.innerHTML='';
+  horarios.forEach(h=>{ const btn=document.createElement('button'); btn.classList.add('option-btn'); btn.innerText=h; btn.dataset.h=h; btn.onclick=()=>btn.classList.toggle('selected'); manualHorarios.appendChild(btn); });
+  manualDate.value = hojeStr();
+  manualQuantidade.value = 1;
+  await carregarBloqueios();
+  manualModal.style.display='block';
 };
-closeManual.onclick = ()=> manualModal.style.display = 'none';
+closeManual.onclick = ()=> manualModal.style.display='none';
 
 async function carregarBloqueios(){
-  bloqueios = await fetchBloqueios(); bloqueiosList.innerHTML = '';
+  bloqueios = await fetchBloqueios();
+  bloqueiosList.innerHTML = '';
   bloqueios.forEach((b,i)=>{
     const div = document.createElement('div'); div.classList.add('list-item');
     const arr = toArray(b.horarios);
-    div.textContent = `${isoToBR(b.datafim || b.dataFim)} — ${arr.join(', ')} — Qtde: ${b.quantidade}`;
-    const del = document.createElement('button'); del.textContent = 'Remover'; del.classList.add('del-btn');
-    del.onclick = async ()=>{ if(confirm('Remover bloqueio?')){ await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?id=eq.${b.id}`,{method:'DELETE',headers}); await montarCalendario(); await carregarBloqueios(); } };
-    div.appendChild(del); bloqueiosList.appendChild(div);
+    div.textContent = `${isoToBR(b.datafim||b.dataFim)} — ${arr.join(', ')} — Qtde: ${b.quantidade} — ${b.ambiente || 'Chromebooks'}`;
+    const del = document.createElement('button'); del.textContent='Remover'; del.classList.add('del-btn');
+    del.onclick = async ()=>{ if(confirm('Remover bloqueio?')){ await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?id=eq.${b.id}`,{method:'DELETE',headers}); montarCalendario(); await carregarBloqueios(); } };
+    div.appendChild(del);
+    bloqueiosList.appendChild(div);
   });
 }
 
+/* ------------- liberação manual (top modal) ------------- */
 confirmManual.onclick = async ()=>{
   const selected = Array.from(manualHorarios.querySelectorAll('.selected')).map(b=>b.dataset.h);
   if(selected.length===0){ alert('Selecione ao menos um horário'); return; }
   const data = manualDate.value; const quantidade = parseInt(manualQuantidade.value) || 1;
-  const payload = { datafim: data, horarios: selected, quantidade };
-  try{ await criarBloqueio(payload); alert('Bloqueio adicionado'); manualModal.style.display='none'; await montarCalendario(); }
-  catch(e){ console.error(e); alert('Erro ao criar bloqueio (ver console)'); }
+  const ambiente = manualAmbiente.value || 'Chromebooks';
+
+  reservas = await fetchReservas();
+  bloqueios = await fetchBloqueios();
+
+  // validação por horário
+  for(const h of selected){
+    const ocupados = reservas
+      .filter(r => (r.ambiente || 'Chromebooks') === ambiente && (r.datafim||r.dataFim) === data && (toArray(r.horarios)||[]).includes(h))
+      .reduce((soma,r)=>soma + (Number(r.quantidade)||0), 0);
+
+    const bloqueado = bloqueios.some(b => (b.datafim||b.dataFim)===data && (toArray(b.horarios)||[]).includes(h) && ((b.ambiente||'Chromebooks')===ambiente));
+
+    if(bloqueado){
+      alert(`O horário ${h} em ${isoToBR(data)} para ${ambiente} já está bloqueado.`);
+      return;
+    }
+
+    const maxPermitido = (ambiente==='Chromebooks'?MAX_CHROMEBOOKS:MAX_DEFAULT);
+    const totalDepois = ocupados + quantidade;
+
+    if(totalDepois > maxPermitido){
+      alert(`Não é possível liberar ${quantidade} em ${h} — já existem ${ocupados} ocupados (máx: ${maxPermitido})`);
+      return;
+    }
+  }
+
+  // salvar reservas manuais e criar bloqueio quando atingir limite
+  try{
+    for(const h of selected){
+      await criarReserva({
+        professor: 'Admin (manual)',
+        cpf: '000.000.000-00',
+        telefone: '-',
+        email: '-',
+        datafim: data,
+        horarios: [h],
+        ambiente: ambiente,
+        quantidade: quantidade
+      });
+
+      // recarregar reservas para checar se atingiu limite
+      reservas = await fetchReservas();
+      const ocupadosAgora = reservas
+        .filter(r => (r.ambiente || 'Chromebooks') === ambiente && (r.datafim||r.dataFim) === data && (toArray(r.horarios)||[]).includes(h))
+        .reduce((soma,r)=>soma + (Number(r.quantidade)||0), 0);
+
+      const maxPermitido = (ambiente==='Chromebooks'?MAX_CHROMEBOOKS:MAX_DEFAULT);
+      if(ocupadosAgora === maxPermitido){
+        const existeBloq = (await fetchBloqueios()).some(b => (b.datafim||b.dataFim) === data && (toArray(b.horarios)||[]).includes(h) && ((b.ambiente||'Chromebooks')===ambiente));
+        if(!existeBloq){
+          await criarBloqueio({ datafim: data, horarios: [h], quantidade: maxPermitido, ambiente: ambiente });
+        }
+      }
+    }
+
+    alert('✅ Liberações manuais registradas com sucesso.');
+    manualModal.style.display='none';
+    montarCalendario();
+    await carregarBloqueios();
+  }catch(e){
+    console.error(e);
+    alert('Erro ao salvar (ver console).');
+  }
 };
 
-// Refresh button
+/* ------------- refresh ------------- */
 document.getElementById('refreshBtn').onclick = ()=> montarCalendario();
 
-// inicia
-montarCalendario();
-</script>
+/* ------------- tooltip implementation ------------- */
+const tooltip = document.getElementById('tooltip');
+function showTooltip(e){
+  const el = e.currentTarget;
+  const prof = el.dataset.prof || '---';
+  const quant = el.dataset.quant || '-';
+  const horariosText = el.dataset.horarios || '';
+  const data = el.dataset.data || '';
+  const ambiente = el.dataset.ambiente || '';
+  tooltip.innerHTML = `<b>${ambiente}</b><div>${prof} — ${quant} unidade(s)</div><div>${horariosText} • ${isoToBR(data)}</div>`;
+  tooltip.classList.add('show');
+  moveTooltip(e);
+}
+function moveTooltip(e){
+  const pad = 12;
+  let x = e.clientX + pad;
+  let y = e.clientY + pad;
+  const rect = tooltip.getBoundingClientRect();
+  if (x + rect.width > window.innerWidth) x = e.clientX - rect.width - pad;
+  if (y + rect.height > window.innerHeight) y = e.clientY - rect.height - pad;
+  tooltip.style.left = x + 'px';
+  tooltip.style.top = y + 'px';
+}
+function hideTooltip(){
+  tooltip.classList.remove('show');
+}
 
+/* ------------- inicia ------------- */
+montarCalendario();
+
+</script>
 </body>
 </html>
