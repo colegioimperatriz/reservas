@@ -13,6 +13,7 @@
   .from-user { background:#dcf8c6; align-self:flex-end; }
   .option-btn { background:#25d366; color:#fff; border:none; border-radius:20px; padding:8px 14px; cursor:pointer; margin-top:5px; display:inline-block; user-select:none; transition:background-color 0.3s ease; }
   .option-btn:hover { background-color:#128c5e; }
+  .option-btn.disabled { background:#ccc !important; cursor:not-allowed; }
   .option-container { display:flex; flex-wrap:wrap; gap:5px; margin-top:5px; }
   .input-container { display:flex; padding:10px; background:#f0f0f0; border-top:1px solid #ccc; }
   .input-container input { flex:1; border-radius:25px; border:1px solid #ccc; padding:10px 15px; outline:none; font-size:14px; }
@@ -45,7 +46,9 @@ const headers = {
   "Prefer": "return=representation"
 };
 
-const MAX_CHROMEBOOKS = 86;
+const MAX_CHROMEBOOKS = 85;
+const MAX_DEFAULT = 1; // demais ambientes
+
 let state = 0;
 let professor = {nome:'', cpf:'', telefone:'', email:''};
 let reserva = {quantidade: 0, dataFim: '', horarios: [], ambiente: 'Chromebooks'};
@@ -76,6 +79,15 @@ async function saveReserva(r){
 }
 
 async function saveBloqueio(r){
+  const bloqueiosExist = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*&datafim=eq.${r.dataFim}`, {headers});
+  const existentes = await bloqueiosExist.json();
+
+  const jaExiste = existentes.some(b => 
+    b.datafim === r.dataFim && (b.horarios||[]).some(h => r.horarios.includes(h))
+  );
+
+  if(jaExiste) return;
+
   const res = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios`, {
     method:"POST", headers,
     body: JSON.stringify({
@@ -87,9 +99,27 @@ async function saveBloqueio(r){
   return await res.json();
 }
 
-function addMessage(text, from='system'){ const div=document.createElement('div'); div.classList.add('message', from==='system'?'from-system':'from-user'); div.innerText=text; messagesEl.appendChild(div); messagesEl.scrollTop=messagesEl.scrollHeight; }
+function addMessage(text, from='system'){ 
+  const div=document.createElement('div'); 
+  div.classList.add('message', from==='system'?'from-system':'from-user'); 
+  div.innerText=text; 
+  messagesEl.appendChild(div); 
+  messagesEl.scrollTop=messagesEl.scrollHeight; 
+}
 
-function createInput(placeholder, callback){ chatInput.disabled=false; chatInput.value=''; chatInput.placeholder=placeholder; sendBtn.disabled=false; sendBtn.onclick=()=>{ if(chatInput.value.trim()==='') return; const val=chatInput.value.trim(); chatInput.value=''; chatInput.disabled=true; sendBtn.disabled=true; callback(val); }; chatInput.focus(); }
+function createInput(placeholder, callback){ 
+  chatInput.disabled=false; chatInput.value=''; chatInput.placeholder=placeholder; 
+  sendBtn.disabled=false; 
+  sendBtn.onclick=()=>{ 
+    if(chatInput.value.trim()==='') return; 
+    const val=chatInput.value.trim(); 
+    chatInput.value=''; 
+    chatInput.disabled=true; 
+    sendBtn.disabled=true; 
+    callback(val); 
+  }; 
+  chatInput.focus(); 
+}
 
 function onlyDigits(s){ return (s||'').replace(/\D/g,''); }
 function formatCPF(digits){ return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4'); }
@@ -195,21 +225,48 @@ function askQuantity(){
   }); 
 }
 
-function askHorarios(){ 
+async function askHorarios(){ 
   addMessage('Selecione horários:'); 
   const container=document.createElement('div'); 
   container.classList.add('option-container'); 
   reserva.horariosSelecionados=new Set(); 
+
+  const reservas = await fetchReservas();
+  const bloqueiosResp = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*`, {headers});
+  const bloqueios = await bloqueiosResp.json();
+
   horarios.forEach(h=>{ 
+    let ocupado = 0;
+    let max = (selectedAmbiente==='Chromebooks'?MAX_CHROMEBOOKS:MAX_DEFAULT);
+
+    // soma reservas já feitas
+    ocupado = reservas
+      .filter(r => r.ambiente===selectedAmbiente && r.datafim===reserva.dataFim && (r.horarios||[]).includes(h))
+      .reduce((soma,r)=> soma+(r.quantidade||1), 0);
+
+    const bloqueado = bloqueios.some(b => b.datafim===reserva.dataFim && (b.horarios||[]).includes(h));
+
     const btn=document.createElement('button'); 
     btn.classList.add('option-btn'); 
     btn.innerText=h; 
-    btn.onclick=()=>{ 
-      if(reserva.horariosSelecionados.has(h)){reserva.horariosSelecionados.delete(h); btn.style.backgroundColor='#25d366';} 
-      else{reserva.horariosSelecionados.add(h); btn.style.backgroundColor='#128c5e';} 
-    }; 
+
+    if(ocupado >= max || bloqueado){
+      btn.classList.add('disabled');
+      btn.disabled=true;
+    } else {
+      btn.onclick=()=>{ 
+        if(reserva.horariosSelecionados.has(h)){
+          reserva.horariosSelecionados.delete(h); 
+          btn.style.backgroundColor='#25d366';
+        } else {
+          reserva.horariosSelecionados.add(h); 
+          btn.style.backgroundColor='#128c5e';
+        }
+      }; 
+    }
     container.appendChild(btn); 
   }); 
+
   const confirm=document.createElement('button'); 
   confirm.classList.add('option-btn'); 
   confirm.innerText='Confirmar'; 
@@ -226,17 +283,40 @@ function askHorarios(){
 function askHorariosAmbiente(){ askHorarios(); }
 
 async function confirmReservation(){ 
-  reserva.professor=professor.nome; 
-  reserva.cpf=professor.cpf; 
-  reserva.telefone=professor.telefone; 
-  reserva.email=professor.email; 
-  reserva.ambiente=selectedAmbiente; 
-  if(reserva.quantidade===0) reserva.quantidade=1; 
-  
-  await saveReserva(reserva); 
-  await saveBloqueio(reserva);
+  reserva.professor = professor.nome; 
+  reserva.cpf = professor.cpf; 
+  reserva.telefone = professor.telefone; 
+  reserva.email = professor.email; 
+  reserva.ambiente = selectedAmbiente; 
+  if(reserva.quantidade === 0) reserva.quantidade = 1; 
 
-  addMessage('Reserva confirmada!'); 
+  const reservas = await fetchReservas();
+  const maxPermitido = (selectedAmbiente==='Chromebooks'?MAX_CHROMEBOOKS:MAX_DEFAULT);
+
+  for (let h of reserva.horarios) {
+    const ocupados = reservas
+      .filter(r => r.ambiente === selectedAmbiente && r.datafim === reserva.dataFim && (r.horarios||[]).includes(h))
+      .reduce((soma, r) => soma + (r.quantidade || 1), 0);
+
+    const totalDepois = ocupados + reserva.quantidade;
+
+    if (totalDepois > maxPermitido) {
+      addMessage(`❌ Não há disponibilidade no horário ${h} de ${isoToBR(reserva.dataFim)}.\nDisponíveis: ${maxPermitido - ocupados}`);
+      askSelectAmbiente();
+      return;
+    }
+
+    if (totalDepois === maxPermitido) {
+      await saveBloqueio({
+        dataFim: reserva.dataFim,
+        horarios: [h],
+        quantidade: maxPermitido
+      });
+    }
+  }
+
+  await saveReserva(reserva); 
+  addMessage('✅ Reserva confirmada!'); 
   askSelectAmbiente(); 
 }
 
