@@ -320,7 +320,7 @@ async function confirmReservation(){
   askSelectAmbiente(); 
 }
 
-addMessage('Olá, eu sou a Leopoldina. Digite seu CPF para começar:');
+addMessage('Olá, eu sou a Leopoldina, sua assistente virtual. Digite seu CPF para começar:');
 state=0; createInput('CPF',cpfInput); 
 chatInput.addEventListener('keydown', e=>{ if(e.key==='Enter'&&!sendBtn.disabled){ sendBtn.click(); e.preventDefault(); }});
 </script>
