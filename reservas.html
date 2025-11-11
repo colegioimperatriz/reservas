@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>v3.3 - Controle de Reservas — Colégio Imperatriz</title>
+<title>v3.0 - Controle de Reservas — Colégio Imperatriz</title>
 <style>
   :root{
     --primary:#075E54;
@@ -182,13 +182,6 @@
         <input type="number" id="manualQuantidade" min="1" value="1" />
       </div>
 
-      <div class="field">
-        <label for="manualProfessor">Professor</label>
-        <select id="manualProfessor">
-          <option value="">Carregando professores...</option>
-        </select>
-      </div>
-
       <div style="margin-top:8px;">
         <button id="confirmManual" class="btn primary">Confirmar liberação</button>
       </div>
@@ -202,29 +195,18 @@
 
 <div id="tooltip" class="tooltip" aria-hidden="true"></div>
 
-<!-- Supabase JS (UMD) - necessário para createClient no browser -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
-
 <script>
 /* ============================================================
-   v3.0 - Calendário com liberação manual (com select de professor)
+   v3.0 - Combinação das versões: base funcional (v1.0) +
+   melhorias visuais/UX (v1.2) + pequenos refinamentos
    ============================================================ */
 
-/* ---------- Observação importante ----------
-   Este arquivo **usa** as variáveis `supabaseUrl` e `supabaseKey`
-   que você afirmou já existir no seu projeto. Não as redeclarei.
-   Elas devem existir neste escopo quando este script rodar.
-   -------------------------------------------- */
+/* =============== CONFIGURAÇÃO SUPABASE =============== */
+const SUPABASE_URL = "https://oufiieqxyyqnqpcbuyms.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91ZmlpZXF4eXlxbnFwY2J1eW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNDMwNDgsImV4cCI6MjA3NDkxOTA0OH0.-4QPA1R5y24daAt-WsZuWc8-2bJxCJGhdTR1nq4RnHc";
+const headers = { "Content-Type":"application/json", "apikey":SUPABASE_KEY, "Authorization":`Bearer ${SUPABASE_KEY}` };
+/* ==================================================== */
 
-/* ----------------- inicializar client supabase (browser UMD) ----------------- */
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
-/* ----------------- cabeçalhos (para chamadas REST antigas) ----------------- */
-/* Mantive as chamadas REST do seu código original (fetch para /rest/v1/...).
-   Essas chamadas usam os mesmos valores de conexão via headers. */
-const headers = { "Content-Type":"application/json", "apikey": supabaseKey, "Authorization":`Bearer ${supabaseKey}` };
-
-/* ----------------- configuração / constantes ----------------- */
 const MAX_CHROMEBOOKS = 85;
 const MAX_DEFAULT = 1;
 const horarios = ['07:20','08:05','08:50','09:55','10:40','11:25','13:45','14:30','15:35','16:20','17:05'];
@@ -237,9 +219,9 @@ let currentMonth = new Date().getMonth();
 function hojeStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function isoToBR(iso){ if(!iso) return '---'; const part=(iso||'').split('T')[0]; return part.split('-').reverse().join('/'); }
 function toArray(val){ if(!val) return []; if(Array.isArray(val)) return val; try{ return JSON.parse(val); }catch(e){ if(typeof val==='string') return val.split(',').map(s=>s.trim()).filter(Boolean); return []; } }
-function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); } // utilitário para testes/pequenos delays
 
-/* ----------------- UI helpers / tooltip ----------------- */
+/* ----------------- UI helpers ----------------- */
 const tooltip = document.getElementById('tooltip');
 function showTooltip(e){
   const el = e.currentTarget;
@@ -268,7 +250,7 @@ function hideTooltip(){
   tooltip.setAttribute('aria-hidden','true');
 }
 
-/* ----------------- chamadas Supabase REST (robustas) ----------------- */
+/* ----------------- chamadas Supabase (robustas) ----------------- */
 async function fetchJson(url){
   try{
     const r = await fetch(url,{headers});
@@ -277,13 +259,14 @@ async function fetchJson(url){
     return json;
   }catch(e){ console.error('fetchJson err',e); return []; }
 }
-async function fetchReservas(){ return await fetchJson(`${supabaseUrl}/rest/v1/reservas?select=*`); }
-async function fetchBloqueios(){ return await fetchJson(`${supabaseUrl}/rest/v1/bloqueios?select=*`); }
+async function fetchReservas(){ return await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*`); }
+async function fetchBloqueios(){ return await fetchJson(`${SUPABASE_URL}/rest/v1/bloqueios?select=*`); }
 
 async function criarReserva(body){
   try{
-    const res = await fetch(`${supabaseUrl}/rest/v1/reservas`,{method:'POST',headers,body:JSON.stringify(body)});
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/reservas`,{method:'POST',headers,body:JSON.stringify(body)});
     if(!res.ok){ const txt = await res.text(); throw new Error(txt||res.status); }
+    // some POST endpoints return empty body; try parse safely
     const text = await res.text();
     try{ return JSON.parse(text); }catch(e){ return text || {}; }
   }catch(e){ console.error('criarReserva',e); throw e; }
@@ -291,7 +274,7 @@ async function criarReserva(body){
 
 async function criarBloqueio(body){
   try{
-    const res = await fetch(`${supabaseUrl}/rest/v1/bloqueios`,{method:'POST',headers,body:JSON.stringify(body)});
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios`,{method:'POST',headers,body:JSON.stringify(body)});
     if(!res.ok){ const txt = await res.text(); throw new Error(txt||res.status); }
     const text = await res.text();
     try{ return JSON.parse(text); }catch(e){ return text || {}; }
@@ -299,7 +282,7 @@ async function criarBloqueio(body){
 }
 
 async function deleteReserva(id){
-  try{ await fetch(`${supabaseUrl}/rest/v1/reservas?id=eq.${id}`,{method:'DELETE',headers}); }catch(e){ console.error('deleteReserva',e); }
+  try{ await fetch(`${SUPABASE_URL}/rest/v1/reservas?id=eq.${id}`,{method:'DELETE',headers}); }catch(e){ console.error('deleteReserva',e); }
 }
 
 /* ----------------- mapa por data-horário-ambiente ----------------- */
@@ -378,15 +361,19 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
     const mapaHorario = buildReservasPorDataHorarioPara(dataStr);
 
     // mostrar indicadores por horário (compacto) - para cada ambiente principal
+    // Aqui mostramos um indicador por ambiente+horário quando houver ocupação
     horarios.forEach(h=>{
+      // for each ambiente main, check ocupação
       const ambientes = ['Chromebooks','Cozinha','Tele Sala','Sala de Atendimento I','Sala de Reuniões'];
       ambientes.forEach(amb => {
+        // se filtro ativo, só mostra o ambiente selecionado
         if(filtro !== 'all' && filtro !== amb) return;
         const key = `${amb}-${h}`;
         const ocupados = mapaHorario[key]||0;
         if(ocupados > 0){
           const span = document.createElement('span');
           span.classList.add('horario-indicador');
+          // aplicar classes de cor por ambiente
           if(amb==='Chromebooks') span.classList.add('ind-chrom');
           else if(amb==='Cozinha') span.classList.add('ind-coz');
           else if(amb==='Tele Sala') span.classList.add('ind-tele');
@@ -399,7 +386,7 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
       });
     });
 
-    // reservas detalhadas
+    // agora inserir reservas como antes (detalhadas) — filtrando por ambiente quando necessário
     reservas.filter(r=>{ const d=r.datafim||r.dataFim||''; return d && d.startsWith(dataStr); })
       .forEach(r=>{
         const arr = toArray(r.horarios);
@@ -417,6 +404,7 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
           div.dataset.data = dataStr;
           div.dataset.ambiente = amb;
           div.dataset.resId = r.id || '';
+          // eventos
           div.addEventListener('mouseenter', showTooltip);
           div.addEventListener('mousemove', moveTooltip);
           div.addEventListener('mouseleave', hideTooltip);
@@ -459,6 +447,7 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
 /* ----------------- totais por hoje ----------------- */
 function atualizarTotaisDia(){
   const hoje = hojeStr();
+  // recalcula o mapa para hoje
   const mapa = buildReservasPorDataHorarioPara(hoje);
   let total = 0;
   let detalhes = '';
@@ -506,10 +495,11 @@ function openModal(r){
     setLoading(false);
   };
 
-  // abrir modal
+  // abrir modal (acessibilidade - foco)
   const modal = document.getElementById('reservationModal');
   modal.setAttribute('aria-hidden','false');
   modal.style.display='block';
+  // foco no botão de cancelar para permitir keyboard users
   cancelBtn.focus();
 }
 function closeReservationModal(){
@@ -529,10 +519,8 @@ const manualQuantidade = document.getElementById('manualQuantidade');
 const confirmManual = document.getElementById('confirmManual');
 const bloqueiosList = document.getElementById('bloqueiosList');
 const manualAmbiente = document.getElementById('manualAmbiente');
-const manualProfessorSelect = document.getElementById('manualProfessor');
 
 openManualBtn.onclick = async ()=>{
-  // montar botões de horário
   manualHorarios.innerHTML='';
   horarios.forEach(h=>{
     const btn = document.createElement('button');
@@ -543,17 +531,12 @@ openManualBtn.onclick = async ()=>{
     btn.onclick = ()=> btn.classList.toggle('selected');
     manualHorarios.appendChild(btn);
   });
-
-  // data padrão
   manualDate.value = hojeStr();
   manualQuantidade.value = 1;
-
-  // carregar bloqueios e professores (em paralelo)
-  await Promise.all([carregarBloqueios(), carregarProfessores()]);
-
-  // abrir modal
+  await carregarBloqueios();
   manualModal.setAttribute('aria-hidden','false');
   manualModal.style.display='block';
+  // foco principal
   manualAmbiente.focus();
 };
 closeManual.onclick = ()=> closeManualModal();
@@ -576,7 +559,7 @@ async function carregarBloqueios(){
       if(!confirm('Remover bloqueio?')) return;
       setLoading(true,'Removendo bloqueio...');
       try{
-        await fetch(`${supabaseUrl}/rest/v1/bloqueios?id=eq.${b.id}`,{method:'DELETE',headers});
+        await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?id=eq.${b.id}`,{method:'DELETE',headers});
         await montarCalendario();
         await carregarBloqueios();
       }catch(e){ console.error(e); alert('Erro ao remover bloqueio. Veja console.'); }
@@ -587,44 +570,8 @@ async function carregarBloqueios(){
   });
 }
 
-/* ----------------- carregar professores (via supabase client) ----------------- */
-async function carregarProfessores(){
-  // limpa opções e coloca indicador
-  manualProfessorSelect.innerHTML = '<option value="">Carregando professores...</option>';
-  try{
-    const { data, error } = await supabaseClient.from('professores').select('nome').order('nome', { ascending: true });
-    if(error){
-      console.error('Erro ao buscar professores', error);
-      manualProfessorSelect.innerHTML = '<option value="">Erro ao carregar</option>';
-      return;
-    }
-    if(!data || !data.length){
-      manualProfessorSelect.innerHTML = '<option value="">Nenhum professor encontrado</option>';
-      return;
-    }
-    // popular select
-    manualProfessorSelect.innerHTML = '<option value="">Selecione o professor</option>';
-    data.forEach(p=>{
-      const opt = document.createElement('option');
-      // usar p.nome como texto e valor
-      opt.value = p.nome || '';
-      opt.textContent = p.nome || '';
-      manualProfessorSelect.appendChild(opt);
-    });
-  }catch(e){
-    console.error('carregarProfessores err', e);
-    manualProfessorSelect.innerHTML = '<option value="">Erro ao carregar</option>';
-  }
-}
-
 /* ----------------- liberação manual (salvar) ----------------- */
 confirmManual.onclick = async ()=>{
-  const professor = (document.getElementById('manualProfessor') || manualProfessorSelect).value.trim();
-  if(!professor){
-    alert('Informe o professor.');
-    return;
-  }
-
   const selected = Array.from(manualHorarios.querySelectorAll('.selected')).map(b=>b.dataset.h);
   if(selected.length===0){ alert('Selecione ao menos um horário'); return; }
   const data = manualDate.value; if(!data){ alert('Selecione uma data válida'); return; }
@@ -660,9 +607,9 @@ confirmManual.onclick = async ()=>{
         return;
       }
 
-      // criar reserva manual (com o professor selecionado)
+      // criar reserva manual (Admin)
       await criarReserva({
-        professor: professor,
+        professor: 'Admin (manual)',
         cpf: '000.000.000-00',
         telefone: '-',
         email: '-',
