@@ -181,6 +181,12 @@
         <label for="manualQuantidade">Quantidade (por horário)</label>
         <input type="number" id="manualQuantidade" min="1" value="1" />
       </div>
+	  
+	  <div class="field">
+		<label for="manualProfessor">Professor</label>
+		<input type="text" id="manualProfessor" placeholder="Nome do professor" />
+	 </div>
+
 
       <div style="margin-top:8px;">
         <button id="confirmManual" class="btn primary">Confirmar liberação</button>
@@ -571,6 +577,13 @@ async function carregarBloqueios(){
 }
 
 /* ----------------- liberação manual (salvar) ----------------- */
+const professor = document.getElementById('manualProfessor').value.trim();
+if (!professor) {
+  alert('Informe o nome do professor.');
+  setLoading(false);
+  return;
+}
+
 confirmManual.onclick = async ()=>{
   const selected = Array.from(manualHorarios.querySelectorAll('.selected')).map(b=>b.dataset.h);
   if(selected.length===0){ alert('Selecione ao menos um horário'); return; }
@@ -608,16 +621,19 @@ confirmManual.onclick = async ()=>{
       }
 
       // criar reserva manual (Admin)
-      await criarReserva({
-        professor: 'Admin (manual)',
-        cpf: '000.000.000-00',
-        telefone: '-',
-        email: '-',
-        datafim: data,
-        horarios: [h],
-        ambiente: ambiente,
-        quantidade: quantidade
-      });
+  const professor = document.getElementById('manualProfessor').value.trim() || 'Admin (manual)';
+
+await criarReserva({
+  professor: professor,
+  cpf: '000.000.000-00',
+  telefone: '-',
+  email: '-',
+  datafim: data,
+  horarios: [h],
+  ambiente: ambiente,
+  quantidade: quantidade
+});
+
 
       // recarregar reservas localmente para checar se atingiu limite
       reservas = await fetchReservas();
