@@ -63,40 +63,46 @@ async function saveProfessor(p){ await fetch(`${SUPABASE_URL}/rest/v1/professore
 
 async function saveReserva(r){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/reservas`, {
-    method:"POST", headers,
+    method:'POST', headers,
     body: JSON.stringify({
       professor: r.professor,
       cpf: r.cpf,
       telefone: r.telefone,
       email: r.email,
-      datafim: r.dataFim,
+      datafim: r.dataFim || r.datafim,
       horarios: r.horarios,
-      ambiente: r.ambiente,
+      ambiente: r.ambiente || 'Chromebooks',
       quantidade: r.quantidade
     })
   });
-  return await res.json();
+  try { return await res.json(); } catch(e){ return {}; }
 }
 
+
 async function saveBloqueio(r){
-  const bloqueiosExist = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*&datafim=eq.${r.dataFim}`, {headers});
-  const existentes = await bloqueiosExist.json();
-
-  const jaExiste = existentes.some(b => 
-    b.datafim === r.dataFim && (b.horarios||[]).some(h => r.horarios.includes(h))
+  // r: { dataFim, horarios, quantidade, ambiente? }
+  const datafim = r.dataFim || r.datafim;
+  const ambiente = r.ambiente || 'Chromebooks';
+  // busca bloqueios já existentes na mesma data e ambiente
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*&datafim=eq.${datafim}`, {headers});
+  let existentes = [];
+  try { existentes = await resp.json(); } catch(e){ existentes = []; }
+  const jaExiste = existentes.some(b =>
+    b.datafim === datafim &&
+    (b.ambiente || 'Chromebooks') === ambiente &&
+    (toArray(b.horarios)||[]).some(h => (r.horarios||[]).includes(h))
   );
-
   if(jaExiste) return;
-
   const res = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios`, {
-    method:"POST", headers,
+    method:'POST', headers,
     body: JSON.stringify({
-      datafim: r.dataFim,
-      horarios: r.horarios,
-      quantidade: r.quantidade
+      datafim: datafim,
+      horarios: r.horarios || [],
+      quantidade: r.quantidade,
+      ambiente: ambiente
     })
   });
-  return await res.json();
+  try { return await res.json(); } catch(e){ return {}; }
 }
 
 function addMessage(text, from='system'){ 
