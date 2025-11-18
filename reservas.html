@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>v3.0 - Controle de Reservas — Colégio Imperatriz</title>
+<meta name="theme-color" content="#075E54" />
+<title>v3.3 - Controle de Reservas — Colégio Imperatriz</title>
 <style>
   :root{
     --primary:#075E54;
@@ -16,21 +17,24 @@
     --salareunioes:#d35400;
     --bloqueio:#555;
     --muted:#777;
+    --card-shadow: 0 6px 20px rgba(0,0,0,.06);
   }
   *{box-sizing:border-box}
-  body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);margin:0;padding:20px;color:#222}
+  html,body{height:100%}
+  body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);margin:0;padding:20px;color:#222;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
   .container{max-width:1200px;margin:0 auto}
-  h2{text-align:center;margin:6px 0 12px}
+  h2{text-align:center;margin:6px 0 12px;font-weight:600}
   #topBar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap}
   .controls{display:flex;gap:8px;align-items:center}
-  .btn{padding:8px 12px;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .btn{padding:8px 12px;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-weight:600}
+  .btn:focus{outline:3px solid rgba(7,94,84,.14);outline-offset:2px}
   .btn.primary{background:var(--primary);color:#fff}
   .btn.warn{background:#f39c12;color:#fff}
   .btn.ghost{background:transparent;border:1px solid #ddd}
   .btn[disabled]{opacity:0.6;cursor:not-allowed}
   .badge{display:inline-block;padding:8px 12px;border-radius:8px;background:var(--accent);color:#fff;cursor:default}
   .badge.secondary{background:#888}
-  .calendar{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,.06)}
+  .calendar{background:#fff;border-radius:8px;overflow:hidden;box-shadow:var(--card-shadow)}
   table{border-collapse:collapse;width:100%}
   thead{background:var(--primary);color:#fff}
   th,td{border:1px solid #ddd;padding:6px;vertical-align:top;font-size:13px;min-width:110px;min-height:110px;position:relative}
@@ -44,16 +48,17 @@
   .amb-SalaAtendimentoI{background:var(--salaatendimento) !important}
   .amb-SalaReunioes{background:var(--salareunioes) !important}
 
-  .scroll-container{overflow-x:auto}
+  .scroll-container{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
   .modal{display:none;position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.45);z-index:200;padding-top:40px}
   .modal[aria-hidden="false"]{display:block}
-  .modal-content{background:#fff;margin:20px auto;padding:16px;border-radius:8px;max-width:720px;position:relative;outline:0}
+  .modal-content{background:#fff;margin:20px auto;padding:16px;border-radius:8px;max-width:720px;position:relative;outline:0;box-shadow:var(--card-shadow)}
   .close{position:absolute;right:12px;top:8px;font-size:22px;cursor:pointer;color:#666;background:transparent;border:none}
+  .close:focus{outline:3px solid rgba(0,0,0,.12);outline-offset:2px}
   .field{margin:8px 0}
   .field label{display:block;margin-bottom:6px;font-weight:600}
   input[type="date"], input[type="number"], select{padding:8px;width:100%;box-sizing:border-box;border-radius:6px;border:1px solid #ccc}
   .option-container{display:flex;flex-wrap:wrap;gap:6px}
-  .option-btn{padding:8px 10px;border-radius:6px;border:none;background:var(--accent);color:#fff;cursor:pointer}
+  .option-btn{padding:8px 10px;border-radius:6px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-weight:600}
   .option-btn.selected{background:#128c5e}
   .list-item{padding:8px;background:#fafafa;border-radius:6px;margin:6px 0;display:flex;justify-content:space-between;align-items:center}
   .del-btn{background:#d9534f;color:#fff;border:none;padding:6px 8px;border-radius:6px;cursor:pointer}
@@ -75,7 +80,40 @@
   .ind-bloq{background:var(--bloqueio)}
   /* small helpers */
   .muted{color:var(--muted);font-size:13px}
-  @media (max-width:900px){ th,td{font-size:12px;min-width:90px;min-height:100px} .legend{font-size:13px} .badge{font-size:12px} }
+
+  /* Accessibility: visible focus for keyboard users */
+  [tabindex]:focus, button:focus, a:focus, input:focus, select:focus { outline:3px solid rgba(7,94,84,.14); outline-offset:2px }
+
+  /* Responsive improvements */
+  @media (max-width:900px){
+    th,td{font-size:12px;min-width:90px;min-height:100px}
+    .legend{font-size:13px}
+    .badge{font-size:12px}
+  }
+
+  @media (max-width:700px){
+    body{padding:12px}
+    h2{font-size:18px}
+    .btn{padding:12px 14px;border-radius:10px}
+    .calendar{border-radius:10px}
+    th,td{font-size:13px;min-width:140px;min-height:90px}
+    .reserva{font-size:13px;padding:6px 8px}
+    .modal{padding-top:8px}
+    .modal-content{width:calc(100% - 24px);max-width:100%;margin:8px auto;padding:12px;border-radius:10px;height:auto;max-height:calc(100vh - 32px);overflow:auto}
+    .close{right:8px;top:6px}
+    .tooltip{max-width:220px;font-size:12px}
+    .legend{gap:6px}
+    .option-container{gap:8px}
+    .option-btn{padding:10px 12px;border-radius:8px}
+    /* ensure horizontal scroll works well on mobile */
+    .scroll-container{padding-bottom:12px}
+  }
+
+  /* Very small screens: make table horizontally scrollable and increase cell touch area */
+  @media (max-width:420px){
+    th,td{min-width:160px;min-height:84px;padding:8px}
+    .horario-indicador{font-size:11px;padding:4px 8px}
+  }
 </style>
 </head>
 <body>
@@ -84,8 +122,8 @@
 
   <div id="topBar">
     <div class="controls" aria-hidden="false">
-      <button id="refreshBtn" class="btn primary" title="Atualizar calendário">🔁 Atualizar</button>
-      <button id="openManualBtn" class="btn warn" title="Abrir liberação manual">🗝️ Liberar Manualmente</button>
+      <button id="refreshBtn" class="btn primary" title="Atualizar calendário" aria-label="Atualizar calendário">🔁 Atualizar</button>
+      <button id="openManualBtn" class="btn warn" title="Abrir liberação manual" aria-label="Abrir liberação manual">🗝️ Liberar Manualmente</button>
       <select id="filterAmbiente" aria-label="Filtrar por ambiente" class="btn ghost" style="margin-left:8px;padding:6px 10px;border-radius:8px">
         <option value="all">Mostrar todos ambientes</option>
         <option>Chromebooks</option>
@@ -199,6 +237,7 @@
 /* ============================================================
    v3.0 - Combinação das versões: base funcional (v1.0) +
    melhorias visuais/UX (v1.2) + pequenos refinamentos
+   Nota: mantive toda a lógica e endpoints originais.
    ============================================================ */
 
 /* =============== CONFIGURAÇÃO SUPABASE =============== */
