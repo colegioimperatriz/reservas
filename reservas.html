@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta name="theme-color" content="#075E54" />
-<title>v3.0 - Controle de Reservas — Colégio Imperatriz</title>
+<title>v18/11 - Controle de Reservas — Colégio Imperatriz</title>
 <style>
   :root{
     --primary:#075E54;
@@ -528,34 +528,44 @@ cancelBtn.onclick = async () => {
   setLoading(true, 'Removendo reserva...');
 
   try {
-    // remover reserva
+    // 1) remover reserva
     await deleteReserva(r.id);
 
-    // após excluir a reserva, verificar se existe bloqueio para data/horário/ambiente
+    // 2) recarregar reservas e bloqueios
+    reservas = await fetchReservas();
+    bloqueios = await fetchBloqueios();
+
     const data = r.datafim || r.dataFim;
     const ambiente = r.ambiente || "Chromebooks";
     const horariosReserva = toArray(r.horarios);
 
-    // recarregar bloqueios
-    bloqueios = await fetchBloqueios();
-
     for (const h of horariosReserva) {
-      const bloq = bloqueios.find(b =>
-        (b.datafim || b.dataFim) === data &&
-        (b.ambiente || 'Chromebooks') === ambiente &&
-        (toArray(b.horarios) || []).includes(h)
-      );
+      // calcular ocupação atual para data/ambiente/horário
+      const ocupadosAgora = reservas
+        .filter(rr => (rr.ambiente || 'Chromebooks') === ambiente && (rr.datafim||rr.dataFim) === data && (toArray(rr.horarios)||[]).includes(h))
+        .reduce((s, rr) => s + (Number(rr.quantidade) || 0), 0);
 
-      if (bloq) {
-        // exclui o bloqueio
-        await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?id=eq.${bloq.id}`, {
-          method: "DELETE",
-          headers
-        });
+      const maxPermitido = (ambiente === 'Chromebooks' ? MAX_CHROMEBOOKS : MAX_DEFAULT);
+
+      // se ocupação atual < max, podemos remover bloqueio (se existir)
+      if (ocupadosAgora < maxPermitido) {
+        // encontrar bloqueio para esse data/ambiente/horário
+        const bloq = bloqueios.find(b =>
+          (b.datafim || b.dataFim) === data &&
+          b.ambiente === ambiente &&
+          (toArray(b.horarios) || []).includes(h)
+        );
+
+        if (bloq) {
+          await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?id=eq.${bloq.id}`, {
+            method: "DELETE",
+            headers
+          });
+        }
       }
     }
 
-    // recarregar tudo
+    // 3) recarregar interface e fechar modal
     await montarCalendario();
     closeReservationModal();
 
@@ -566,6 +576,7 @@ cancelBtn.onclick = async () => {
 
   setLoading(false);
 };
+
 
   // abrir modal (acessibilidade - foco)
   const modal = document.getElementById('reservationModal');
