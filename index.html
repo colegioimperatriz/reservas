@@ -172,16 +172,31 @@ function nextStep(input){
 }
 
 async function showProfessorReservations(cpfDigits){ 
-  const reservas=await fetchReservas(); 
-  const matches=reservas.filter(r=> (r.cpf && onlyDigits(r.cpf)===cpfDigits)||(r.professor===professor.nome)); 
-  if(matches.length===0){ 
-    addMessage('Você ainda não possui reservas.'); 
+  const reservas = await fetchReservas();
+
+  // Data atual (local do dispositivo)
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+
+  const matches = reservas.filter(r => {
+    const ok = (r.cpf && onlyDigits(r.cpf) === cpfDigits) || (r.professor === professor.nome);
+    if (!ok) return false;
+
+    const dataR = new Date(r.datafim);
+    dataR.setHours(0,0,0,0);
+    return dataR >= hoje; // SOMENTE HOJE EM DIANTE
+  });
+
+  if (matches.length === 0){ 
+    addMessage('Você ainda não possui reservas futuras.'); 
     return; 
   } 
-  let text='Suas reservas:\n'; 
-  matches.forEach(r=>{ 
-    text+=`${r.ambiente}: ${r.quantidade||1} em ${isoToBR(r.datafim)} - ${(r.horarios||[]).join(', ')}\n`; 
+
+  let text = 'Suas reservas (apenas futuras):\n'; 
+  matches.forEach(r => { 
+    text += `${r.ambiente}: ${r.quantidade||1} em ${isoToBR(r.datafim)} - ${(r.horarios||[]).join(', ')}\n`; 
   }); 
+
   addMessage(text); 
 }
 
@@ -315,9 +330,60 @@ async function confirmReservation(){
     }
   }
 
-  await saveReserva(reserva); 
-  addMessage('✅ Reserva confirmada!'); 
-  askSelectAmbiente(); 
+ await saveReserva(reserva); 
+addMessage('✅ Reserva confirmada!');
+
+// Pergunta se quer mais reservas
+const container = document.createElement('div');
+container.classList.add('option-container');
+
+const btnSim = document.createElement('button');
+btnSim.classList.add('option-btn');
+btnSim.innerText = 'Sim';
+btnSim.onclick = () => {
+  addMessage('Sim','user');
+  askSelectAmbiente();
+};
+
+const btnNao = document.createElement('button');
+btnNao.classList.add('option-btn');
+btnNao.innerText = 'Não';
+btnNao.onclick = () => {
+  addMessage('Não','user');
+  resetChat();
+};
+
+container.appendChild(btnSim);
+container.appendChild(btnNao);
+
+messagesEl.appendChild(container);
+messagesEl.scrollTop = messagesEl.scrollHeight;
+
+}
+
+function resetChat(){
+  messagesEl.innerHTML = '';
+  professor = {nome:'', cpf:'', telefone:'', email:''};
+  reserva = {quantidade:0, dataFim:'', horarios:[], ambiente:'Chromebooks'};
+  state = 0;
+
+  addMessage('Olá, eu sou a Leopoldina, sua assistente virtual. Digite seu CPF para começar:');
+
+  chatInput.disabled = false;
+  chatInput.value = '';
+  chatInput.placeholder = 'CPF';
+  sendBtn.disabled = false;
+
+  sendBtn.onclick = () => {
+    if(chatInput.value.trim()==='') return;
+    const val = chatInput.value.trim();
+    chatInput.value = '';
+    chatInput.disabled = true;
+    sendBtn.disabled = true;
+    cpfInput(val);
+  };
+
+  chatInput.focus();
 }
 
 addMessage('Olá, eu sou a Leopoldina, sua assistente virtual. Digite seu CPF para começar:');
