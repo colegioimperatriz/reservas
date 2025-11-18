@@ -328,11 +328,13 @@ async function confirmReservation(){
     }
 
     if (totalDepois === maxPermitido) {
-      await saveBloqueio({
-        dataFim: reserva.dataFim,
-        horarios: [h],
-        quantidade: maxPermitido
-      });
+    await saveBloqueio({
+  dataFim: reserva.dataFim,
+  horarios: [h],
+  quantidade: maxPermitido,
+  ambiente: selectedAmbiente
+});
+
     }
   }
 
