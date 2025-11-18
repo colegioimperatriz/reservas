@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta name="theme-color" content="#075E54" />
-<title>v3.4 - Controle de Reservas — Colégio Imperatriz</title>
+<title>v3.0 - Controle de Reservas — Colégio Imperatriz</title>
 <style>
   :root{
     --primary:#075E54;
@@ -525,54 +525,37 @@ function openModal(r){
 const cancelBtn = document.getElementById('cancelReservationBtn');
 cancelBtn.onclick = async () => {
   if (!confirm('Cancelar reserva?')) return;
-
   setLoading(true, 'Removendo reserva...');
 
   try {
-    // 1. Remove a reserva
+    // remover reserva
     await deleteReserva(r.id);
 
-    // 2. Recarrega dados atuais
-    reservas = await fetchReservas();
+    // após excluir a reserva, verificar se existe bloqueio para data/horário/ambiente
+    const data = r.datafim || r.dataFim;
+    const ambiente = r.ambiente || "Chromebooks";
+    const horariosReserva = toArray(r.horarios);
+
+    // recarregar bloqueios
     bloqueios = await fetchBloqueios();
 
-    const ambiente = r.ambiente || 'Chromebooks';
-    const horariosReserva = toArray(r.horarios);
-    const data = r.datafim || r.dataFim;
-
-    // 3. Para cada horário da reserva cancelada
     for (const h of horariosReserva) {
+      const bloq = bloqueios.find(b =>
+        (b.datafim || b.dataFim) === data &&
+        (b.ambiente || 'Chromebooks') === ambiente &&
+        (toArray(b.horarios) || []).includes(h)
+      );
 
-      // quantidade ocupada agora
-      const ocupadosAgora = reservas
-        .filter(res =>
-          (res.ambiente || 'Chromebooks') === ambiente &&
-          (res.datafim || res.dataFim) === data &&
-          (toArray(res.horarios) || []).includes(h)
-        )
-        .reduce((soma, res) => soma + (Number(res.quantidade) || 0), 0);
-
-      const limite = ambiente === 'Chromebooks' ? MAX_CHROMEBOOKS : MAX_DEFAULT;
-
-      // 4. Se ocupação caiu abaixo do limite → remover bloqueio
-      if (ocupadosAgora < limite) {
-
-        const bloq = bloqueios.find(b =>
-          (b.datafim || b.dataFim) === data &&
-          (toArray(b.horarios) || []).includes(h) &&
-          (b.ambiente || 'Chromebooks') === ambiente
-        );
-
-        if (bloq) {
-          await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?id=eq.${bloq.id}`, {
-            method: 'DELETE',
-            headers
-          });
-        }
+      if (bloq) {
+        // exclui o bloqueio
+        await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?id=eq.${bloq.id}`, {
+          method: "DELETE",
+          headers
+        });
       }
     }
 
-    // 5. Atualizar interface
+    // recarregar tudo
     await montarCalendario();
     closeReservationModal();
 
@@ -583,7 +566,6 @@ cancelBtn.onclick = async () => {
 
   setLoading(false);
 };
-
 
   // abrir modal (acessibilidade - foco)
   const modal = document.getElementById('reservationModal');
