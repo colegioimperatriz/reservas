@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>v2 - Sistema de Reservas - Colégio Imperatriz</title>
+<title>Sistema de Reservas - Colégio Imperatriz</title>
 <style>
   body { font-family: Arial, sans-serif; margin:0; padding:0; background:#ece5dd; }
   .chat-container { display:flex; flex-direction:column; max-width:480px; height:100vh; margin:0 auto; border:1px solid #ccc; background:#fff; }
@@ -54,7 +54,9 @@ let professor = {nome:'', cpf:'', telefone:'', email:''};
 let reserva = {quantidade: 0, dataFim: '', horarios: [], ambiente: 'Chromebooks'};
 let selectedAmbiente = 'Chromebooks';
 
-const AMBIENTES = ['Chromebooks','Cozinha','Tele Sala','Sala de Atendimento I','Sala de Reuniões'];
+// ADICIONEI NOVOS AMBIENTES AQUI
+const AMBIENTES = ['Chromebooks','Cozinha','Tele Sala','Sala de Atendimento I','Sala de Reuniões',
+                   'Carro','Lab. Química','Lab. Física','Lab. Biologia','Sala do CTC'];
 const horarios = ['07:20','08:05','08:50','09:55','10:40','11:25','13:45','14:30','15:35','16:20','17:05'];
 
 async function fetchReservas(){ const r=await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*`,{headers}); return await r.json(); }
@@ -84,12 +86,12 @@ async function saveBloqueio(r){
   const datafim = r.dataFim || r.datafim;
   const ambiente = r.ambiente || 'Chromebooks';
   // busca bloqueios já existentes na mesma data e ambiente
-  const resp = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*&datafim=eq.${datafim}`, {headers});
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*&datafim=eq.${datafim}&ambiente=eq.${encodeURIComponent(ambiente)}`, {headers});
   let existentes = [];
   try { existentes = await resp.json(); } catch(e){ existentes = []; }
   const jaExiste = existentes.some(b =>
-    b.datafim === datafim &&
-    (b.ambiente || 'Chromebooks') === ambiente &&
+    (b.datafim === datafim) &&
+    ((b.ambiente || 'Chromebooks') === ambiente) &&
     (toArray(b.horarios)||[]).some(h => (r.horarios||[]).includes(h))
   );
   if(jaExiste) return;
@@ -105,26 +107,26 @@ async function saveBloqueio(r){
   try { return await res.json(); } catch(e){ return {}; }
 }
 
-function addMessage(text, from='system'){ 
-  const div=document.createElement('div'); 
-  div.classList.add('message', from==='system'?'from-system':'from-user'); 
-  div.innerText=text; 
-  messagesEl.appendChild(div); 
-  messagesEl.scrollTop=messagesEl.scrollHeight; 
+function addMessage(text, from='system'){
+  const div=document.createElement('div');
+  div.classList.add('message', from==='system'?'from-system':'from-user');
+  div.innerText=text;
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop=messagesEl.scrollHeight;
 }
 
-function createInput(placeholder, callback){ 
-  chatInput.disabled=false; chatInput.value=''; chatInput.placeholder=placeholder; 
-  sendBtn.disabled=false; 
-  sendBtn.onclick=()=>{ 
-    if(chatInput.value.trim()==='') return; 
-    const val=chatInput.value.trim(); 
-    chatInput.value=''; 
-    chatInput.disabled=true; 
-    sendBtn.disabled=true; 
-    callback(val); 
-  }; 
-  chatInput.focus(); 
+function createInput(placeholder, callback){
+  chatInput.disabled=false; chatInput.value=''; chatInput.placeholder=placeholder;
+  sendBtn.disabled=false;
+  sendBtn.onclick=()=>{
+    if(chatInput.value.trim()==='') return;
+    const val=chatInput.value.trim();
+    chatInput.value='';
+    chatInput.disabled=true;
+    sendBtn.disabled=true;
+    callback(val);
+  };
+  chatInput.focus();
 }
 
 function onlyDigits(s){ return (s||'').replace(/\D/g,''); }
@@ -132,52 +134,52 @@ function formatCPF(digits){ return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/
 function brToISO(dateStr){ const [d,m,y]=dateStr.split('/'); return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
 function isoToBR(iso){ if(!iso) return ''; return iso.split('T')[0].split('-').reverse().join('/'); }
 
-async function cpfInput(cpfRaw){ 
-  const digits=onlyDigits(cpfRaw); 
-  if(digits.length!==11){ addMessage('CPF inválido.'); createInput('CPF',cpfInput); return; } 
-  const maskedCPF=formatCPF(digits); 
-  let professores=await fetchProfessores(); 
-  const profExistente=professores.find(p=>onlyDigits(p.cpf||'')===digits); 
-  if(profExistente){ 
-    professor={...profExistente}; 
-    addMessage(`Olá ${professor.nome}!`); 
-    await showProfessorReservations(digits); 
-    askSelectAmbiente(); 
-  } else { 
-    professor.cpf=maskedCPF; 
-    addMessage(maskedCPF,'user'); 
-    addMessage('Digite seu nome completo:'); 
-    state=11; 
-    createInput('Nome completo', nome=>nextStep(nome)); 
-  } 
+async function cpfInput(cpfRaw){
+  const digits=onlyDigits(cpfRaw);
+  if(digits.length!==11){ addMessage('CPF inválido.'); createInput('CPF',cpfInput); return; }
+  const maskedCPF=formatCPF(digits);
+  let professores=await fetchProfessores();
+  const profExistente=professores.find(p=>onlyDigits(p.cpf||'')===digits);
+  if(profExistente){
+    professor={...profExistente};
+    addMessage(`Olá ${professor.nome}!`);
+    await showProfessorReservations(digits);
+    askSelectAmbiente();
+  } else {
+    professor.cpf=maskedCPF;
+    addMessage(maskedCPF,'user');
+    addMessage('Digite seu nome completo:');
+    state=11;
+    createInput('Nome completo', nome=>nextStep(nome));
+  }
 }
 
-function nextStep(input){ 
-  switch(state){ 
-    case 11: 
-      professor.nome=input; 
-      addMessage(input,'user'); 
-      addMessage('Telefone:'); 
-      state=12; 
-      createInput('Telefone', tel=>{ 
-        professor.telefone=tel; 
-        addMessage(tel,'user'); 
-        addMessage('E-mail:'); 
-        state=13; 
-        createInput('E-mail', async email=>{ 
-          professor.email=email; 
-          addMessage(email,'user'); 
-          addMessage('Cadastro concluído!'); 
-          await saveProfessor(professor); 
-          await showProfessorReservations(onlyDigits(professor.cpf)); 
-          askSelectAmbiente(); 
-        }); 
-      }); 
-      break; 
-  } 
+function nextStep(input){
+  switch(state){
+    case 11:
+      professor.nome=input;
+      addMessage(input,'user');
+      addMessage('Telefone:');
+      state=12;
+      createInput('Telefone', tel=>{
+        professor.telefone=tel;
+        addMessage(tel,'user');
+        addMessage('E-mail:');
+        state=13;
+        createInput('E-mail', async email=>{
+          professor.email=email;
+          addMessage(email,'user');
+          addMessage('Cadastro concluído!');
+          await saveProfessor(professor);
+          await showProfessorReservations(onlyDigits(professor.cpf));
+          askSelectAmbiente();
+        });
+      });
+      break;
+  }
 }
 
-async function showProfessorReservations(cpfDigits){ 
+async function showProfessorReservations(cpfDigits){
   const reservas = await fetchReservas();
 
   // Data atual (local do dispositivo)
@@ -193,130 +195,135 @@ async function showProfessorReservations(cpfDigits){
     return dataR >= hoje; // SOMENTE HOJE EM DIANTE
   });
 
-  if (matches.length === 0){ 
-    addMessage('Você ainda não possui reservas futuras.'); 
-    return; 
-  } 
+  if (matches.length === 0){
+    addMessage('Você ainda não possui reservas futuras.');
+    return;
+  }
 
-  let text = 'Suas reservas (apenas futuras):\n'; 
-  matches.forEach(r => { 
-    text += `${r.ambiente}: ${r.quantidade||1} em ${isoToBR(r.datafim)} - ${(r.horarios||[]).join(', ')}\n`; 
-  }); 
+  let text = 'Suas reservas (apenas futuras):\n';
+  matches.forEach(r => {
+    text += `${r.ambiente}: ${r.quantidade||1} em ${isoToBR(r.datafim)} - ${(r.horarios||[]).join(', ')}\n`;
+  });
 
-  addMessage(text); 
+  addMessage(text);
 }
 
-function askSelectAmbiente(){ 
-  addMessage('Selecione o ambiente:'); 
-  const container=document.createElement('div'); 
-  container.classList.add('option-container'); 
-  AMBIENTES.forEach(a=>{ 
-    const btn=document.createElement('button'); 
-    btn.classList.add('option-btn'); 
-    btn.innerText=a; 
-    btn.onclick=()=>{ 
-      addMessage(a,'user'); 
-      selectedAmbiente=a; 
-      reserva={quantidade:0,dataFim:'',horarios:[],ambiente:a}; 
-      if(a==='Chromebooks') askDate(); else askDateAmbiente(); 
-    }; 
-    container.appendChild(btn); 
-  }); 
-  messagesEl.appendChild(container); 
-  messagesEl.scrollTop=messagesEl.scrollHeight; 
+function askSelectAmbiente(){
+  addMessage('Selecione o ambiente:');
+  const container=document.createElement('div');
+  container.classList.add('option-container');
+  AMBIENTES.forEach(a=>{
+    const btn=document.createElement('button');
+    btn.classList.add('option-btn');
+    btn.innerText=a;
+    btn.onclick=()=>{
+      addMessage(a,'user');
+      selectedAmbiente=a;
+      reserva={quantidade:0,dataFim:'',horarios:[],ambiente:a};
+      if(a==='Chromebooks') askDate(); else askDateAmbiente();
+    };
+    container.appendChild(btn);
+  });
+  messagesEl.appendChild(container);
+  messagesEl.scrollTop=messagesEl.scrollHeight;
 }
 
-function askDate(){ 
-  addMessage('Digite a data (dd/mm/yyyy):'); 
-  createInput('Data', d=>{ 
-    reserva.dataFim=brToISO(d); 
-    addMessage(d); 
-    if(selectedAmbiente==='Chromebooks') askQuantity(); 
-    else askHorariosAmbiente(); 
-  }); 
+function askDate(){
+  addMessage('Digite a data (dd/mm/yyyy):');
+  createInput('Data', d=>{
+    reserva.dataFim=brToISO(d);
+    addMessage(d);
+    if(selectedAmbiente==='Chromebooks') askQuantity();
+    else askHorariosAmbiente();
+  });
 }
 function askDateAmbiente(){ askDate(); }
 
-function askQuantity(){ 
-  addMessage('Quantidade de Chromebooks:'); 
-  createInput('Quantidade', q=>{ 
-    reserva.quantidade=parseInt(q); 
-    addMessage(q); 
-    askHorarios(); 
-  }); 
+function askQuantity(){
+  addMessage('Quantidade de Chromebooks:');
+  createInput('Quantidade', q=>{
+    reserva.quantidade=parseInt(q);
+    addMessage(q);
+    askHorarios();
+  });
 }
 
-async function askHorarios(){ 
-  addMessage('Selecione horários:'); 
-  const container=document.createElement('div'); 
-  container.classList.add('option-container'); 
-  reserva.horariosSelecionados=new Set(); 
+async function askHorarios(){
+  addMessage('Selecione horários:');
+  const container=document.createElement('div');
+  container.classList.add('option-container');
+  reserva.horariosSelecionados=new Set();
 
   const reservas = await fetchReservas();
-  const bloqueiosResp = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*`, {headers});
+  const bloqueiosResp = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*&datafim=eq.${reserva.dataFim}`, {headers});
   const bloqueios = await bloqueiosResp.json();
 
-  horarios.forEach(h=>{ 
+  horarios.forEach(h=>{
     let ocupado = 0;
     let max = (selectedAmbiente==='Chromebooks'?MAX_CHROMEBOOKS:MAX_DEFAULT);
 
-    // soma reservas já feitas
+    // soma reservas já feitas (filtrando por ambiente, data e horário)
     ocupado = reservas
-      .filter(r => r.ambiente===selectedAmbiente && r.datafim===reserva.dataFim && (r.horarios||[]).includes(h))
+      .filter(r => (r.ambiente||'Chromebooks')===selectedAmbiente && (r.datafim===reserva.dataFim) && (r.horarios||[]).includes(h))
       .reduce((soma,r)=> soma+(r.quantidade||1), 0);
 
-    const bloqueado = bloqueios.some(b => b.datafim===reserva.dataFim && (b.horarios||[]).includes(h));
+    // CORREÇÃO IMPORTANTE: verificar bloqueio por data + ambiente + horário
+    const bloqueado = bloqueios.some(b =>
+      (b.datafim === reserva.dataFim) &&
+      ((b.ambiente || 'Chromebooks') === selectedAmbiente) &&
+      ((b.horarios || []).includes(h))
+    );
 
-    const btn=document.createElement('button'); 
-    btn.classList.add('option-btn'); 
-    btn.innerText=h; 
+    const btn=document.createElement('button');
+    btn.classList.add('option-btn');
+    btn.innerText=h;
 
     if(ocupado >= max || bloqueado){
       btn.classList.add('disabled');
       btn.disabled=true;
     } else {
-      btn.onclick=()=>{ 
+      btn.onclick=()=>{
         if(reserva.horariosSelecionados.has(h)){
-          reserva.horariosSelecionados.delete(h); 
+          reserva.horariosSelecionados.delete(h);
           btn.style.backgroundColor='#25d366';
         } else {
-          reserva.horariosSelecionados.add(h); 
+          reserva.horariosSelecionados.add(h);
           btn.style.backgroundColor='#128c5e';
         }
-      }; 
+      };
     }
-    container.appendChild(btn); 
-  }); 
+    container.appendChild(btn);
+  });
 
-  const confirm=document.createElement('button'); 
-  confirm.classList.add('option-btn'); 
-  confirm.innerText='Confirmar'; 
-  confirm.style.backgroundColor='#075E54'; 
-  confirm.onclick=()=>{ 
-    reserva.horarios=Array.from(reserva.horariosSelecionados); 
-    confirmReservation(); 
-  }; 
-  container.appendChild(confirm); 
-  messagesEl.appendChild(container); 
-  messagesEl.scrollTop=messagesEl.scrollHeight; 
+  const confirm=document.createElement('button');
+  confirm.classList.add('option-btn');
+  confirm.innerText='Confirmar';
+  confirm.style.backgroundColor='#075E54';
+  confirm.onclick=()=>{
+    reserva.horarios=Array.from(reserva.horariosSelecionados);
+    confirmReservation();
+  };
+  container.appendChild(confirm);
+  messagesEl.appendChild(container);
+  messagesEl.scrollTop=messagesEl.scrollHeight;
 }
 
 function askHorariosAmbiente(){ askHorarios(); }
 
-async function confirmReservation(){ 
-  reserva.professor = professor.nome; 
-  reserva.cpf = professor.cpf; 
-  reserva.telefone = professor.telefone; 
-  reserva.email = professor.email; 
-  reserva.ambiente = selectedAmbiente; 
-  if(reserva.quantidade === 0) reserva.quantidade = 1; 
+async function confirmReservation(){
+  reserva.professor = professor.nome;
+  reserva.cpf = professor.cpf;
+  reserva.telefone = professor.telefone;
+  reserva.email = professor.email;
+  reserva.ambiente = selectedAmbiente;
+  if(reserva.quantidade === 0) reserva.quantidade = 1;
 
   const reservas = await fetchReservas();
   const maxPermitido = (selectedAmbiente==='Chromebooks'?MAX_CHROMEBOOKS:MAX_DEFAULT);
 
   for (let h of reserva.horarios) {
     const ocupados = reservas
-      .filter(r => r.ambiente === selectedAmbiente && r.datafim === reserva.dataFim && (r.horarios||[]).includes(h))
+      .filter(r => (r.ambiente||'Chromebooks') === selectedAmbiente && r.datafim === reserva.dataFim && (r.horarios||[]).includes(h))
       .reduce((soma, r) => soma + (r.quantidade || 1), 0);
 
     const totalDepois = ocupados + reserva.quantidade;
@@ -328,47 +335,46 @@ async function confirmReservation(){
     }
 
     if (totalDepois === maxPermitido) {
-    await saveBloqueio({
-  dataFim: reserva.dataFim,
-  horarios: [h],
-  quantidade: maxPermitido,
-  ambiente: selectedAmbiente
-});
-
+      await saveBloqueio({
+        dataFim: reserva.dataFim,
+        horarios: [h],
+        quantidade: maxPermitido,
+        ambiente: selectedAmbiente
+      });
     }
   }
 
- await saveReserva(reserva); 
-addMessage('✅ Reserva confirmada!');
+  await saveReserva(reserva);
+  addMessage('✅ Reserva confirmada!');
 
-// AQUI está a pergunta que está faltando:
-addMessage('Deseja fazer mais alguma reserva?');
+  // AQUI está a pergunta que está faltando:
+  addMessage('Deseja fazer mais alguma reserva?');
 
-// Botões
-const container = document.createElement('div');
-container.classList.add('option-container');
+  // Botões
+  const container = document.createElement('div');
+  container.classList.add('option-container');
 
-const btnSim = document.createElement('button');
-btnSim.classList.add('option-btn');
-btnSim.innerText = 'Sim';
-btnSim.onclick = () => {
-  addMessage('Sim','user');
-  askSelectAmbiente();
-};
+  const btnSim = document.createElement('button');
+  btnSim.classList.add('option-btn');
+  btnSim.innerText = 'Sim';
+  btnSim.onclick = () => {
+    addMessage('Sim','user');
+    askSelectAmbiente();
+  };
 
-const btnNao = document.createElement('button');
-btnNao.classList.add('option-btn');
-btnNao.innerText = 'Não';
-btnNao.onclick = () => {
-  addMessage('Não','user');
-  resetChat();
-};
+  const btnNao = document.createElement('button');
+  btnNao.classList.add('option-btn');
+  btnNao.innerText = 'Não';
+  btnNao.onclick = () => {
+    addMessage('Não','user');
+    resetChat();
+  };
 
-container.appendChild(btnSim);
-container.appendChild(btnNao);
+  container.appendChild(btnSim);
+  container.appendChild(btnNao);
 
-messagesEl.appendChild(container);
-messagesEl.scrollTop = messagesEl.scrollHeight;
+  messagesEl.appendChild(container);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
 
 }
 
@@ -398,8 +404,11 @@ function resetChat(){
 }
 
 addMessage('Olá, eu sou a Leopoldina, sua assistente virtual. Digite seu CPF para começar:');
-state=0; createInput('CPF',cpfInput); 
+state=0; createInput('CPF',cpfInput);
 chatInput.addEventListener('keydown', e=>{ if(e.key==='Enter'&&!sendBtn.disabled){ sendBtn.click(); e.preventDefault(); }});
+
+/* helper toArray reused in multiple files */
+function toArray(val){ if(!val) return []; if(Array.isArray(val)) return val; try{ return JSON.parse(val); }catch(e){ if(typeof val==='string') return val.split(',').map(s=>s.trim()).filter(Boolean); return []; } }
 </script>
 </body>
 </html>
