@@ -689,16 +689,17 @@ confirmManual.onclick = async ()=>{
       }
 
       // criar reserva manual (Admin)
-      await criarReserva({
-        professor: 'Admin (manual)',
-        cpf: '000.000.000-00',
-        telefone: '-',
-        email: '-',
-        datafim: data,
-        horarios: [h],
-        ambiente: ambiente,
-        quantidade: quantidade
-      });
+      // criar reserva manual usando o admin logado
+    await criarReserva({
+    professor: loggedAdmin.nome,
+    cpf: loggedAdmin.cpf,
+    telefone: loggedAdmin.telefone || 'ADMIN',
+    email: loggedAdmin.email || 'admin@colegio.com',
+    datafim: data,
+    horarios: [h],
+    ambiente: ambiente,
+    quantidade: quantidade
+    });
 
       reservas = await fetchReservas();
       const ocupadosAgora = reservas
