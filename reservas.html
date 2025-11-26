@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta name="theme-color" content="#075E54" />
-<title>v2 - Controle de Reservas — Colégio Imperatriz</title>
+<title>Controle de Reservas - Admin  — Colégio Imperatriz</title>
 <style>
   :root{
     --primary:#075E54;
@@ -15,6 +15,11 @@
     --telesala:#2e7d32;
     --salaatendimento:#8e44ad;
     --salareunioes:#d35400;
+    --carro:#6c757d;
+    --labquimica:#00796b;
+    --labfisica:#5d4037;
+    --labiologia:#c2185b;
+    --salactc:#3949ab;
     --bloqueio:#555;
     --muted:#777;
     --card-shadow: 0 6px 20px rgba(0,0,0,.06);
@@ -45,8 +50,13 @@
   .amb-Chromebooks{background:var(--chromebooks) !important}
   .amb-Cozinha{background:var(--cozinha) !important}
   .amb-TeleSala{background:var(--telesala) !important}
-  .amb-SalaAtendimentoI{background:var(--salaatendimento) !important}
-  .amb-SalaReunioes{background:var(--salareunioes) !important}
+  .amb-SalaDeAtendimentoI{background:var(--salaatendimento) !important}
+  .amb-SalaDeReuniões{background:var(--salareunioes) !important}
+  .amb-Carro{background:var(--carro) !important}
+  .amb-LabQuímica{background:var(--labquimica) !important}
+  .amb-LabFísica{background:var(--labfisica) !important}
+  .amb-LabBiologia{background:var(--labiologia) !important}
+  .amb-SalaDoCTC{background:var(--salactc) !important}
 
   .scroll-container{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
   .modal{display:none;position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.45);z-index:200;padding-top:40px}
@@ -56,7 +66,7 @@
   .close:focus{outline:3px solid rgba(0,0,0,.12);outline-offset:2px}
   .field{margin:8px 0}
   .field label{display:block;margin-bottom:6px;font-weight:600}
-  input[type="date"], input[type="number"], select{padding:8px;width:100%;box-sizing:border-box;border-radius:6px;border:1px solid #ccc}
+  input[type="date"], input[type="number"], select, input[type="text"], input[type="password"]{padding:8px;width:100%;box-sizing:border-box;border-radius:6px;border:1px solid #ccc}
   .option-container{display:flex;flex-wrap:wrap;gap:6px}
   .option-btn{padding:8px 10px;border-radius:6px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-weight:600}
   .option-btn.selected{background:#128c5e}
@@ -66,59 +76,51 @@
   .legend{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
   .legend-item{display:flex;gap:6px;align-items:center;padding:6px 8px;background:#fff;border-radius:6px;border:1px solid #eee}
   .swatch{width:16px;height:16px;border-radius:4px;display:inline-block}
-  /* tooltip */
   .tooltip{position:fixed;pointer-events:none;background:#111;color:#fff;padding:8px;border-radius:6px;font-size:13px;z-index:9999;opacity:0;transform:translateY(-6px);transition:opacity .12s,transform .12s;max-width:300px;box-shadow:0 6px 20px rgba(0,0,0,.2)}
   .tooltip.show{opacity:1;transform:translateY(0)}
   .tooltip b{display:block;margin-bottom:4px}
-  /* indicador por horário (compacto) */
   .horario-indicador{display:inline-block;font-size:10px;padding:2px 6px;margin:4px 4px 0 0;border-radius:999px;text-align:center;color:#fff;opacity:0.95}
   .ind-chrom{background:var(--chromebooks)}
   .ind-coz{background:var(--cozinha)}
   .ind-tele{background:var(--telesala)}
   .ind-att{background:var(--salaatendimento)}
   .ind-reun{background:var(--salareunioes)}
+  .ind-carro{background:var(--carro)}
+  .ind-lq{background:var(--labquimica)}
+  .ind-lf{background:var(--labfisica)}
+  .ind-lb{background:var(--labiologia)}
+  .ind-ctc{background:var(--salactc)}
   .ind-bloq{background:var(--bloqueio)}
-  /* small helpers */
   .muted{color:var(--muted);font-size:13px}
-
-  /* Accessibility: visible focus for keyboard users */
   [tabindex]:focus, button:focus, a:focus, input:focus, select:focus { outline:3px solid rgba(7,94,84,.14); outline-offset:2px }
 
-  /* Responsive improvements */
+  /* login bar */
+  #loginBar{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+  #loginBar input{padding:8px;border-radius:6px;border:1px solid #ccc}
+  #loginBar button{padding:8px 10px;border-radius:6px;border:none;background:var(--primary);color:#fff;cursor:pointer}
+
+  /* hide calendar until logged in */
+  .hidden { display:none !important; }
+
   @media (max-width:900px){
     th,td{font-size:12px;min-width:90px;min-height:100px}
     .legend{font-size:13px}
     .badge{font-size:12px}
-  }
-
-  @media (max-width:700px){
-    body{padding:12px}
-    h2{font-size:18px}
-    .btn{padding:12px 14px;border-radius:10px}
-    .calendar{border-radius:10px}
-    th,td{font-size:13px;min-width:140px;min-height:90px}
-    .reserva{font-size:13px;padding:6px 8px}
-    .modal{padding-top:8px}
-    .modal-content{width:calc(100% - 24px);max-width:100%;margin:8px auto;padding:12px;border-radius:10px;height:auto;max-height:calc(100vh - 32px);overflow:auto}
-    .close{right:8px;top:6px}
-    .tooltip{max-width:220px;font-size:12px}
-    .legend{gap:6px}
-    .option-container{gap:8px}
-    .option-btn{padding:10px 12px;border-radius:8px}
-    /* ensure horizontal scroll works well on mobile */
-    .scroll-container{padding-bottom:12px}
-  }
-
-  /* Very small screens: make table horizontally scrollable and increase cell touch area */
-  @media (max-width:420px){
-    th,td{min-width:160px;min-height:84px;padding:8px}
-    .horario-indicador{font-size:11px;padding:4px 8px}
   }
 </style>
 </head>
 <body>
 <div class="container">
   <h2>Calendário de Reservas — Colégio Imperatriz (v3.0)</h2>
+
+  <!-- LOGIN BAR (topo) -->
+  <div id="loginBar" aria-live="polite">
+    <input id="loginCpf" placeholder="CPF do admin" aria-label="CPF do admin" />
+    <input id="loginSenha" placeholder="Senha" type="password" aria-label="Senha do admin" />
+    <button id="loginBtn">Login</button>
+    <button id="logoutBtn" style="display:none;background:#d9534f;margin-left:8px">Logout</button>
+    <div id="loginMsg" class="muted" style="margin-left:12px"></div>
+  </div>
 
   <div id="topBar">
     <div class="controls" aria-hidden="false">
@@ -131,6 +133,11 @@
         <option>Tele Sala</option>
         <option>Sala de Atendimento I</option>
         <option>Sala de Reuniões</option>
+        <option>Carro</option>
+        <option>Lab. Química</option>
+        <option>Lab. Física</option>
+        <option>Lab. Biologia</option>
+        <option>Sala do CTC</option>
       </select>
     </div>
 
@@ -150,12 +157,17 @@
     <div class="legend-item"><span class="swatch" style="background:var(--telesala)"></span> Tele Sala</div>
     <div class="legend-item"><span class="swatch" style="background:var(--salaatendimento)"></span> Sala de Atendimento I</div>
     <div class="legend-item"><span class="swatch" style="background:var(--salareunioes)"></span> Sala de Reuniões</div>
+    <div class="legend-item"><span class="swatch" style="background:var(--carro)"></span> Carro</div>
+    <div class="legend-item"><span class="swatch" style="background:var(--labquimica)"></span> Lab. Química</div>
+    <div class="legend-item"><span class="swatch" style="background:var(--labfisica)"></span> Lab. Física</div>
+    <div class="legend-item"><span class="swatch" style="background:var(--labiologia)"></span> Lab. Biologia</div>
+    <div class="legend-item"><span class="swatch" style="background:var(--salactc)"></span> Sala do CTC</div>
     <div class="legend-item"><span class="swatch" style="background:var(--bloqueio)"></span> Bloqueio</div>
   </div>
 
   <div style="height:12px"></div>
 
-  <div class="calendar" role="region" aria-label="Calendário de Reservas">
+  <div id="calendarWrap" class="calendar" role="region" aria-label="Calendário de Reservas">
     <div style="padding:8px 12px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px">
       <div id="calendarHeader" style="flex:1"></div>
       <div class="muted" id="loadStatus" aria-live="polite" style="font-size:13px"></div>
@@ -202,6 +214,11 @@
           <option>Tele Sala</option>
           <option>Sala de Atendimento I</option>
           <option>Sala de Reuniões</option>
+          <option>Carro</option>
+          <option>Lab. Química</option>
+          <option>Lab. Física</option>
+          <option>Lab. Biologia</option>
+          <option>Sala do CTC</option>
         </select>
       </div>
 
@@ -235,9 +252,8 @@
 
 <script>
 /* ============================================================
-   v3.0 - Combinação das versões: base funcional (v1.0) +
-   melhorias visuais/UX (v1.2) + pequenos refinamentos
-   Nota: mantive toda a lógica e endpoints originais.
+   v3.0 - Painel com login de administrador (client-side, valida via tabela administrators)
+   Mantive URL e API KEY originais.
    ============================================================ */
 
 /* =============== CONFIGURAÇÃO SUPABASE =============== */
@@ -253,12 +269,14 @@ const horarios = ['07:20','08:05','08:50','09:55','10:40','11:25','13:45','14:30
 let reservas = [], bloqueios = [];
 let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth();
+let isLoggedIn = false;
+let loggedAdmin = null;
 
 /* ----------------- helpers ----------------- */
 function hojeStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function isoToBR(iso){ if(!iso) return '---'; const part=(iso||'').split('T')[0]; return part.split('-').reverse().join('/'); }
 function toArray(val){ if(!val) return []; if(Array.isArray(val)) return val; try{ return JSON.parse(val); }catch(e){ if(typeof val==='string') return val.split(',').map(s=>s.trim()).filter(Boolean); return []; } }
-function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); } // utilitário para testes/pequenos delays
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
 /* ----------------- UI helpers ----------------- */
 const tooltip = document.getElementById('tooltip');
@@ -300,12 +318,12 @@ async function fetchJson(url){
 }
 async function fetchReservas(){ return await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*`); }
 async function fetchBloqueios(){ return await fetchJson(`${SUPABASE_URL}/rest/v1/bloqueios?select=*`); }
+async function fetchAdministrators(){ return await fetchJson(`${SUPABASE_URL}/rest/v1/administrators?select=*`); }
 
 async function criarReserva(body){
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/reservas`,{method:'POST',headers,body:JSON.stringify(body)});
     if(!res.ok){ const txt = await res.text(); throw new Error(txt||res.status); }
-    // some POST endpoints return empty body; try parse safely
     const text = await res.text();
     try{ return JSON.parse(text); }catch(e){ return text || {}; }
   }catch(e){ console.error('criarReserva',e); throw e; }
@@ -364,7 +382,6 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
   const ultimoDia = new Date(ano,mes+1,0);
   const diasNoMes = ultimoDia.getDate();
 
-  // header (meses disponíveis)
   const mesesDisponiveis = new Set([...reservas,...bloqueios].map(r=>{
     const d = r.datafim || r.dataFim || '';
     if(!d) return null;
@@ -386,7 +403,6 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
   const filterAmb = document.getElementById('filterAmbiente');
   const filtro = filterAmb.value || 'all';
 
-  // montar dias
   let tr = document.createElement('tr');
   for(let i=0;i<primeiroDia.getDay();i++) tr.appendChild(document.createElement('td'));
 
@@ -396,28 +412,27 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
     const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
     const divDia = document.createElement('div'); divDia.style.fontWeight='bold'; divDia.textContent = dia; td.appendChild(divDia);
 
-    // mapa de ocupação por horario (para exibição compacta)
     const mapaHorario = buildReservasPorDataHorarioPara(dataStr);
 
-    // mostrar indicadores por horário (compacto) - para cada ambiente principal
-    // Aqui mostramos um indicador por ambiente+horário quando houver ocupação
     horarios.forEach(h=>{
-      // for each ambiente main, check ocupação
-      const ambientes = ['Chromebooks','Cozinha','Tele Sala','Sala de Atendimento I','Sala de Reuniões'];
+      const ambientes = ['Chromebooks','Cozinha','Tele Sala','Sala de Atendimento I','Sala de Reuniões','Carro','Lab. Química','Lab. Física','Lab. Biologia','Sala do CTC'];
       ambientes.forEach(amb => {
-        // se filtro ativo, só mostra o ambiente selecionado
         if(filtro !== 'all' && filtro !== amb) return;
         const key = `${amb}-${h}`;
         const ocupados = mapaHorario[key]||0;
         if(ocupados > 0){
           const span = document.createElement('span');
           span.classList.add('horario-indicador');
-          // aplicar classes de cor por ambiente
           if(amb==='Chromebooks') span.classList.add('ind-chrom');
           else if(amb==='Cozinha') span.classList.add('ind-coz');
           else if(amb==='Tele Sala') span.classList.add('ind-tele');
           else if(amb==='Sala de Atendimento I') span.classList.add('ind-att');
           else if(amb==='Sala de Reuniões') span.classList.add('ind-reun');
+          else if(amb==='Carro') span.classList.add('ind-carro');
+          else if(amb==='Lab. Química') span.classList.add('ind-lq');
+          else if(amb==='Lab. Física') span.classList.add('ind-lf');
+          else if(amb==='Lab. Biologia') span.classList.add('ind-lb');
+          else if(amb==='Sala do CTC') span.classList.add('ind-ctc');
           span.title = `${amb} — ${h}: ${ocupados}`;
           span.textContent = `${h} (${ocupados})`;
           td.appendChild(span);
@@ -425,7 +440,6 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
       });
     });
 
-    // agora inserir reservas como antes (detalhadas) — filtrando por ambiente quando necessário
     reservas.filter(r=>{ const d=r.datafim||r.dataFim||''; return d && d.startsWith(dataStr); })
       .forEach(r=>{
         const arr = toArray(r.horarios);
@@ -433,6 +447,7 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
           const amb = (r.ambiente||'Chromebooks');
           if(filterAmb.value !== 'all' && filterAmb.value !== amb) return;
           const div = document.createElement('div'); div.classList.add('reserva');
+          // normalizar classe
           const cls = 'amb-' + amb.replace(/\s+/g,'').replace(/[^a-zA-Z0-9]/g,'');
           div.classList.add(cls);
           const prof = r.professor || '---';
@@ -443,7 +458,6 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
           div.dataset.data = dataStr;
           div.dataset.ambiente = amb;
           div.dataset.resId = r.id || '';
-          // eventos
           div.addEventListener('mouseenter', showTooltip);
           div.addEventListener('mousemove', moveTooltip);
           div.addEventListener('mouseleave', hideTooltip);
@@ -452,7 +466,6 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
         });
       });
 
-    // bloqueios detalhados
     bloqueios.filter(b=>{ const d=b.datafim||b.dataFim||''; return d && d.startsWith(dataStr); })
       .forEach(b=>{
         const arr = toArray(b.horarios);
@@ -478,7 +491,6 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
   while(tr.children.length<7) tr.appendChild(document.createElement('td'));
   tbody.appendChild(tr);
 
-  // atualizar totais (e remover status de loading)
   atualizarTotaisDia();
   setLoading(false);
 }
@@ -486,7 +498,6 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
 /* ----------------- totais por hoje ----------------- */
 function atualizarTotaisDia(){
   const hoje = hojeStr();
-  // recalcula o mapa para hoje
   const mapa = buildReservasPorDataHorarioPara(hoje);
   let total = 0;
   let detalhes = '';
@@ -500,7 +511,7 @@ function atualizarTotaisDia(){
   document.getElementById('totalLivres').textContent = Math.max(0, MAX_CHROMEBOOKS - total);
 }
 
-/* ----------------- modal detalhes ----------------- */
+/* ----------------- modal detalhes (cancelar exige login) ----------------- */
 function openModal(r){
   const ambiente = r.ambiente || 'Chromebooks';
   document.getElementById('modalAmbiente').textContent = ambiente;
@@ -521,68 +532,58 @@ function openModal(r){
     perHorarioDiv.appendChild(p);
   });
 
-// botão cancelar
-const cancelBtn = document.getElementById('cancelReservationBtn');
-cancelBtn.onclick = async () => {
-  if (!confirm('Cancelar reserva?')) return;
-  setLoading(true, 'Removendo reserva...');
+  const cancelBtn = document.getElementById('cancelReservationBtn');
+  cancelBtn.onclick = async () => {
+    if (!isLoggedIn){ alert('Ação permitida apenas para administradores autenticados.'); return; }
+    if (!confirm('Cancelar reserva?')) return;
+    setLoading(true, 'Removendo reserva...');
 
-  try {
-    // 1) remover reserva
-    await deleteReserva(r.id);
+    try {
+      await deleteReserva(r.id);
+      reservas = await fetchReservas();
+      bloqueios = await fetchBloqueios();
 
-    // 2) recarregar reservas e bloqueios
-    reservas = await fetchReservas();
-    bloqueios = await fetchBloqueios();
+      const data = r.datafim || r.dataFim;
+      const ambiente = r.ambiente || "Chromebooks";
+      const horariosReserva = toArray(r.horarios);
 
-    const data = r.datafim || r.dataFim;
-    const ambiente = r.ambiente || "Chromebooks";
-    const horariosReserva = toArray(r.horarios);
+      for (const h of horariosReserva) {
+        const ocupadosAgora = reservas
+          .filter(rr => (rr.ambiente || 'Chromebooks') === ambiente && (rr.datafim||rr.dataFim) === data && (toArray(rr.horarios)||[]).includes(h))
+          .reduce((s, rr) => s + (Number(rr.quantidade) || 0), 0);
 
-    for (const h of horariosReserva) {
-      // calcular ocupação atual para data/ambiente/horário
-      const ocupadosAgora = reservas
-        .filter(rr => (rr.ambiente || 'Chromebooks') === ambiente && (rr.datafim||rr.dataFim) === data && (toArray(rr.horarios)||[]).includes(h))
-        .reduce((s, rr) => s + (Number(rr.quantidade) || 0), 0);
+        const maxPermitido = (ambiente === 'Chromebooks' ? MAX_CHROMEBOOKS : MAX_DEFAULT);
 
-      const maxPermitido = (ambiente === 'Chromebooks' ? MAX_CHROMEBOOKS : MAX_DEFAULT);
+        if (ocupadosAgora < maxPermitido) {
+          const bloq = bloqueios.find(b =>
+            (b.datafim || b.dataFim) === data &&
+            b.ambiente === ambiente &&
+            (toArray(b.horarios) || []).includes(h)
+          );
 
-      // se ocupação atual < max, podemos remover bloqueio (se existir)
-      if (ocupadosAgora < maxPermitido) {
-        // encontrar bloqueio para esse data/ambiente/horário
-        const bloq = bloqueios.find(b =>
-          (b.datafim || b.dataFim) === data &&
-          b.ambiente === ambiente &&
-          (toArray(b.horarios) || []).includes(h)
-        );
-
-        if (bloq) {
-          await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?id=eq.${bloq.id}`, {
-            method: "DELETE",
-            headers
-          });
+          if (bloq) {
+            await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?id=eq.${bloq.id}`, {
+              method: "DELETE",
+              headers
+            });
+          }
         }
       }
+
+      await montarCalendario();
+      closeReservationModal();
+
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao cancelar. Veja console.');
     }
 
-    // 3) recarregar interface e fechar modal
-    await montarCalendario();
-    closeReservationModal();
+    setLoading(false);
+  };
 
-  } catch (e) {
-    console.error(e);
-    alert('Erro ao cancelar. Veja console.');
-  }
-
-  setLoading(false);
-};
-
-
-  // abrir modal (acessibilidade - foco)
   const modal = document.getElementById('reservationModal');
   modal.setAttribute('aria-hidden','false');
   modal.style.display='block';
-  // foco no botão de cancelar para permitir keyboard users
   cancelBtn.focus();
 }
 function closeReservationModal(){
@@ -604,6 +605,7 @@ const bloqueiosList = document.getElementById('bloqueiosList');
 const manualAmbiente = document.getElementById('manualAmbiente');
 
 openManualBtn.onclick = async ()=>{
+  if(!isLoggedIn){ alert('Somente administradores autenticados podem abrir essa tela.'); return; }
   manualHorarios.innerHTML='';
   horarios.forEach(h=>{
     const btn = document.createElement('button');
@@ -619,7 +621,6 @@ openManualBtn.onclick = async ()=>{
   await carregarBloqueios();
   manualModal.setAttribute('aria-hidden','false');
   manualModal.style.display='block';
-  // foco principal
   manualAmbiente.focus();
 };
 closeManual.onclick = ()=> closeManualModal();
@@ -655,26 +656,23 @@ async function carregarBloqueios(){
 
 /* ----------------- liberação manual (salvar) ----------------- */
 confirmManual.onclick = async ()=>{
+  if(!isLoggedIn){ alert('Somente administradores autenticados podem realizar liberações.'); return; }
   const selected = Array.from(manualHorarios.querySelectorAll('.selected')).map(b=>b.dataset.h);
   if(selected.length===0){ alert('Selecione ao menos um horário'); return; }
   const data = manualDate.value; if(!data){ alert('Selecione uma data válida'); return; }
   const quantidade = parseInt(manualQuantidade.value) || 1;
   const ambiente = manualAmbiente.value || 'Chromebooks';
 
-  // bloquear UI
   setLoading(true,'Salvando liberações...');
   try{
-    // recarregar estado atual
     reservas = await fetchReservas();
     bloqueios = await fetchBloqueios();
 
     for(const h of selected){
-      // calcula ocupados atuais para o par ambiente+horário
       const ocupados = reservas
         .filter(r => (r.ambiente || 'Chromebooks') === ambiente && (r.datafim||r.dataFim) === data && (toArray(r.horarios)||[]).includes(h))
         .reduce((soma,r)=>soma + (Number(r.quantidade)||0), 0);
 
-      // checa se já existe bloqueio
       const bloqueado = bloqueios.some(b => (b.datafim||b.dataFim)===data && (toArray(b.horarios)||[]).includes(h) && ((b.ambiente||'Chromebooks')===ambiente));
       if(bloqueado){
         alert(`O horário ${h} em ${isoToBR(data)} para ${ambiente} já está bloqueado.`);
@@ -702,14 +700,12 @@ confirmManual.onclick = async ()=>{
         quantidade: quantidade
       });
 
-      // recarregar reservas localmente para checar se atingiu limite
       reservas = await fetchReservas();
       const ocupadosAgora = reservas
         .filter(r => (r.ambiente || 'Chromebooks') === ambiente && (r.datafim||r.dataFim) === data && (toArray(r.horarios)||[]).includes(h))
         .reduce((soma,r)=>soma + (Number(r.quantidade)||0), 0);
 
       if(ocupadosAgora === maxPermitido){
-        // criar bloqueio caso ainda não exista
         const existeBloq = (await fetchBloqueios()).some(b => (b.datafim||b.dataFim) === data && (toArray(b.horarios)||[]).includes(h) && ((b.ambiente||'Chromebooks')===ambiente));
         if(!existeBloq){
           await criarBloqueio({ datafim: data, horarios: [h], quantidade: maxPermitido, ambiente: ambiente });
@@ -756,18 +752,71 @@ function setLoading(active, message=''){
 /* ----------------- teclado / escape para fechar modais ----------------- */
 window.addEventListener('keydown', (e)=>{
   if(e.key === 'Escape'){
-    // fechar modals se abertos
     closeReservationModal();
     closeManualModal();
   }
 });
 
+/* =================== LOGIN/LOGOUT =================== */
+/*
+  Login simples: busca tabela administrators no Supabase e compara CPF (somente dígitos) e senha em texto.
+  Recomendo fortemente migrar para hash/sessão real em produção (isto é apenas autenticação client-side baseada em REST).
+*/
+const loginBtn = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const loginCpf = document.getElementById('loginCpf');
+const loginSenha = document.getElementById('loginSenha');
+const loginMsg = document.getElementById('loginMsg');
+const calendarWrap = document.getElementById('calendarWrap');
+
+function onlyDigits(s){ return (s||'').replace(/\D/g,''); }
+
+loginBtn.onclick = async ()=>{
+  const cpfRaw = onlyDigits(loginCpf.value||'');
+  const senha = (loginSenha.value||'').trim();
+  if(cpfRaw.length !== 11 && !senha){ loginMsg.textContent = 'Informe CPF e senha.'; return; }
+  setLoading(true,'Validando administrador...');
+  try{
+    // buscamos admin por cpf (igual) OU por email se user usar email
+    const admins = await fetchAdministrators();
+    const found = admins.find(a => ((a.cpf && onlyDigits(a.cpf)===cpfRaw) || (a.email && a.email.toLowerCase() === (loginCpf.value||'').toLowerCase())) && (a.senha === senha));
+    if(!found){ loginMsg.textContent = 'Credenciais inválidas'; setLoading(false); return; }
+    // sucesso
+    isLoggedIn = true; loggedAdmin = found;
+    loginMsg.textContent = `Olá, ${found.nome}`;
+    loginBtn.style.display='none'; logoutBtn.style.display='inline-block';
+    loginCpf.style.display='none'; loginSenha.style.display='none';
+    // mostrar calendário
+    calendarWrap.classList.remove('hidden');
+    // habilitar controles de admin
+    document.getElementById('openManualBtn').removeAttribute('disabled');
+    document.getElementById('refreshBtn').removeAttribute('disabled');
+    await montarCalendario();
+  }catch(e){
+    console.error('login err',e); loginMsg.textContent = 'Erro ao validar (veja console)';
+  }finally{ setLoading(false); }
+};
+
+logoutBtn.onclick = ()=>{
+  isLoggedIn = false; loggedAdmin = null;
+  loginBtn.style.display='inline-block'; logoutBtn.style.display='none';
+  loginCpf.style.display='inline-block'; loginSenha.style.display='inline-block';
+  loginCpf.value=''; loginSenha.value=''; loginMsg.textContent = 'Desconectado';
+  // esconder calendário até novo login
+  calendarWrap.classList.add('hidden');
+  // desabilitar controles
+  document.getElementById('openManualBtn').setAttribute('disabled','true');
+};
+
+/* Ao carregar pela primeira vez, escondemos o calendário até o admin logar */
+document.getElementById('openManualBtn').setAttribute('disabled','true');
+calendarWrap.classList.add('hidden');
+
 /* ----------------- inicialização ----------------- */
 async function init(){
-  // definir data mínima do manualDate para hoje
   document.getElementById('manualDate').setAttribute('min', hojeStr());
-  // inicia calendário
-  await montarCalendario();
+  // não inicia calendário até login; podemos pré-carregar para performance opcionalmente
+  // await montarCalendario();
 }
 init();
 </script>
