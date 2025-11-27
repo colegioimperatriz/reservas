@@ -3,104 +3,389 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Calendário de Reservas - Público — Colégio Imperatriz</title>
+<title>Calendário Público — Colégio Imperatriz</title>
+
 <style>
-  body{font-family:Arial,Helvetica,sans-serif;background:#f7f7f7;color:#222;margin:0;padding:18px}
-  .container{max-width:1100px;margin:0 auto}
-  h2{text-align:center}
-  .calendar{background:#fff;border-radius:8px;padding:8px;box-shadow:0 6px 20px rgba(0,0,0,.06)}
-  table{width:100%;border-collapse:collapse}
-  th,td{border:1px solid #eee;padding:8px;vertical-align:top;min-height:90px}
-  .reserva{display:block;padding:4px 6px;border-radius:6px;margin:4px 0;color:#fff;font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-  .reserva.bloqueio{background:#555}
-  .amb-Chromebooks{background:#1e88e5}
-  .amb-Cozinha{background:#f39c12}
-  .amb-TeleSala{background:#2e7d32}
-  .amb-SalaDeAtendimentoI{background:#8e44ad}
-  .amb-SalaDeReuniões{background:#d35400}
-  .amb-Carro{background:#6c757d}
-  .amb-LabQuímica{background:#00796b}
-  .amb-LabFísica{background:#5d4037}
-  .amb-LabBiologia{background:#c2185b}
-  .amb-SalaDoCTC{background:#3949ab}
-  .muted{color:#666;font-size:13px}
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+        color: #222;
+    }
+
+    .container {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .muted {
+        text-align: center;
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    /* --- CONTROL BAR --- */
+    .controls {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    .btn {
+        padding: 8px 12px;
+        background: #075E54;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    select {
+        padding: 8px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+    }
+
+    /* --- CALENDAR STRUCTURE --- */
+    .calendar {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .calendar-header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 15px;
+        background: #075E54;
+        color: #fff;
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        border-top: 1px solid #ddd;
+    }
+
+    .weekday {
+        background: #e7e7e7;
+        padding: 10px 0;
+        text-align: center;
+        font-weight: bold;
+        border-bottom: 1px solid #ccc;
+    }
+
+    .day {
+        min-height: 120px;
+        padding: 10px;
+        border: 1px solid #eee;
+        background: #fafafa;
+        position: relative;
+    }
+
+    .day .num {
+        font-weight: bold;
+        margin-bottom: 6px;
+        font-size: 15px;
+    }
+
+    /* --- RESERVAS & BLOQUEIOS --- */
+    .badge {
+        display: block;
+        margin-top: 4px;
+        padding: 4px 6px;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 11px;
+        line-height: 1.2;
+        word-break: break-word;
+        cursor: pointer;
+    }
+
+    .bloqueio {
+        background: #555 !important;
+    }
+
+    /* COLORS */
+    .Chromebooks { background: #1e88e5; }
+    .Cozinha { background: #f39c12; }
+    .TeleSala { background: #2e7d32; }
+    .SalaDeAtendimentoI { background: #8e44ad; }
+    .SalaDeReunioes { background: #d35400; }
+    .Carro { background: #6c757d; }
+    .LabQuimica { background: #00796b; }
+    .LabFisica { background: #5d4037; }
+    .LabBiologia { background: #c2185b; }
+    .SalaDoCTC { background: #3949ab; }
+
+    /* Tooltip */
+    .tooltip {
+        position: fixed;
+        background: #111;
+        color: #fff;
+        padding: 8px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0;
+        transition: opacity .15s ease, transform .15s ease;
+        transform: translateY(-4px);
+        max-width: 260px;
+    }
+    .tooltip.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
 </style>
 </head>
+
 <body>
+
 <div class="container">
-  <h2>Calendário Público de Reservas — Colégio Imperatriz</h2>
-  <p class="muted">Visão pública: consulte os horários já reservados antes de fazer sua reserva. Esta tela é somente leitura.</p>
-  <div id="calendar" class="calendar">
-    <div id="calendarBody"></div>
-  </div>
+    <h2>Calendário Público de Reservas</h2>
+    <p class="muted">Visualize aqui todas as reservas existentes antes de realizar a sua pelo chatbot.</p>
+
+    <!-- CONTROLES -->
+    <div class="controls">
+        <button id="prevBtn" class="btn">◀ Mês Anterior</button>
+        <button id="nextBtn" class="btn">Próximo Mês ▶</button>
+
+        <select id="filtroAmbiente">
+            <option value="all">Todos os Ambientes</option>
+            <option value="Chromebooks">Chromebooks</option>
+            <option value="Cozinha">Cozinha</option>
+            <option value="Tele Sala">Tele Sala</option>
+            <option value="Sala de Atendimento I">Sala de Atendimento I</option>
+            <option value="Sala de Reuniões">Sala de Reuniões</option>
+            <option value="Carro">Carro</option>
+            <option value="Lab. Química">Lab. Química</option>
+            <option value="Lab. Física">Lab. Física</option>
+            <option value="Lab. Biologia">Lab. Biologia</option>
+            <option value="Sala do CTC">Sala do CTC</option>
+        </select>
+    </div>
+
+    <div class="calendar">
+        <div id="calendarHeader" class="calendar-header">Carregando...</div>
+        <div id="calendarGrid" class="calendar-grid"></div>
+    </div>
 </div>
+
+<div id="tooltip" class="tooltip"></div>
 
 <script>
 const SUPABASE_URL = "https://oufiieqxyyqnqpcbuyms.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91ZmlpZXF4eXlxbnFwY2J1eW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNDMwNDgsImV4cCI6MjA3NDkxOTA0OH0.-4QPA1R5y24daAt-WsZuWc8-2bJxCJGhdTR1nq4RnHc";
-const headers = { "Content-Type":"application/json", "apikey":SUPABASE_KEY, "Authorization":`Bearer ${SUPABASE_KEY}` };
-const horarios = ['07:20','08:05','08:50','09:55','10:40','11:25','13:45','14:30','15:35','16:20','17:05'];
 
-function toArray(val){ if(!val) return []; if(Array.isArray(val)) return val; try{ return JSON.parse(val); }catch(e){ if(typeof val==='string') return val.split(',').map(s=>s.trim()).filter(Boolean); return []; } }
+const headers = {
+    "Content-Type": "application/json",
+    "apikey": SUPABASE_KEY,
+    "Authorization": `Bearer ${SUPABASE_KEY}`
+};
 
-async function fetchJson(url){
-  try{
-    const r = await fetch(url,{headers});
-    if(!r.ok) return [];
-    return await r.json();
-  }catch(e){ return []; }
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
+let reservas = [];
+let bloqueios = [];
+
+/* Tooltip */
+const tooltip = document.getElementById("tooltip");
+
+function showTooltip(e) {
+    tooltip.innerHTML = e.currentTarget.dataset.tip;
+    tooltip.style.left = e.clientX + 12 + "px";
+    tooltip.style.top = e.clientY + 12 + "px";
+    tooltip.classList.add("show");
+}
+function moveTooltip(e) {
+    tooltip.style.left = e.clientX + 12 + "px";
+    tooltip.style.top = e.clientY + 12 + "px";
+}
+function hideTooltip() {
+    tooltip.classList.remove("show");
 }
 
-function isoToBR(iso){ if(!iso) return '---'; const part=(iso||'').split('T')[0]; return part.split('-').reverse().join('/'); }
+function toArray(val) {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    try { return JSON.parse(val) }
+    catch { return val.split(",").map(s=>s.trim()); }
+}
 
-async function montarPublico(){
-  const reservas = await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*`);
-  const bloqueios = await fetchJson(`${SUPABASE_URL}/rest/v1/bloqueios?select=*`);
-  // vamos exibir próximos 14 dias (hoje + 13)
-  const container = document.getElementById('calendarBody');
-  container.innerHTML = '';
-  const hoje = new Date();
-  for(let i=0;i<14;i++){
-    const d = new Date(hoje); d.setDate(hoje.getDate()+i);
-    const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    const card = document.createElement('div');
-    card.style.borderBottom='1px solid #eee';
-    card.style.padding='8px 0';
-    const title = document.createElement('div'); title.style.fontWeight='700'; title.textContent = isoToBR(iso);
-    card.appendChild(title);
+function isoToBR(iso) {
+    return iso.split("T")[0].split("-").reverse().join("/");
+}
 
-    const items = document.createElement('div');
-    // reservas
-    reservas.filter(r=> (r.datafim||r.dataFim||'').startsWith(iso)).forEach(r=>{
-      toArray(r.horarios).forEach(h=>{
-        const amb = r.ambiente || 'Chromebooks';
-        const div = document.createElement('div');
-        div.classList.add('reserva', 'amb-' + amb.replace(/\s+/g,'').replace(/[^a-zA-Z0-9]/g,''));
-        div.textContent = `${h} — ${amb} — ${r.professor || '---'} (${r.quantidade||1})`;
-        items.appendChild(div);
-      });
+async function fetchJson(url) {
+    try {
+        const r = await fetch(url, { headers });
+        return r.ok ? r.json() : [];
+    } catch {
+        return [];
+    }
+}
+
+async function carregarDados() {
+    reservas = await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*`);
+    bloqueios = await fetchJson(`${SUPABASE_URL}/rest/v1/bloqueios?select=*`);
+}
+
+async function montarCalendarioPublico() {
+
+    const filtro = document.getElementById("filtroAmbiente").value;
+
+    const headerEl = document.getElementById("calendarHeader");
+    const grid = document.getElementById("calendarGrid");
+
+    headerEl.textContent =
+        new Date(currentYear, currentMonth).toLocaleString("pt-BR", {
+            month: "long",
+            year: "numeric"
+        });
+
+    grid.innerHTML = "";
+
+    // Cabeçalho dos dias
+    const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    diasSemana.forEach(d => {
+        const div = document.createElement("div");
+        div.className = "weekday";
+        div.textContent = d;
+        grid.appendChild(div);
     });
-    // bloqueios
-    bloqueios.filter(b=> (b.datafim||b.dataFim||'').startsWith(iso)).forEach(b=>{
-      toArray(b.horarios).forEach(h=>{
-        const div = document.createElement('div'); div.classList.add('reserva','bloqueio');
-        div.textContent = `${h} — BLOQUEIO — ${b.ambiente || 'Chromebooks'} (${b.quantidade||0})`;
-        items.appendChild(div);
-      });
-    });
 
-    if(items.children.length === 0){
-      const none = document.createElement('div'); none.classList.add('muted'); none.textContent = 'Nenhuma reserva neste dia.';
-      card.appendChild(none);
-    } else {
-      card.appendChild(items);
+    const primeiroDia = new Date(currentYear, currentMonth, 1);
+    const ultimoDia = new Date(currentYear, currentMonth + 1, 0);
+    const blanks = primeiroDia.getDay();
+    const totalDias = ultimoDia.getDate();
+
+    // Dias vazios antes do primeiro dia
+    for (let i = 0; i < blanks; i++) {
+        grid.appendChild(document.createElement("div")).className = "day";
     }
 
-    container.appendChild(card);
-  }
+    // Dias do mês
+    for (let dia = 1; dia <= totalDias; dia++) {
+
+        const dataISO = `${currentYear}-${String(currentMonth+1).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
+
+        const dayDiv = document.createElement("div");
+        dayDiv.className = "day";
+
+        // Número do dia
+        const num = document.createElement("div");
+        num.className = "num";
+        num.textContent = dia;
+        dayDiv.appendChild(num);
+
+        /* === RESERVAS === */
+        reservas
+        .filter(r => (r.datafim || "").startsWith(dataISO))
+        .forEach(r => {
+
+            if (filtro !== "all" && filtro !== r.ambiente) return;
+
+            const horas = toArray(r.horarios);
+            horas.forEach(h => {
+
+                let className = r.ambiente.replace(/\s+/g, '').replace(/[^\w]/g,'');
+
+                const badge = document.createElement("div");
+                badge.className = `badge ${className}`;
+                badge.textContent = `${h} — ${r.ambiente} (${r.quantidade || 1})`;
+
+                badge.dataset.tip =
+                    `<b>${r.ambiente}</b><br>` +
+                    `Horário: ${h}<br>` +
+                    `Professor: ${r.professor || "—"}<br>` +
+                    `Quantidade: ${r.quantidade || 1}<br>` +
+                    `Data: ${isoToBR(dataISO)}`;
+
+                badge.addEventListener("mouseenter", showTooltip);
+                badge.addEventListener("mousemove", moveTooltip);
+                badge.addEventListener("mouseleave", hideTooltip);
+
+                dayDiv.appendChild(badge);
+            });
+        });
+
+        /* === BLOQUEIOS === */
+        bloqueios
+        .filter(b => (b.datafim || "").startsWith(dataISO))
+        .forEach(b => {
+
+            if (filtro !== "all" && filtro !== b.ambiente) return;
+
+            const horas = toArray(b.horarios);
+            horas.forEach(h => {
+
+                const badge = document.createElement("div");
+                badge.className = `badge bloqueio`;
+                badge.textContent = `${h} — BLOQUEADO`;
+
+                badge.dataset.tip =
+                    `<b>BLOQUEADO</b><br>` +
+                    `${b.ambiente}<br>` +
+                    `Horário: ${h}<br>` +
+                    `Quantidade: ${b.quantidade || 0}<br>` +
+                    `Data: ${isoToBR(dataISO)}`;
+
+                badge.addEventListener("mouseenter", showTooltip);
+                badge.addEventListener("mousemove", moveTooltip);
+                badge.addEventListener("mouseleave", hideTooltip);
+
+                dayDiv.appendChild(badge);
+            });
+        });
+
+        grid.appendChild(dayDiv);
+    }
 }
 
-montarPublico();
+/* NAVIGATION */
+document.getElementById("prevBtn").onclick = () => {
+    currentMonth--;
+    if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+    }
+    montarCalendarioPublico();
+};
+
+document.getElementById("nextBtn").onclick = () => {
+    currentMonth++;
+    if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+    }
+    montarCalendarioPublico();
+};
+
+/* FILTRO */
+document.getElementById("filtroAmbiente").onchange = () => {
+    montarCalendarioPublico();
+};
+
+/* INIT */
+(async () => {
+    await carregarDados();
+    montarCalendarioPublico();
+})();
 </script>
+
 </body>
 </html>
