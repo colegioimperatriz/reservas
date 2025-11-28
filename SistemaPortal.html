@@ -29,18 +29,18 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 26px;
+        padding: 32px 20px;
         gap: 14px;
         color: white;
-        font-size: 26px;
+        font-size: 28px;
         font-weight: bold;
         text-align: center;
     }
 
-    /* LOGO 4x MAIOR */
     header img {
-        height: 150px;
+        height: 120px;
         width: auto;
+        max-width: 60vw;
     }
 
     .container {
@@ -50,73 +50,60 @@
         margin: auto;
     }
 
+    /* GRID RESPONSIVO DEFINITIVO */
     .cards {
-        display: flex;
-        flex-wrap: nowrap;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: 25px;
-        overflow-x: auto;
-        padding-bottom: 10px;
-        scroll-behavior: smooth;
-    }
-
-    .cards::-webkit-scrollbar {
-        height: 8px;
-    }
-    .cards::-webkit-scrollbar-thumb {
-        background: #c7cde0;
-        border-radius: 4px;
     }
 
     .card {
         background: white;
-        min-width: 280px;
-        max-width: 280px;
         border-radius: var(--radius);
         box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-        padding: 24px;
+        padding: 28px 22px;
         text-align: center;
         border-top: 6px solid var(--azul);
         cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: transform 0.25s, box-shadow 0.25s;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
     }
 
     .card:hover {
         transform: translateY(-6px);
-        box-shadow: 0 10px 26px rgba(0,0,0,0.15);
+        box-shadow: 0 12px 28px rgba(0,0,0,0.16);
     }
 
     .icon {
-        font-size: 50px;
+        font-size: 54px;
         color: var(--azul);
-        margin-bottom: 10px;
+        margin-bottom: 12px;
     }
 
     h3 {
-        margin: 8px 0 12px;
-        font-size: 18px;
+        margin: 10px 0 14px;
+        font-size: 20px;
         color: #222;
     }
 
     p {
-        font-size: 14px;
+        font-size: 15px;
         color: #555;
-        line-height: 1.4;
+        line-height: 1.45;
         flex-grow: 1;
     }
 
     button {
-        padding: 10px 16px;
+        padding: 12px 18px;
         background: var(--azul);
         color: white;
         border: none;
         border-radius: 8px;
-        font-size: 15px;
+        font-size: 16px;
         cursor: pointer;
         transition: background 0.2s;
-        margin-top: 15px;
+        margin-top: 18px;
     }
 
     button:hover {
@@ -125,13 +112,13 @@
 
     footer {
         text-align: center;
-        padding: 16px;
+        padding: 18px;
         background: #e3e6ee;
-        font-size: 13px;
+        font-size: 14px;
         color: #444;
     }
 
-    /* BOTÃO FLUTUANTE WHATSAPP */
+    /* BOTÃO WHATSAPP */
     .whatsapp-float {
         position: fixed;
         bottom: 22px;
@@ -156,6 +143,26 @@
         box-shadow: 0 6px 20px rgba(0,0,0,0.35);
     }
 
+    /* AJUSTES MOBILE FINOS */
+    @media (max-width: 480px) {
+        header {
+            font-size: 22px;
+            padding: 22px 14px;
+        }
+        header img {
+            height: 90px;
+        }
+        button {
+            font-size: 15px;
+        }
+        .whatsapp-float {
+            width: 54px;
+            height: 54px;
+            font-size: 28px;
+            bottom: 16px;
+            right: 16px;
+        }
+    }
 </style>
 </head>
 <body>
@@ -197,7 +204,6 @@
     © 2025 Colégio Imperatriz Leopoldina — Sistema de Reservas
 </footer>
 
-<!-- BOTÃO FLUTUANTE WHATSAPP -->
 <a 
     class="whatsapp-float"
     href="https://wa.me/554236258379?text=Estou%20com%20a%20seguinte%20d%C3%BAvida%2Ferros%20no%20novo%20sistema%20de%20reservas%20do%20col%C3%A9gio"
