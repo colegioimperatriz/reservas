@@ -2,15 +2,21 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal de Acesso — Colégio Imperatriz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistema de Reservas</title>
 
 <style>
+    :root {
+        --azul: #1a4fb3;
+        --azul-escuro: #163f90;
+        --bg: #f4f6fb;
+        --radius: 14px;
+    }
+
     body {
         margin: 0;
-        padding: 0;
-        background: #f0f2f5;
         font-family: Arial, sans-serif;
+        background: var(--bg);
         color: #333;
         display: flex;
         flex-direction: column;
@@ -18,131 +24,169 @@
     }
 
     header {
-        background: #075E54;
-        padding: 20px;
-        text-align: center;
+        background: var(--azul);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 26px;
+        gap: 14px;
         color: white;
-        font-size: 24px;
+        font-size: 26px;
         font-weight: bold;
+        text-align: center;
+    }
+
+    /* LOGO 4x MAIOR */
+    header img {
+        height: 150px;
+        width: auto;
     }
 
     .container {
-        max-width: 1100px;
-        margin: 40px auto;
-        padding: 0 20px;
         flex: 1;
+        padding: 30px 20px;
+        max-width: 1200px;
+        margin: auto;
     }
 
-   .cards {
-    display: flex;
-    justify-content: center;
-    gap: 25px;
-    flex-wrap: nowrap; /* mantém tudo na mesma linha */
-}
-
-@media (max-width: 900px) {
     .cards {
-        flex-wrap: wrap; /* quebra no celular */
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 25px;
+        overflow-x: auto;
+        padding-bottom: 10px;
+        scroll-behavior: smooth;
     }
-}
 
+    .cards::-webkit-scrollbar {
+        height: 8px;
+    }
+    .cards::-webkit-scrollbar-thumb {
+        background: #c7cde0;
+        border-radius: 4px;
+    }
 
     .card {
         background: white;
-        padding: 25px;
-        border-radius: 14px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        min-width: 280px;
+        max-width: 280px;
+        border-radius: var(--radius);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+        padding: 24px;
         text-align: center;
-        transition: 0.25s;
+        border-top: 6px solid var(--azul);
         cursor: pointer;
-        border-top: 6px solid #075E54;
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
     .card:hover {
         transform: translateY(-6px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        box-shadow: 0 10px 26px rgba(0,0,0,0.15);
     }
 
     .icon {
-        font-size: 55px;
-        margin-bottom: 15px;
-        color: #075E54;
+        font-size: 50px;
+        color: var(--azul);
+        margin-bottom: 10px;
     }
 
     h3 {
-        font-size: 20px;
-        margin-bottom: 12px;
+        margin: 8px 0 12px;
+        font-size: 18px;
+        color: #222;
     }
 
     p {
         font-size: 14px;
         color: #555;
-        margin-bottom: 20px;
         line-height: 1.4;
+        flex-grow: 1;
     }
 
     button {
-        padding: 10px 18px;
-        background: #075E54;
+        padding: 10px 16px;
+        background: var(--azul);
         color: white;
         border: none;
         border-radius: 8px;
         font-size: 15px;
         cursor: pointer;
-        transition: 0.2s;
+        transition: background 0.2s;
+        margin-top: 15px;
     }
 
     button:hover {
-        background: #064b44;
+        background: var(--azul-escuro);
     }
 
     footer {
         text-align: center;
-        padding: 20px 0;
-        background: #e5e5e5;
-        font-size: 14px;
-        color: #555;
-        margin-top: 40px;
+        padding: 16px;
+        background: #e3e6ee;
+        font-size: 13px;
+        color: #444;
     }
+
+    /* BOTÃO FLUTUANTE WHATSAPP */
+    .whatsapp-float {
+        position: fixed;
+        bottom: 22px;
+        right: 22px;
+        background: #25d366;
+        color: white;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 34px;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+        transition: transform 0.2s, box-shadow 0.2s;
+        z-index: 999;
+    }
+
+    .whatsapp-float:hover {
+        transform: scale(1.08);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    }
+
 </style>
 </head>
 <body>
 
-<header>Portal de Acesso — Colégio Imperatriz</header>
+<header>
+    <img src="https://www.colegioimperatriz.net.br/img/logo-colegio-imperatriz-rodape.png"
+         alt="Logo" loading="lazy">
+    Sistema de Reservas
+</header>
 
 <div class="container">
     <div class="cards">
 
-        <!-- Card 1: Chat / Sistema -->
-        <div class="card" onclick="window.location='index.html'">
+        <div class="card" onclick="location.href='index.html'">
             <div class="icon">💬</div>
             <h3>Chat de Reservas</h3>
-            <p>
-                Acesso ao sistema de reservas via chatbot inteligente.
-                Ideal para professores e colaboradores realizarem suas reservas.
-            </p>
+            <p>Faça e consulte reservas via chatbot rápido e inteligente.</p>
             <button>Acessar Chat</button>
         </div>
 
-        <!-- Card 2: Calendário/Admin -->
-        <div class="card" onclick="window.location='reservas.html'">
+        <div class="card" onclick="location.href='reservas.html'">
             <div class="icon">🗂️</div>
             <h3>Painel Administrativo</h3>
-            <p>
-                Área restrita para administradores.  
-                Gerencie reservas, bloqueios e liberações manuais.
-            </p>
+            <p>Gerencie reservas e ajustes em um único painel.</p>
             <button>Acessar Admin</button>
         </div>
 
-        <!-- Card 3: Calendário Público -->
-        <div class="card" onclick="window.location='publico.html'">
+        <div class="card" onclick="location.href='publico.html'">
             <div class="icon">📅</div>
             <h3>Calendário Público</h3>
-            <p>
-                Consulte todas as reservas do mês antes de solicitar uma nova.
-                Visualização aberta ao público.
-            </p>
+            <p>Consulte a disponibilidade antes de solicitar uma reserva.</p>
             <button>Ver Calendário</button>
         </div>
 
@@ -150,8 +194,17 @@
 </div>
 
 <footer>
-    © 2025 — Colégio Imperatriz Leopoldina — Sistema de Reservas
+    © 2025 Colégio Imperatriz Leopoldina — Sistema de Reservas
 </footer>
+
+<!-- BOTÃO FLUTUANTE WHATSAPP -->
+<a 
+    class="whatsapp-float"
+    href="https://wa.me/554236258379?text=Estou%20com%20a%20seguinte%20d%C3%BAvida%2Ferros%20no%20novo%20sistema%20de%20reservas%20do%20col%C3%A9gio"
+    target="_blank"
+>
+    ☎
+</a>
 
 </body>
 </html>
