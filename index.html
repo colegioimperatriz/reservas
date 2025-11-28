@@ -5,21 +5,133 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Sistema de Reservas - Colégio Imperatriz</title>
 <style>
-  body { font-family: Arial, sans-serif; margin:0; padding:0; background:#ece5dd; }
-  .chat-container { display:flex; flex-direction:column; max-width:480px; height:100vh; margin:0 auto; border:1px solid #ccc; background:#fff; }
-  .messages { flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; background:#e5ddd5; }
-  .message { margin:5px 0; padding:10px 14px; border-radius:18px; max-width:75%; word-wrap:break-word; line-height:1.4; white-space:pre-wrap;}
-  .from-system { background:#ffffff; align-self:flex-start; }
-  .from-user { background:#dcf8c6; align-self:flex-end; }
-  .option-btn { background:#25d366; color:#fff; border:none; border-radius:20px; padding:8px 14px; cursor:pointer; margin-top:5px; display:inline-block; user-select:none; transition:background-color 0.3s ease; }
+  /* Reset + sensible defaults */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { font-family: Arial, sans-serif; margin:0; padding:16px; background:#ece5dd; -webkit-font-smoothing:antialiased; }
+
+  /* Container: fluid on small/medium,保持 o visual compacto em telas muito grandes */
+  .chat-container {
+    display:flex;
+    flex-direction:column;
+    width:100%;
+    max-width:720px;      /* permite expandir em telas médias */
+    height: calc(100vh - 32px);
+    margin:0 auto;
+    border:1px solid #ccc;
+    background:#fff;
+    border-radius:10px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  }
+
+  /* Para manter o layout original em telas muito grandes (desktop) */
+  @media (min-width: 1024px) {
+    .chat-container { max-width:480px; }
+  }
+
+  .messages {
+    flex:1;
+    overflow-y:auto;
+    padding:12px;
+    display:flex;
+    flex-direction:column;
+    background:#e5ddd5;
+    min-height:0; /* importante para que overflow funcione dentro do flex */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    overflow-anchor: none; /* evita saltos estranhos ao inserir elementos */
+  }
+
+  .message {
+    margin:6px 0;
+    padding:10px 14px;
+    border-radius:18px;
+    max-width: calc(100% - 80px); /* garante margem lateral mesmo em telas pequenas */
+    word-wrap:break-word;
+    line-height:1.4;
+    white-space:pre-wrap;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02) inset;
+    font-size: clamp(13px, 1.8vw, 15px);
+  }
+
+  .from-system { background:#ffffff; align-self:flex-start; margin-right:auto; }
+  .from-user { background:#dcf8c6; align-self:flex-end; margin-left:auto; }
+
+  /* Opções (botões): responsivos e adaptativos */
+  .option-container { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .option-btn {
+    background:#25d366;
+    color:#fff;
+    border:none;
+    border-radius:20px;
+    padding:8px 14px;
+    cursor:pointer;
+    display:inline-block;
+    user-select:none;
+    transition:background-color 0.18s ease, transform 0.08s ease;
+    flex: 0 1 auto; /* não cresce demais, mas encolhe quando necessário */
+    min-width:64px;
+    max-width: 100%;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    overflow:hidden;
+    font-size: clamp(13px, 1.5vw, 15px);
+  }
   .option-btn:hover { background-color:#128c5e; }
   .option-btn.disabled { background:#ccc !important; cursor:not-allowed; }
-  .option-container { display:flex; flex-wrap:wrap; gap:5px; margin-top:5px; }
-  .input-container { display:flex; padding:10px; background:#f0f0f0; border-top:1px solid #ccc; }
-  .input-container input { flex:1; border-radius:25px; border:1px solid #ccc; padding:10px 15px; outline:none; font-size:14px; }
+
+  /* Input area: sticky to bottom of the container */
+  .input-container {
+    display:flex;
+    gap:8px;
+    padding:10px;
+    background:#f0f0f0;
+    border-top:1px solid #ccc;
+    align-items:center;
+    position: relative; /* mantém dentro do container */
+  }
+
+  .input-container input {
+    flex:1;
+    border-radius:25px;
+    border:1px solid #ccc;
+    padding:10px 15px;
+    outline:none;
+    font-size:14px;
+    min-width:0; /* importante para evitar overflow em flex */
+  }
   .input-container input:disabled { background:#e5e5e5; cursor:not-allowed; }
-  .input-container button { margin-left:8px; border:none; background:#25d366; color:white; border-radius:50%; width:40px; height:40px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; }
+
+  .input-container button {
+    margin-left:0;
+    border:none;
+    background:#25d366;
+    color:white;
+    border-radius:50%;
+    width:44px;
+    height:44px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:18px;
+    flex: 0 0 44px;
+  }
   .input-container button:disabled { background:#9fd9a0; cursor:not-allowed; }
+
+  /* pequenas melhorias visuais para telas reduzidas */
+  @media (max-width:420px){
+    body{ padding:10px; }
+    .chat-container{ height: calc(100vh - 20px); }
+    .message{ font-size:14px; }
+    .option-btn{ padding:8px 10px; min-width:56px; }
+    .input-container button{ width:40px; height:40px; font-size:16px; }
+  }
+
+  /* Melhor comportamento quando opções ocupam muitas linhas */
+  .option-container > button { flex-basis: auto; }
+
 </style>
 </head>
 <body>
