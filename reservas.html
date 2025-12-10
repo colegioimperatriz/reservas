@@ -193,6 +193,7 @@
       <p><strong>Data:</strong> <span id="modalData"></span></p>
       <p><strong>Horários:</strong> <span id="modalHorarios"></span></p>
       <p><strong>Quantidade:</strong> <span id="modalQuantidade"></span></p>
+      <p><strong>Observação:</strong> <span id="modalObs"></span></p>
       <div id="modalPerHorario" style="margin-top:8px"></div>
       <div style="margin-top:12px;">
         <button id="cancelReservationBtn" class="btn primary">Cancelar Reserva</button>
@@ -235,6 +236,11 @@
       <div class="field">
         <label for="manualQuantidade">Quantidade (por horário)</label>
         <input type="number" id="manualQuantidade" min="1" value="1" />
+      </div>
+
+      <div class="field">
+        <label for="manualObs">Observação (opcional)</label>
+        <input type="text" id="manualObs" placeholder="Ex.: Liberação para professor Fulano" />
       </div>
 
       <div style="margin-top:8px;">
@@ -287,7 +293,8 @@ function showTooltip(e){
   const horariosText = el.dataset.horarios || '';
   const data = el.dataset.data || '';
   const ambiente = el.dataset.ambiente || '';
-  tooltip.innerHTML = `<b>${ambiente}</b><div>${prof} — ${quant} unidade(s)</div><div style="font-size:12px;margin-top:4px">${horariosText} • ${isoToBR(data)}</div>`;
+  const obs = el.dataset.obs || '';
+  tooltip.innerHTML = `<b>${ambiente}</b><div>${prof} — ${quant} unidade(s)</div><div style="font-size:12px;margin-top:4px">${horariosText} • ${isoToBR(data)}</div>${obs ? `<div style="margin-top:6px;font-size:12px"><i>${obs}</i></div>` : ''}`;
   tooltip.classList.add('show');
   moveTooltip(e);
   tooltip.setAttribute('aria-hidden','false');
@@ -458,6 +465,7 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
           div.dataset.data = dataStr;
           div.dataset.ambiente = amb;
           div.dataset.resId = r.id || '';
+          div.dataset.obs = r.observacao || r.obs || '';
           div.addEventListener('mouseenter', showTooltip);
           div.addEventListener('mousemove', moveTooltip);
           div.addEventListener('mouseleave', hideTooltip);
@@ -478,6 +486,7 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
           div.dataset.horarios = h;
           div.dataset.data = dataStr;
           div.dataset.ambiente = b.ambiente || 'Chromebooks';
+          div.dataset.obs = b.observacao || b.obs || '';
           div.addEventListener('mouseenter', showTooltip);
           div.addEventListener('mousemove', moveTooltip);
           div.addEventListener('mouseleave', hideTooltip);
@@ -519,6 +528,7 @@ function openModal(r){
   document.getElementById('modalData').textContent = isoToBR(r.datafim || r.dataFim);
   document.getElementById('modalHorarios').textContent = toArray(r.horarios).join(', ');
   document.getElementById('modalQuantidade').textContent = r.quantidade || 1;
+  document.getElementById('modalObs').textContent = r.observacao || r.obs || '---';
 
   const perHorarioDiv = document.getElementById('modalPerHorario'); perHorarioDiv.innerHTML='';
   const counts = buildReservasPorDataHorarioPara(r.datafim || r.dataFim);
@@ -660,6 +670,7 @@ confirmManual.onclick = async ()=>{
   const selected = Array.from(manualHorarios.querySelectorAll('.selected')).map(b=>b.dataset.h);
   if(selected.length===0){ alert('Selecione ao menos um horário'); return; }
   const data = manualDate.value; if(!data){ alert('Selecione uma data válida'); return; }
+  const obs = (document.getElementById('manualObs') && document.getElementById('manualObs').value) ? document.getElementById('manualObs').value.trim() : '';
   const quantidade = parseInt(manualQuantidade.value) || 1;
   const ambiente = manualAmbiente.value || 'Chromebooks';
 
@@ -698,7 +709,8 @@ confirmManual.onclick = async ()=>{
     datafim: data,
     horarios: [h],
     ambiente: ambiente,
-    quantidade: quantidade
+    quantidade: quantidade,
+    observacao: obs || null
     });
 
       reservas = await fetchReservas();
