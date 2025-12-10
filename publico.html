@@ -102,17 +102,18 @@
     }
 
     /* --- RESERVAS & BLOQUEIOS --- */
-    .badge {
-        display: block;
-        margin-top: 4px;
-        padding: 4px 6px;
-        border-radius: 6px;
-        color: #fff;
-        font-size: 11px;
-        line-height: 1.2;
-        word-break: break-word;
-        cursor: pointer;
-    }
+   .badge {
+    display: block;
+    margin-top: 4px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    background: #000 !important;
+    color: #fff !important;
+    font-size: 11px;
+    line-height: 1.2;
+    word-break: break-word;
+    cursor: pointer;
+}
 
     .bloqueio {
         background: #555 !important;
@@ -324,7 +325,7 @@ async function montarCalendarioPublico() {
         });
 
         /* === BLOQUEIOS === */
-        bloqueios
+       /*   bloqueios
         .filter(b => (b.datafim || "").startsWith(dataISO))
         .forEach(b => {
 
@@ -350,7 +351,7 @@ async function montarCalendarioPublico() {
 
                 dayDiv.appendChild(badge);
             });
-        });
+        });*/
 
         grid.appendChild(dayDiv);
     }
