@@ -110,17 +110,17 @@
   /* ====== RESUMO CHROMEBOOKS MELHORADO ====== */
 .resumo-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-  gap:6px;
-  margin-top:8px;
+  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+  gap:4px;
+  margin-top:4px;
 }
 
 .resumo-card{
-  background:#ffffff22;
-  padding:6px;
+  background:rgba(255,255,255,0.15);
+  padding:4px 6px;
   border-radius:6px;
   font-size:11px;
-  backdrop-filter:blur(2px);
+  line-height:1.2;
 }
 
 .resumo-card.full{
@@ -129,15 +129,16 @@
 
 .resumo-horario{
   font-weight:700;
-  font-size:12px;
+  font-size:11px;
+  margin-bottom:2px;
 }
 
 .resumo-bar{
-  height:6px;
-  background:#ffffff33;
+  height:5px;
+  background:rgba(255,255,255,0.25);
   border-radius:4px;
   overflow:hidden;
-  margin:4px 0;
+  margin:3px 0;
 }
 
 .resumo-bar-fill{
@@ -155,6 +156,7 @@
   display:flex;
   justify-content:space-between;
   font-size:10px;
+  gap:4px;
 }
 </style>
 </head>
@@ -189,16 +191,11 @@
         <option>Sala do CTC</option>
       </select>
     </div>
-
-    <div id="totalsBar" style="text-align:right">
-      <span class="badge" aria-live="polite">
-        Reservados (hoje):<strong id="totalReservados">0</strong>
-        <div id="detalhesPorHorario" style="font-size:11px;margin-top:6px;line-height:1.2"></div>
-      </span>
-      <span style="width:8px;display:inline-block"></span>
-     <span class="badge secondary">Total livres (hoje): <strong id="totalLivres">0</strong></span>
-    </div>
-  </div>
+<div id="totalsBar" style="text-align:right">
+ <div class="badge" aria-live="polite">
+  <div id="detalhesPorHorario"></div>
+</div>
+</div>
 
   <div class="legend" id="legend" aria-hidden="false">
     <div class="legend-item"><span class="swatch" style="background:var(--chromebooks)"></span> Chromebooks</div>
@@ -558,18 +555,12 @@ function atualizarTotaisDia(){
   const hoje = hojeStr();
   const mapa = buildReservasPorDataHorarioPara(hoje);
 
-  let totalReservadosDia = 0;
-  let maiorOcupacao = 0;
   let html = `<div class="resumo-grid">`;
 
   horarios.forEach(h=>{
     const reservados = mapa[`Chromebooks-${h}`] || 0;
     const disponiveis = Math.max(0, MAX_CHROMEBOOKS - reservados);
     const porcentagem = Math.min(100, (reservados / MAX_CHROMEBOOKS) * 100);
-
-    if(reservados > maiorOcupacao) maiorOcupacao = reservados;
-    totalReservadosDia += reservados;
-
     const fullClass = reservados >= MAX_CHROMEBOOKS ? 'full' : '';
 
     html += `
@@ -579,8 +570,8 @@ function atualizarTotaisDia(){
           <div class="resumo-bar-fill" style="width:${porcentagem}%"></div>
         </div>
         <div class="resumo-numeros">
-          <span>R: ${reservados}</span>
-          <span>D: ${disponiveis}</span>
+          <span>Reservados: ${reservados}</span>
+          <span>Disponíveis: ${disponiveis}</span>
         </div>
       </div>
     `;
@@ -588,13 +579,10 @@ function atualizarTotaisDia(){
 
   html += `</div>`;
 
-  document.getElementById('totalReservados').textContent = totalReservadosDia;
   document.getElementById('detalhesPorHorario').innerHTML = html;
-
-  // Total livres agora representa o maior número disponível em um horário
-  const totalLivres = Math.max(0, MAX_CHROMEBOOKS - maiorOcupacao);
-  document.getElementById('totalLivres').textContent = totalLivres;
 }
+
+
 /* ----------------- modal detalhes (cancelar exige login) ----------------- */
 function openModal(r){
   const ambiente = r.ambiente || 'Chromebooks';
