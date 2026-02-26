@@ -110,9 +110,8 @@
   /* ====== RESUMO CHROMEBOOKS MELHORADO ====== */
 .resumo-grid{
   display:grid;
-  grid-template-columns:1fr 1fr; /* 2 colunas fixas */
-  gap:6px;
-  margin-top:4px;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
 }
 
 .resumo-card{
@@ -556,44 +555,55 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
 function atualizarTotaisDia(){
   const hoje = hojeStr();
   const mapa = buildReservasPorDataHorarioPara(hoje);
-
-  // formata data para BR
   const dataBR = hoje.split('-').reverse().join('/');
+
+  const horariosManha = ['07:20','08:05','08:50','09:55','10:40','11:25'];
+  const horariosTarde = ['13:45','14:30','15:35','16:20','17:05'];
 
   let html = `
     <div style="font-weight:600;font-size:15px;margin-bottom:8px;text-align:center;color:#fff;border-bottom:1px solid rgba(255,255,255,.3);padding-bottom:4px;">
-      Reservas de Chromebooks, hoje ${dataBR} por horário:
+      Reservas de hoje (${dataBR}) / horário
     </div>
+
     <div class="resumo-grid">
+      <div>
   `;
 
-  horarios.forEach(h=>{
-    const reservados = mapa[`Chromebooks-${h}`] || 0;
-    const disponiveis = Math.max(0, MAX_CHROMEBOOKS - reservados);
-    const porcentagem = Math.min(100, (reservados / MAX_CHROMEBOOKS) * 100);
-    const fullClass = reservados >= MAX_CHROMEBOOKS ? 'full' : '';
-
-    html += `
-      <div class="resumo-card ${fullClass}">
-        <div class="resumo-horario">${h}</div>
-        <div class="resumo-bar">
-          <div class="resumo-bar-fill" style="width:${porcentagem}%"></div>
-        </div>
-        <div class="resumo-numeros">
-          <span>Reservados: ${reservados}</span>
-          <span>Disponíveis: ${disponiveis}</span>
-        </div>
-      </div>
-    `;
+  // 🔹 COLUNA ESQUERDA - MANHÃ
+  horariosManha.forEach(h=>{
+    html += gerarCardResumo(h, mapa);
   });
 
-  html += `</div>`;
+  html += `</div><div>`;
+
+  // 🔹 COLUNA DIREITA - TARDE
+  horariosTarde.forEach(h=>{
+    html += gerarCardResumo(h, mapa);
+  });
+
+  html += `</div></div>`;
 
   document.getElementById('detalhesPorHorario').innerHTML = html;
 }
+function gerarCardResumo(h, mapa){
+  const reservados = mapa[`Chromebooks-${h}`] || 0;
+  const disponiveis = Math.max(0, MAX_CHROMEBOOKS - reservados);
+  const porcentagem = Math.min(100, (reservados / MAX_CHROMEBOOKS) * 100);
+  const fullClass = reservados >= MAX_CHROMEBOOKS ? 'full' : '';
 
-
-
+  return `
+    <div class="resumo-card ${fullClass}">
+      <div class="resumo-horario">${h}</div>
+      <div class="resumo-bar">
+        <div class="resumo-bar-fill" style="width:${porcentagem}%"></div>
+      </div>
+      <div class="resumo-numeros">
+        <span>Reservados: ${reservados}</span>
+        <span>Disponíveis: ${disponiveis}</span>
+      </div>
+    </div>
+  `;
+}
 /* ----------------- modal detalhes (cancelar exige login) ----------------- */
 function openModal(r){
   const ambiente = r.ambiente || 'Chromebooks';
