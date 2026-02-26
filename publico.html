@@ -2,154 +2,255 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Calendário Público — Colégio Imperatriz</title>
 
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #f4f4f4;
-        margin: 0;
-        padding: 20px;
-        color: #222;
-    }
 
-    .container {
-        max-width: 1100px;
-        margin: 0 auto;
-    }
+/* =========================
+   RESET & BASE (Mobile First)
+========================= */
 
-    h2 {
-        text-align: center;
-        margin-bottom: 10px;
-    }
-
-    .muted {
-        text-align: center;
-        font-size: 14px;
-        color: #666;
-        margin-bottom: 20px;
-    }
-
-    /* --- CONTROL BAR --- */
-    .controls {
-        display: flex;
-        justify-content: center;
-        gap: 12px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-    }
-    .btn {
-        padding: 8px 12px;
-        background: #075E54;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: bold;
-    }
-    select {
-        padding: 8px;
-        border-radius: 6px;
-        border: 1px solid #ccc;
-    }
-
-    /* --- CALENDAR STRUCTURE --- */
-    .calendar {
-        background: #fff;
-        border-radius: 10px;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-        overflow: hidden;
-    }
-
-    .calendar-header {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 15px;
-        background: #075E54;
-        color: #fff;
-        font-size: 20px;
-        font-weight: bold;
-    }
-
-    .calendar-grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        border-top: 1px solid #ddd;
-    }
-
-    .weekday {
-        background: #e7e7e7;
-        padding: 10px 0;
-        text-align: center;
-        font-weight: bold;
-        border-bottom: 1px solid #ccc;
-    }
-
-    .day {
-        min-height: 120px;
-        padding: 10px;
-        border: 1px solid #eee;
-        background: #fafafa;
-        position: relative;
-    }
-
-    .day .num {
-        font-weight: bold;
-        margin-bottom: 6px;
-        font-size: 15px;
-    }
-
-    /* --- RESERVAS & BLOQUEIOS --- */
-   .badge {
-    display: block;
-    margin-top: 4px;
-    padding: 4px 6px;
-    border-radius: 6px;
-    background: #000 !important;
-    color: #fff !important;
-    font-size: 11px;
-    line-height: 1.2;
-    word-break: break-word;
-    cursor: pointer;
+:root{
+    --primary: #075E54;
+    --primary-dark: #064940;
+    --bg: #f2f5f7;
+    --card: #ffffff;
+    --text: #1f2933;
+    --muted: #6b7280;
+    --border: #e5e7eb;
 }
 
-    .bloqueio {
-        background: #555 !important;
+*{
+    box-sizing: border-box;
+}
+
+body{
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 12px;
+}
+
+.container{
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+h2{
+    text-align: center;
+    margin: 10px 0 5px;
+    font-size: 20px;
+}
+
+.muted{
+    text-align: center;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 18px;
+}
+
+/* =========================
+   CONTROLS
+========================= */
+
+.controls{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.btn,
+select{
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.btn{
+    background: var(--primary);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: 0.2s ease;
+}
+
+.btn:hover{
+    background: var(--primary-dark);
+}
+
+select{
+    background: #fff;
+}
+
+/* =========================
+   CALENDAR CARD
+========================= */
+
+.calendar{
+    background: var(--card);
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+/* Header */
+.calendar-header{
+    text-align: center;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    font-weight: 600;
+    font-size: 18px;
+    text-transform: capitalize;
+}
+
+/* Scroll container (mobile safety) */
+.calendar-wrapper{
+    overflow-x: auto;
+}
+
+/* Grid */
+.calendar-grid{
+    display: grid;
+    grid-template-columns: repeat(7, minmax(90px, 1fr));
+    min-width: 630px;
+}
+
+/* Weekdays */
+.weekday{
+    background: #f3f4f6;
+    text-align: center;
+    font-weight: 600;
+    padding: 8px 0;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Day cell */
+.day{
+    min-height: 85px;
+    padding: 6px;
+    border: 1px solid var(--border);
+    background: #fafafa;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.day:hover{
+    background: #f0fdf4;
+}
+
+.day .num{
+    font-weight: 700;
+    font-size: 13px;
+}
+
+/* =========================
+   BADGES
+========================= */
+
+.badge{
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-size: 10px;
+    line-height: 1.2;
+    color: #fff;
+    cursor: pointer;
+    word-break: break-word;
+    transition: 0.15s ease;
+}
+
+.badge:hover{
+    transform: scale(1.02);
+    opacity: 0.9;
+}
+
+/* Ambientes cores */
+.Chromebooks { background: #1e88e5; }
+.Cozinha { background: #f39c12; }
+.TeleSala { background: #2e7d32; }
+.SalaDeAtendimentoI { background: #8e44ad; }
+.SalaDeReunioes { background: #d35400; }
+.Carro { background: #6c757d; }
+.LabQuimica { background: #00796b; }
+.LabFisica { background: #5d4037; }
+.LabBiologia { background: #c2185b; }
+.SalaDoCTC { background: #3949ab; }
+
+.bloqueio{
+    background: #444 !important;
+}
+
+/* =========================
+   TOOLTIP (touch friendly)
+========================= */
+
+.tooltip{
+    position: fixed;
+    background: #111;
+    color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    max-width: 260px;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: 0.15s ease;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.tooltip.show{
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* =========================
+   DESKTOP
+========================= */
+
+@media (min-width: 768px){
+
+    body{
+        padding: 24px;
     }
 
-    /* COLORS */
-    .Chromebooks { background: #1e88e5; }
-    .Cozinha { background: #f39c12; }
-    .TeleSala { background: #2e7d32; }
-    .SalaDeAtendimentoI { background: #8e44ad; }
-    .SalaDeReunioes { background: #d35400; }
-    .Carro { background: #6c757d; }
-    .LabQuimica { background: #00796b; }
-    .LabFisica { background: #5d4037; }
-    .LabBiologia { background: #c2185b; }
-    .SalaDoCTC { background: #3949ab; }
+    h2{
+        font-size: 24px;
+    }
 
-    /* Tooltip */
-    .tooltip {
-        position: fixed;
-        background: #111;
-        color: #fff;
-        padding: 8px 10px;
-        border-radius: 6px;
-        font-size: 12px;
-        pointer-events: none;
-        z-index: 9999;
-        opacity: 0;
-        transition: opacity .15s ease, transform .15s ease;
-        transform: translateY(-4px);
-        max-width: 260px;
+    .controls{
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
     }
-    .tooltip.show {
-        opacity: 1;
-        transform: translateY(0);
+
+    .btn, select{
+        width: auto;
     }
+
+    .day{
+        min-height: 120px;
+        padding: 8px;
+    }
+
+    .badge{
+        font-size: 11px;
+    }
+}
 
 </style>
 </head>
@@ -158,9 +259,10 @@
 
 <div class="container">
     <h2>Calendário Público de Reservas</h2>
-    <p class="muted">Visualize aqui todas as reservas existentes antes de realizar a sua pelo chatbot.</p>
+    <p class="muted">
+        Visualize aqui todas as reservas existentes antes de realizar a sua pelo chatbot.
+    </p>
 
-    <!-- CONTROLES -->
     <div class="controls">
         <button id="prevBtn" class="btn">◀ Mês Anterior</button>
         <button id="nextBtn" class="btn">Próximo Mês ▶</button>
@@ -182,7 +284,9 @@
 
     <div class="calendar">
         <div id="calendarHeader" class="calendar-header">Carregando...</div>
-        <div id="calendarGrid" class="calendar-grid"></div>
+        <div class="calendar-wrapper">
+            <div id="calendarGrid" class="calendar-grid"></div>
+        </div>
     </div>
 </div>
 
@@ -201,9 +305,7 @@ const headers = {
 let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth();
 let reservas = [];
-let bloqueios = [];
 
-/* Tooltip */
 const tooltip = document.getElementById("tooltip");
 
 function showTooltip(e) {
@@ -211,10 +313,6 @@ function showTooltip(e) {
     tooltip.style.left = e.clientX + 12 + "px";
     tooltip.style.top = e.clientY + 12 + "px";
     tooltip.classList.add("show");
-}
-function moveTooltip(e) {
-    tooltip.style.left = e.clientX + 12 + "px";
-    tooltip.style.top = e.clientY + 12 + "px";
 }
 function hideTooltip() {
     tooltip.classList.remove("show");
@@ -242,13 +340,11 @@ async function fetchJson(url) {
 
 async function carregarDados() {
     reservas = await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*`);
-    bloqueios = await fetchJson(`${SUPABASE_URL}/rest/v1/bloqueios?select=*`);
 }
 
 async function montarCalendarioPublico() {
 
     const filtro = document.getElementById("filtroAmbiente").value;
-
     const headerEl = document.getElementById("calendarHeader");
     const grid = document.getElementById("calendarGrid");
 
@@ -260,8 +356,7 @@ async function montarCalendarioPublico() {
 
     grid.innerHTML = "";
 
-    // Cabeçalho dos dias
-    const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const diasSemana = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
     diasSemana.forEach(d => {
         const div = document.createElement("div");
         div.className = "weekday";
@@ -274,26 +369,21 @@ async function montarCalendarioPublico() {
     const blanks = primeiroDia.getDay();
     const totalDias = ultimoDia.getDate();
 
-    // Dias vazios antes do primeiro dia
-    for (let i = 0; i < blanks; i++) {
-        grid.appendChild(document.createElement("div")).className = "day";
+    for (let i=0;i<blanks;i++){
+        grid.appendChild(document.createElement("div")).className="day";
     }
 
-    // Dias do mês
-    for (let dia = 1; dia <= totalDias; dia++) {
+    for (let dia=1; dia<=totalDias; dia++){
 
         const dataISO = `${currentYear}-${String(currentMonth+1).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
-
         const dayDiv = document.createElement("div");
-        dayDiv.className = "day";
+        dayDiv.className="day";
 
-        // Número do dia
         const num = document.createElement("div");
-        num.className = "num";
-        num.textContent = dia;
+        num.className="num";
+        num.textContent=dia;
         dayDiv.appendChild(num);
 
-        /* === RESERVAS === */
         reservas
         .filter(r => (r.datafim || "").startsWith(dataISO))
         .forEach(r => {
@@ -303,86 +393,45 @@ async function montarCalendarioPublico() {
             const horas = toArray(r.horarios);
             horas.forEach(h => {
 
-                let className = r.ambiente.replace(/\s+/g, '').replace(/[^\w]/g,'');
+                let className = r.ambiente.replace(/\s+/g,'').replace(/[^\w]/g,'');
 
                 const badge = document.createElement("div");
                 badge.className = `badge ${className}`;
                 badge.textContent = `${h} — ${r.ambiente} (${r.quantidade || 1})`;
 
                 badge.dataset.tip =
-                    `<b>${r.ambiente}</b><br>` +
-                    `Horário: ${h}<br>` +
-                    `Professor: ${r.professor || "—"}<br>` +
-                    `Quantidade: ${r.quantidade || 1}<br>` +
-                    `Data: ${isoToBR(dataISO)}`;
+                    `<b>${r.ambiente}</b><br>
+                     Horário: ${h}<br>
+                     Professor: ${r.professor || "—"}<br>
+                     Quantidade: ${r.quantidade || 1}<br>
+                     Data: ${isoToBR(dataISO)}`;
 
-                badge.addEventListener("mouseenter", showTooltip);
-                badge.addEventListener("mousemove", moveTooltip);
+                badge.addEventListener("click", showTooltip);
                 badge.addEventListener("mouseleave", hideTooltip);
 
                 dayDiv.appendChild(badge);
             });
         });
 
-        /* === BLOQUEIOS === */
-       /*   bloqueios
-        .filter(b => (b.datafim || "").startsWith(dataISO))
-        .forEach(b => {
-
-            if (filtro !== "all" && filtro !== b.ambiente) return;
-
-            const horas = toArray(b.horarios);
-            horas.forEach(h => {
-
-                const badge = document.createElement("div");
-                badge.className = `badge bloqueio`;
-                badge.textContent = `${h} — BLOQUEADO`;
-
-                badge.dataset.tip =
-                    `<b>BLOQUEADO</b><br>` +
-                    `${b.ambiente}<br>` +
-                    `Horário: ${h}<br>` +
-                    `Quantidade: ${b.quantidade || 0}<br>` +
-                    `Data: ${isoToBR(dataISO)}`;
-
-                badge.addEventListener("mouseenter", showTooltip);
-                badge.addEventListener("mousemove", moveTooltip);
-                badge.addEventListener("mouseleave", hideTooltip);
-
-                dayDiv.appendChild(badge);
-            });
-        });*/
-
         grid.appendChild(dayDiv);
     }
 }
 
-/* NAVIGATION */
 document.getElementById("prevBtn").onclick = () => {
     currentMonth--;
-    if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-    }
+    if(currentMonth<0){currentMonth=11;currentYear--;}
     montarCalendarioPublico();
 };
 
 document.getElementById("nextBtn").onclick = () => {
     currentMonth++;
-    if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-    }
+    if(currentMonth>11){currentMonth=0;currentYear++;}
     montarCalendarioPublico();
 };
 
-/* FILTRO */
-document.getElementById("filtroAmbiente").onchange = () => {
-    montarCalendarioPublico();
-};
+document.getElementById("filtroAmbiente").onchange = montarCalendarioPublico;
 
-/* INIT */
-(async () => {
+(async ()=>{
     await carregarDados();
     montarCalendarioPublico();
 })();
