@@ -107,6 +107,55 @@
     .legend{font-size:13px}
     .badge{font-size:12px}
   }
+  /* ====== RESUMO CHROMEBOOKS MELHORADO ====== */
+.resumo-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:6px;
+  margin-top:8px;
+}
+
+.resumo-card{
+  background:#ffffff22;
+  padding:6px;
+  border-radius:6px;
+  font-size:11px;
+  backdrop-filter:blur(2px);
+}
+
+.resumo-card.full{
+  background:#b00020;
+}
+
+.resumo-horario{
+  font-weight:700;
+  font-size:12px;
+}
+
+.resumo-bar{
+  height:6px;
+  background:#ffffff33;
+  border-radius:4px;
+  overflow:hidden;
+  margin:4px 0;
+}
+
+.resumo-bar-fill{
+  height:100%;
+  background:#fff;
+  width:0%;
+  transition:width .3s ease;
+}
+
+.resumo-card.full .resumo-bar-fill{
+  background:#ffeb3b;
+}
+
+.resumo-numeros{
+  display:flex;
+  justify-content:space-between;
+  font-size:10px;
+}
 </style>
 </head>
 <body>
@@ -508,18 +557,44 @@ async function montarCalendario(ano=currentYear, mes=currentMonth){
 function atualizarTotaisDia(){
   const hoje = hojeStr();
   const mapa = buildReservasPorDataHorarioPara(hoje);
-  let total = 0;
-  let detalhes = '';
-  horarios.forEach(h=>{
-    const val = mapa[`Chromebooks-${h}`] || 0;
-    detalhes += `${h}: ${val} ocupados<br>`;
-    total += val;
-  });
-  document.getElementById('totalReservados').textContent = total;
-  document.getElementById('detalhesPorHorario').innerHTML = detalhes;
-  document.getElementById('totalLivres').textContent = Math.max(0, MAX_CHROMEBOOKS - total);
-}
 
+  let totalReservadosDia = 0;
+  let maiorOcupacao = 0;
+  let html = `<div class="resumo-grid">`;
+
+  horarios.forEach(h=>{
+    const reservados = mapa[`Chromebooks-${h}`] || 0;
+    const disponiveis = Math.max(0, MAX_CHROMEBOOKS - reservados);
+    const porcentagem = Math.min(100, (reservados / MAX_CHROMEBOOKS) * 100);
+
+    if(reservados > maiorOcupacao) maiorOcupacao = reservados;
+    totalReservadosDia += reservados;
+
+    const fullClass = reservados >= MAX_CHROMEBOOKS ? 'full' : '';
+
+    html += `
+      <div class="resumo-card ${fullClass}">
+        <div class="resumo-horario">${h}</div>
+        <div class="resumo-bar">
+          <div class="resumo-bar-fill" style="width:${porcentagem}%"></div>
+        </div>
+        <div class="resumo-numeros">
+          <span>R: ${reservados}</span>
+          <span>D: ${disponiveis}</span>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+
+  document.getElementById('totalReservados').textContent = totalReservadosDia;
+  document.getElementById('detalhesPorHorario').innerHTML = html;
+
+  // Total livres agora representa o maior número disponível em um horário
+  const totalLivres = Math.max(0, MAX_CHROMEBOOKS - maiorOcupacao);
+  document.getElementById('totalLivres').textContent = totalLivres;
+}
 /* ----------------- modal detalhes (cancelar exige login) ----------------- */
 function openModal(r){
   const ambiente = r.ambiente || 'Chromebooks';
