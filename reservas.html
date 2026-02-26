@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta name="theme-color" content="#075E54" />
-<title>Controle de Reservas - Admin  — Colégio Imperatriz</title>
+<title>Controle de Reservas - Painel Administrador  — Colégio Imperatriz</title>
 <style>
   :root{
     --primary:#075E54;
@@ -557,7 +557,15 @@ function atualizarTotaisDia(){
   const hoje = hojeStr();
   const mapa = buildReservasPorDataHorarioPara(hoje);
 
-  let html = `<div class="resumo-grid">`;
+  // formata data para BR
+  const dataBR = hoje.split('-').reverse().join('/');
+
+  let html = `
+    <div style="font-weight:600;font-size:15px;margin-bottom:8px;text-align:center;color:#fff;border-bottom:1px solid rgba(255,255,255,.3);padding-bottom:4px;">
+      Reservas de hoje (${dataBR}) / horário
+    </div>
+    <div class="resumo-grid">
+  `;
 
   horarios.forEach(h=>{
     const reservados = mapa[`Chromebooks-${h}`] || 0;
@@ -583,6 +591,7 @@ function atualizarTotaisDia(){
 
   document.getElementById('detalhesPorHorario').innerHTML = html;
 }
+
 
 
 /* ----------------- modal detalhes (cancelar exige login) ----------------- */
