@@ -250,6 +250,10 @@ select{
     .badge{
         font-size: 11px;
     }
+	
+	.badge strong{
+    font-size: 11px;
+}
 }
 
 </style>
@@ -383,51 +387,77 @@ async function montarCalendarioPublico() {
         num.className="num";
         num.textContent=dia;
         dayDiv.appendChild(num);
+// ===============================
+// COLE ESTE BLOCO NO LUGAR
+// ===============================
 
-        reservas
-        .filter(r => (r.datafim || "").startsWith(dataISO))
-        .forEach(r => {
+// 1) Coleta todos eventos do dia
+let eventosDoDia = [];
 
-            if (filtro !== "all" && filtro !== r.ambiente) return;
+reservas
+.filter(r => (r.datafim || "").startsWith(dataISO))
+.forEach(r => {
 
-            const horas = toArray(r.horarios);
-            horas.forEach(h => {
+    if (filtro !== "all" && filtro !== r.ambiente) return;
 
-                let className = r.ambiente.replace(/\s+/g,'').replace(/[^\w]/g,'');
+    const horas = toArray(r.horarios);
 
-                const badge = document.createElement("div");
-                badge.className = `badge ${className}`;
-                badge.textContent = `${h} — ${r.ambiente} (${r.quantidade || 1})`;
-
-                badge.dataset.tip =
-                    `<b>${r.ambiente}</b><br>
-                     Horário: ${h}<br>
-                     Professor: ${r.professor || "—"}<br>
-                     Quantidade: ${r.quantidade || 1}<br>
-                     Data: ${isoToBR(dataISO)}`;
-
-                badge.addEventListener("click", showTooltip);
-                badge.addEventListener("mouseleave", hideTooltip);
-
-                dayDiv.appendChild(badge);
-            });
+    horas.forEach(h => {
+        eventosDoDia.push({
+            horario: h,
+            ambiente: r.ambiente,
+            quantidade: r.quantidade || 1,
+            professor: r.professor || "—"
         });
+    });
+});
 
-        grid.appendChild(dayDiv);
-    }
+// 2) Ordena por horário (manhã → tarde)
+eventosDoDia.sort((a,b) => {
+
+    const [hA,mA] = a.horario.split(":").map(Number);
+    const [hB,mB] = b.horario.split(":").map(Number);
+
+    const minutosA = hA*60 + mA;
+    const minutosB = hB*60 + mB;
+
+    return minutosA - minutosB;
+});
+
+// 3) Renderiza ordenado
+eventosDoDia.forEach(ev => {
+
+    let className = ev.ambiente
+        .replace(/\s+/g,'')
+        .replace(/[^\w]/g,'');
+
+    const badge = document.createElement("div");
+    badge.className = `badge ${className}`;
+
+    badge.innerHTML = `
+        <strong>${ev.horario}</strong><br>
+        ${ev.ambiente} (${ev.quantidade})<br>
+        <span style="font-size:9px; opacity:.9">
+            ${ev.professor}
+        </span>
+    `;
+
+    dayDiv.appendChild(badge);
+});
+grid.appendChild(dayDiv);
 }
-
+}
 document.getElementById("prevBtn").onclick = () => {
     currentMonth--;
     if(currentMonth<0){currentMonth=11;currentYear--;}
     montarCalendarioPublico();
 };
-
 document.getElementById("nextBtn").onclick = () => {
     currentMonth++;
     if(currentMonth>11){currentMonth=0;currentYear++;}
     montarCalendarioPublico();
 };
+
 
 document.getElementById("filtroAmbiente").onchange = montarCalendarioPublico;
 
