@@ -181,6 +181,7 @@
   <div id="topBar">
     <div class="controls" aria-hidden="false">
       <button id="refreshBtn" class="btn primary" title="Atualizar calendário" aria-label="Atualizar calendário">🔁 Atualizar</button>
+	  <button id="openRecorrenteBtn" class="btn primary" disabled>🔁 Reserva Recorrente</button>
       <button id="openManualBtn" class="btn warn" title="Abrir liberação manual" aria-label="Abrir liberação manual">🗝️ Liberar Manualmente</button>
       <select id="filterAmbiente" aria-label="Filtrar por ambiente" class="btn ghost" style="margin-left:8px;padding:6px 10px;border-radius:8px">
         <option value="all">Mostrar todos ambientes</option>
@@ -304,6 +305,67 @@
     </div>
   </div>
 </div>
+<!-- MODAL RESERVA RECORRENTE -->
+<div id="recorrenteModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <button id="closeRecorrente" class="close">&times;</button>
+    <h3>Cadastrar Reserva Recorrente</h3>
+
+    <div class="field">
+      <label>Data Inicial</label>
+      <input type="date" id="recDataInicio">
+    </div>
+
+    <div class="field">
+      <label>Data Final</label>
+      <input type="date" id="recDataFim">
+    </div>
+
+    <div class="field">
+      <label>Dia da Semana</label>
+      <select id="recDiaSemana">
+        <option value="1">Segunda</option>
+        <option value="2">Terça</option>
+        <option value="3">Quarta</option>
+        <option value="4">Quinta</option>
+        <option value="5">Sexta</option>
+        <option value="6">Sábado</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Horário</label>
+      <select id="recHorario"></select>
+    </div>
+
+    <div class="field">
+      <label>Ambiente</label>
+      <select id="recAmbiente">
+        <option>Chromebooks</option>
+        <option>Cozinha</option>
+        <option>Tele Sala</option>
+        <option>Sala de Atendimento I</option>
+        <option>Sala de Reuniões</option>
+        <option>Carro</option>
+        <option>Lab. Química</option>
+        <option>Lab. Física</option>
+        <option>Lab. Biologia</option>
+        <option>Sala do CTC</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Professor</label>
+      <input type="text" id="recProfessor">
+    </div>
+
+    <div style="margin-top:10px;">
+      <button id="confirmRecorrente" class="btn primary">
+        Confirmar Recorrência
+      </button>
+    </div>
+  </div>
+</div>
 
 <div id="tooltip" class="tooltip" aria-hidden="true"></div>
 
@@ -398,6 +460,27 @@ async function criarBloqueio(body){
 
 async function deleteReserva(id){
   try{ await fetch(`${SUPABASE_URL}/rest/v1/reservas?id=eq.${id}`,{method:'DELETE',headers}); }catch(e){ console.error('deleteReserva',e); }
+}
+async function deleteSerie(recorrenciaId){
+  try{
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/reservas?recorrencia_id=eq.${recorrenciaId}`,
+      {
+        method:'DELETE',
+        headers
+      }
+    );
+
+    if(!res.ok){
+      const txt = await res.text();
+      throw new Error(txt || res.status);
+    }
+
+  }catch(e){
+    console.error('deleteSerie', e);
+    alert("Erro ao cancelar série.");
+    throw e;
+  }
 }
 
 /* ----------------- mapa por data-horário-ambiente ----------------- */
@@ -632,52 +715,50 @@ function openModal(r){
 
   const cancelBtn = document.getElementById('cancelReservationBtn');
   cancelBtn.onclick = async () => {
-    if (!isLoggedIn){ alert('Ação permitida apenas para administradores autenticados.'); return; }
-    if (!confirm('Cancelar reserva?')) return;
-    setLoading(true, 'Removendo reserva...');
 
-    try {
+  if (!isLoggedIn){
+    alert('Ação permitida apenas para administradores autenticados.');
+    return;
+  }
+
+  let cancelarSerie = false;
+
+  if(r.recorrencia_id){
+    const escolha = confirm(
+      "Esta reserva faz parte de uma série.\n\n" +
+      "OK = Cancelar série inteira\n" +
+      "Cancelar = Cancelar apenas esta ocorrência"
+    );
+    cancelarSerie = escolha;
+  }else{
+    if(!confirm('Cancelar reserva?')) return;
+  }
+
+  setLoading(true, cancelarSerie ? 'Removendo série...' : 'Removendo reserva...');
+
+  try {
+
+    if(cancelarSerie){
+      await deleteSerie(r.recorrencia_id);
+    }else{
       await deleteReserva(r.id);
-      reservas = await fetchReservas();
-      bloqueios = await fetchBloqueios();
-
-      const data = r.datafim || r.dataFim;
-      const ambiente = r.ambiente || "Chromebooks";
-      const horariosReserva = toArray(r.horarios);
-
-      for (const h of horariosReserva) {
-        const ocupadosAgora = reservas
-          .filter(rr => (rr.ambiente || 'Chromebooks') === ambiente && (rr.datafim||rr.dataFim) === data && (toArray(rr.horarios)||[]).includes(h))
-          .reduce((s, rr) => s + (Number(rr.quantidade) || 0), 0);
-
-        const maxPermitido = (ambiente === 'Chromebooks' ? MAX_CHROMEBOOKS : MAX_DEFAULT);
-
-        if (ocupadosAgora < maxPermitido) {
-          const bloq = bloqueios.find(b =>
-            (b.datafim || b.dataFim) === data &&
-            b.ambiente === ambiente &&
-            (toArray(b.horarios) || []).includes(h)
-          );
-
-          if (bloq) {
-            await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?id=eq.${bloq.id}`, {
-              method: "DELETE",
-              headers
-            });
-          }
-        }
-      }
-
-      await montarCalendario();
-      closeReservationModal();
-
-    } catch (e) {
-      console.error(e);
-      alert('Erro ao cancelar. Veja console.');
     }
 
-    setLoading(false);
-  };
+    reservas = await fetchReservas();
+    bloqueios = await fetchBloqueios();
+
+    await montarCalendario();
+    closeReservationModal();
+
+  } catch (e) {
+    console.error(e);
+    alert('Erro ao cancelar. Veja console.');
+  }
+
+  setLoading(false);
+};
+
+   
 
   const modal = document.getElementById('reservationModal');
   modal.setAttribute('aria-hidden','false');
@@ -824,10 +905,126 @@ confirmManual.onclick = async ()=>{
     setLoading(false);
   }
 };
+/* ----------------- criar recorrência ----------------- */
+document.getElementById('confirmRecorrente').onclick = async ()=>{
 
+  if(!isLoggedIn){
+    alert('Somente administradores autenticados.');
+    return;
+  }
+
+  const inicio = document.getElementById('recDataInicio').value;
+  const fim = document.getElementById('recDataFim').value;
+  const diaSemana = parseInt(document.getElementById('recDiaSemana').value);
+  const horario = document.getElementById('recHorario').value;
+  const ambiente = document.getElementById('recAmbiente').value;
+  const professor = document.getElementById('recProfessor').value.trim();
+
+  if(!inicio || !fim || !professor){
+    alert("Preencha todos os campos.");
+    return;
+  }
+ if(new Date(fim) < new Date(inicio)){
+  alert("Data final não pode ser menor que a inicial.");
+  return;
+}
+  const datas = gerarDatasRecorrentes(inicio, fim, diaSemana);
+
+  if(datas.length === 0){
+    alert("Nenhuma data encontrada.");
+    return;
+  }
+
+  const recorrenciaId = gerarUUID();
+
+  setLoading(true,"Criando recorrência...");
+
+  try{
+
+    const reservasBanco = await fetchReservas();
+
+    const ocupacaoMap = {};
+
+    reservasBanco.forEach(r=>{
+      const data = r.datafim || r.dataFim;
+      const amb = r.ambiente || 'Chromebooks';
+      const horariosR = toArray(r.horarios) || [];
+
+      horariosR.forEach(h=>{
+        const chave = `${data}_${amb}_${h}`;
+        ocupacaoMap[chave] = (ocupacaoMap[chave] || 0) + (Number(r.quantidade)||0);
+      });
+    });
+	let criadas = 0;
+    for(const data of datas){
+
+  const chave = `${data}_${ambiente}_${horario}`;
+  const ocupados = ocupacaoMap[chave] || 0;
+
+  const maxPermitido = ambiente === 'Chromebooks'
+    ? MAX_CHROMEBOOKS
+    : MAX_DEFAULT;
+
+  if(ocupados >= maxPermitido){
+    continue;
+  }
+
+  await criarReserva({
+    professor: professor,
+    cpf: loggedAdmin.cpf,
+    telefone: loggedAdmin.telefone || 'ADMIN',
+    email: loggedAdmin.email || 'admin@colegio.com',
+    datafim: data,
+    horarios: [horario],
+    ambiente: ambiente,
+    quantidade: 1,
+    observacao: "Reserva Recorrente",
+    recorrencia_id: recorrenciaId
+  });
+
+  criadas++; // ← AQUI É O LUGAR CORRETO
+
+  ocupacaoMap[chave] = ocupados + 1;
+}
+if(criadas === 0){
+  alert("Nenhuma reserva criada (todos os horários estavam lotados).");
+}else{
+  alert(`✅ Série criada com ${criadas} ocorrências.`);
+}
+   
+recorrenteModal.setAttribute('aria-hidden','true');
+recorrenteModal.style.display='none';
+    await montarCalendario();
+
+  }catch(e){
+    console.error(e);
+    alert("Erro ao criar série.");
+  }
+
+  setLoading(false);
+};
 /* ----------------- refresh / controles ----------------- */
 document.getElementById('refreshBtn').onclick = ()=> montarCalendario();
 document.getElementById('filterAmbiente').onchange = ()=> montarCalendario();
+
+/* ----------------- modal recorrente ----------------- */
+const openRecorrenteBtn = document.getElementById('openRecorrenteBtn');
+const recorrenteModal = document.getElementById('recorrenteModal');
+const closeRecorrente = document.getElementById('closeRecorrente');
+
+openRecorrenteBtn.onclick = ()=>{
+  if(!isLoggedIn){
+    alert('Somente administradores autenticados.');
+    return;
+  }
+  recorrenteModal.setAttribute('aria-hidden','false');
+  recorrenteModal.style.display='block';
+};
+
+closeRecorrente.onclick = ()=>{
+recorrenteModal.setAttribute('aria-hidden','true');
+recorrenteModal.style.display='none';
+};
 
 /* ----------------- carregamento / status UI ----------------- */
 let loadingCount = 0;
@@ -857,6 +1054,31 @@ window.addEventListener('keydown', (e)=>{
     closeManualModal();
   }
 });
+/* =================== FUNÇÕES RECORRÊNCIA =================== */
+
+function gerarUUID(){
+  return crypto.randomUUID();
+}
+
+function gerarDatasRecorrentes(inicio, fim, diaSemana){
+  const datas = [];
+  const dataInicio = new Date(inicio + 'T00:00:00');
+  const dataFim = new Date(fim + 'T00:00:00');
+
+  let atual = new Date(dataInicio);
+
+  while(atual <= dataFim){
+    if(atual.getDay() === diaSemana){
+      const ano = atual.getFullYear();
+      const mes = String(atual.getMonth()+1).padStart(2,'0');
+      const dia = String(atual.getDate()).padStart(2,'0');
+      datas.push(`${ano}-${mes}-${dia}`);
+    }
+    atual.setDate(atual.getDate()+1);
+  }
+
+  return datas;
+}
 
 /* =================== LOGIN/LOGOUT =================== */
 /*
@@ -875,7 +1097,7 @@ function onlyDigits(s){ return (s||'').replace(/\D/g,''); }
 loginBtn.onclick = async ()=>{
   const cpfRaw = onlyDigits(loginCpf.value||'');
   const senha = (loginSenha.value||'').trim();
-  if(cpfRaw.length !== 11 && !senha){ loginMsg.textContent = 'Informe CPF e senha.'; return; }
+  if(cpfRaw.length !== 11 || !senha){ loginMsg.textContent = 'Informe CPF e senha.'; return; }
   setLoading(true,'Validando administrador...');
   try{
     // buscamos admin por cpf (igual) OU por email se user usar email
@@ -891,6 +1113,7 @@ loginBtn.onclick = async ()=>{
     calendarWrap.classList.remove('hidden');
     // habilitar controles de admin
     document.getElementById('openManualBtn').removeAttribute('disabled');
+	document.getElementById('openRecorrenteBtn').removeAttribute('disabled');
     document.getElementById('refreshBtn').removeAttribute('disabled');
     await montarCalendario();
   }catch(e){
@@ -907,6 +1130,7 @@ logoutBtn.onclick = ()=>{
   calendarWrap.classList.add('hidden');
   // desabilitar controles
   document.getElementById('openManualBtn').setAttribute('disabled','true');
+  document.getElementById('openRecorrenteBtn').setAttribute('disabled','true');
 };
 
 /* Ao carregar pela primeira vez, escondemos o calendário até o admin logar */
@@ -915,10 +1139,27 @@ calendarWrap.classList.add('hidden');
 
 /* ----------------- inicialização ----------------- */
 async function init(){
-  document.getElementById('manualDate').setAttribute('min', hojeStr());
-  // não inicia calendário até login; podemos pré-carregar para performance opcionalmente
+
+  document.getElementById('manualDate')
+    .setAttribute('min', hojeStr());
+
+  /* --- popular select de horário da recorrência --- */
+  const recHorario = document.getElementById('recHorario');
+
+  if(recHorario){
+    recHorario.innerHTML = ''; // evita duplicação
+    horarios.forEach(h => {
+      const opt = document.createElement('option');
+      opt.value = h;
+      opt.textContent = h;
+      recHorario.appendChild(opt);
+    });
+  }
+
+  // não inicia calendário até login
   // await montarCalendario();
 }
+
 init();
 </script>
 </body>
