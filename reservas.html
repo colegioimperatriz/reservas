@@ -163,6 +163,25 @@
   color:#fff;       /* branco */
   gap:6px;
 }
+	.dev-footer{
+  position:fixed;
+  bottom:10px;
+  right:18px;
+  font-size:11px;
+  opacity:0.35;
+  z-index:10;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.dev-footer a{
+  text-decoration:none;
+  color:#000;
+  transition:opacity .2s ease;
+}
+
+.dev-footer a:hover{
+  opacity:0.8;
+}
 </style>
 </head>
 <body>
@@ -1162,5 +1181,10 @@ async function init(){
 
 init();
 </script>
+	<footer class="dev-footer">
+  <a href="https://cassio.tec.br/" target="_blank" rel="noopener noreferrer">
+    © 2026 Desenvolvido por CW
+  </a>
+</footer>
 </body>
 </html>
