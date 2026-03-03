@@ -255,6 +255,29 @@ select{
     font-size: 11px;
 }
 }
+	/* =========================
+   FOOTER
+========================= */
+
+.footer{
+    text-align: center;
+    margin-top: 25px;
+    padding: 15px 10px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.footer a{
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: 0.2s ease;
+}
+
+.footer a:hover{
+    text-decoration: underline;
+    color: var(--primary-dark);
+}
 
 </style>
 </head>
@@ -466,6 +489,10 @@ document.getElementById("filtroAmbiente").onchange = montarCalendarioPublico;
     montarCalendarioPublico();
 })();
 </script>
-
+<footer class="footer">
+    <a href="https://cassio.tec.br/" target="_blank" rel="noopener noreferrer">
+        © 2026 - Desenvolvido por CW
+    </a>
+</footer>
 </body>
 </html>
