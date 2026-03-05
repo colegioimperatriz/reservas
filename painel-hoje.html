@@ -125,7 +125,9 @@ function normalizarClasse(txt){return txt.replace(/\s+/g,'').replace(/[^\w]/g,''
 function toArray(v){if(!v)return[]; if(Array.isArray(v)) return v; try{return JSON.parse(v)}catch{return v.split(",").map(s=>s.trim())}}
 function minutos(h){const [a,b]=h.split(":").map(Number); return a*60+b;}
 function agoraMin(){const d=new Date();return d.getHours()*60+d.getMinutes();}
-function horarioPassou(h){return minutos(h)<agoraMin();}
+function horarioPassou(h){
+  return minutos(h) + 20 < agoraMin();
+}
 
 /* Relógio */
 function atualizarRelogio(){
