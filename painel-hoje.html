@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Painel de Reservas — Hoje</title>
+<title>Painel de Reservas - Hoje</title>
 
 <style>
 
@@ -12,6 +12,7 @@
 --card:#1e293b;
 --text:#f1f5f9;
 --muted:#94a3b8;
+--highlight:#22c55e;
 }
 
 *{box-sizing:border-box}
@@ -27,20 +28,32 @@ padding:30px;
 /* HEADER */
 
 header{
-text-align:center;
-margin-bottom:40px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:30px;
+flex-wrap:wrap;
 }
 
-header h1{
+h1{
 margin:0;
-font-size:42px;
-letter-spacing:1px;
+font-size:38px;
 }
 
-header p{
-margin-top:8px;
+.data{
 color:var(--muted);
 font-size:18px;
+}
+
+.clock{
+font-size:28px;
+font-weight:700;
+}
+
+.stats{
+margin-top:10px;
+font-size:16px;
+color:var(--muted);
 }
 
 /* GRID */
@@ -49,28 +62,37 @@ font-size:18px;
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
 gap:22px;
-max-width:1600px;
-margin:auto;
 }
 
-/* CARD HORARIO */
+/* SLOT */
 
 .slot{
 background:var(--card);
 border-radius:16px;
 padding:20px;
-box-shadow:0 10px 25px rgba(0,0,0,0.3);
+box-shadow:0 10px 25px rgba(0,0,0,.3);
 transition:.2s;
+position:relative;
 }
 
-.slot:hover{
-transform:translateY(-3px);
+.slot.proximo{
+border:3px solid var(--highlight);
+}
+
+.slot.alerta{
+animation:alerta 1s infinite;
+}
+
+@keyframes alerta{
+0%{box-shadow:0 0 10px red}
+50%{box-shadow:0 0 25px red}
+100%{box-shadow:0 0 10px red}
 }
 
 .time{
-font-size:28px;
+font-size:26px;
 font-weight:700;
-margin-bottom:14px;
+margin-bottom:12px;
 }
 
 /* EVENTOS */
@@ -78,9 +100,9 @@ margin-bottom:14px;
 .event{
 padding:10px;
 border-radius:8px;
-font-size:15px;
 margin-bottom:8px;
 color:#fff;
+font-size:15px;
 }
 
 .prof{
@@ -88,7 +110,18 @@ font-size:13px;
 opacity:.9;
 }
 
-/* cores ambientes */
+/* PROGRESSO */
+
+.progressBar{
+position:fixed;
+bottom:0;
+left:0;
+height:6px;
+background:#22c55e;
+transition:.3s;
+}
+
+/* cores */
 
 .Chromebooks{background:#1e88e5}
 .Cozinha{background:#f39c12}
@@ -101,35 +134,26 @@ opacity:.9;
 .LabBiologia{background:#c2185b}
 .SalaDoCTC{background:#3949ab}
 
-.livre{
-background:#16a34a;
-text-align:center;
-font-weight:600;
-}
-
-/* relógio */
-
-.clock{
-position:fixed;
-top:20px;
-right:30px;
-font-size:18px;
-color:var(--muted);
-}
-
 </style>
 </head>
 
 <body>
 
-<div class="clock" id="clock"></div>
-
 <header>
+
+<div>
 <h1>Reservas de Hoje</h1>
-<p id="dataHoje"></p>
+<div id="data" class="data"></div>
+<div id="stats" class="stats"></div>
+</div>
+
+<div id="clock" class="clock"></div>
+
 </header>
 
 <div id="grid" class="grid"></div>
+
+<div id="progress" class="progressBar"></div>
 
 <script>
 
@@ -137,60 +161,59 @@ const SUPABASE_URL="https://oufiieqxyyqnqpcbuyms.supabase.co";
 const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91ZmlpZXF4eXlxbnFwY2J1eW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNDMwNDgsImV4cCI6MjA3NDkxOTA0OH0.-4QPA1R5y24daAt-WsZuWc8-2bJxCJGhdTR1nq4RnHc";
 
 const headers={
-"apikey":SUPABASE_KEY,
-"Authorization":`Bearer ${SUPABASE_KEY}`
+apikey:SUPABASE_KEY,
+Authorization:`Bearer ${SUPABASE_KEY}`
 };
 
 let reservas=[];
 
+function normalizarClasse(txt){
+return txt.replace(/\s+/g,'').replace(/[^\w]/g,'');
+}
+
+function toArray(v){
+if(!v) return [];
+if(Array.isArray(v)) return v;
+try{return JSON.parse(v)}
+catch{return v.split(",").map(s=>s.trim())}
+}
+
+function minutos(h){
+const [a,b]=h.split(":").map(Number);
+return a*60+b;
+}
+
+function agoraMin(){
+const d=new Date();
+return d.getHours()*60+d.getMinutes();
+}
+
+function horarioPassou(h){
+return minutos(h)<agoraMin();
+}
+
+/* relógio */
+
 function atualizarRelogio(){
-
 const agora=new Date();
-
 document.getElementById("clock").textContent=
 agora.toLocaleTimeString("pt-BR");
-
 }
 
 setInterval(atualizarRelogio,1000);
 
-function normalizarClasse(txt){
-return txt
-.replace(/\s+/g,'')
-.replace(/[^\w]/g,'');
-}
+/* data */
 
-function toArray(val){
+document.getElementById("data").textContent=
+new Date().toLocaleDateString("pt-BR",{
+weekday:"long",
+day:"numeric",
+month:"long"
+});
 
-if(!val) return [];
-
-if(Array.isArray(val)) return val;
-
-try{
-return JSON.parse(val);
-}
-catch{
-return val.split(",").map(s=>s.trim());
-}
-
-}
-
-function horarioPassou(horario){
-
-const agora=new Date();
-
-const [h,m]=horario.split(":").map(Number);
-
-const horarioMin=h*60+m;
-const agoraMin=agora.getHours()*60+agora.getMinutes();
-
-return horarioMin<agoraMin;
-
-}
+/* carregar dados */
 
 async function carregar(){
-
-const hoje=new Date().toISOString().split("T")[0];
 
 const r=await fetch(
 `${SUPABASE_URL}/rest/v1/reservas?select=*`,
@@ -199,20 +222,20 @@ const r=await fetch(
 
 reservas=await r.json();
 
-renderizar(hoje);
+renderizar();
 
 }
 
-function renderizar(hoje){
+/* render */
 
-const grid=document.getElementById("grid");
+function renderizar(){
 
-grid.innerHTML="";
+const hoje=new Date().toISOString().split("T")[0];
 
 let eventos=[];
 
 reservas
-.filter(r=> (r.datafim||"").startsWith(hoje))
+.filter(r=>(r.datafim||"").startsWith(hoje))
 .forEach(r=>{
 
 const horas=toArray(r.horarios);
@@ -234,33 +257,39 @@ quant:r.quantidade||1
 
 });
 
-eventos.sort((a,b)=>{
+eventos.sort((a,b)=>minutos(a.horario)-minutos(b.horario));
 
-const [h1,m1]=a.horario.split(":").map(Number);
-const [h2,m2]=b.horario.split(":").map(Number);
-
-return (h1*60+m1)-(h2*60+m2);
-
-});
+document.getElementById("stats").textContent=
+`${eventos.length} reservas restantes hoje`;
 
 let grupos={};
 
 eventos.forEach(ev=>{
-
 if(!grupos[ev.horario]) grupos[ev.horario]=[];
-
 grupos[ev.horario].push(ev);
-
 });
 
-Object.keys(grupos).forEach(h=>{
+const grid=document.getElementById("grid");
+
+grid.innerHTML="";
+
+const agora=agoraMin();
+
+Object.keys(grupos).forEach((h,i)=>{
 
 const slot=document.createElement("div");
+
 slot.className="slot";
+
+const diff=minutos(h)-agora;
+
+if(i===0) slot.classList.add("proximo");
+
+if(diff<=10 && diff>=0) slot.classList.add("alerta");
 
 const time=document.createElement("div");
 time.className="time";
-time.textContent="🕗 "+h;
+time.textContent="🕒 "+h;
 
 slot.appendChild(time);
 
@@ -285,24 +314,32 @@ grid.appendChild(slot);
 
 }
 
-function mostrarData(){
+/* barra de progresso do dia */
 
-const hoje=new Date();
+function progressoDia(){
 
-document.getElementById("dataHoje").textContent=
-hoje.toLocaleDateString("pt-BR",{
-weekday:"long",
-day:"numeric",
-month:"long"
-});
+const agora=new Date();
+
+const minutosAgora=agora.getHours()*60+agora.getMinutes();
+
+const perc=(minutosAgora/1440)*100;
+
+document.getElementById("progress").style.width=perc+"%";
 
 }
 
-mostrarData();
+setInterval(progressoDia,60000);
+progressoDia();
+
+/* iniciar */
 
 carregar();
 
-setInterval(carregar,60000);
+/* F5 automático a cada 90 min */
+
+setInterval(()=>{
+location.reload();
+},5400000);
 
 </script>
 
