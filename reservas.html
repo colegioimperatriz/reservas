@@ -457,7 +457,10 @@ async function fetchJson(url){
     return json;
   }catch(e){ console.error('fetchJson err',e); return []; }
 }
-async function fetchReservas(){ return await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*`); }
+async function fetchReservas(){
+  const mes = String(currentMonth+1).padStart(2,'0');
+  return await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*&datafim=like.${currentYear}-${mes}%`);
+}
 async function fetchBloqueios(){ return await fetchJson(`${SUPABASE_URL}/rest/v1/bloqueios?select=*`); }
 async function fetchAdministrators(){ return await fetchJson(`${SUPABASE_URL}/rest/v1/administrators?select=*`); }
 
@@ -482,6 +485,40 @@ async function criarBloqueio(body){
 async function deleteReserva(id){
   try{ await fetch(`${SUPABASE_URL}/rest/v1/reservas?id=eq.${id}`,{method:'DELETE',headers}); }catch(e){ console.error('deleteReserva',e); }
 }
+	async function verificarBloqueio(data, horario, ambiente){
+
+  const reservasAtual = await fetchReservas();
+  const bloqueiosAtual = await fetchBloqueios();
+
+  const ocupados = reservasAtual
+    .filter(r =>
+      (r.datafim||r.dataFim) === data &&
+      (r.ambiente || 'Chromebooks') === ambiente &&
+      (toArray(r.horarios)||[]).includes(horario)
+    )
+    .reduce((s,r)=>s + (Number(r.quantidade)||0),0);
+
+  const maxPermitido = ambiente === 'Chromebooks'
+    ? MAX_CHROMEBOOKS
+    : MAX_DEFAULT;
+
+  if(ocupados < maxPermitido){
+
+    const bloqueio = bloqueiosAtual.find(b =>
+      (b.datafim||b.dataFim) === data &&
+      (b.ambiente || 'Chromebooks') === ambiente &&
+      (toArray(b.horarios)||[]).includes(horario)
+    );
+
+    if(bloqueio){
+      await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?id=eq.${bloqueio.id}`,{
+        method:'DELETE',
+        headers
+      });
+    }
+  }
+}
+
 async function deleteSerie(recorrenciaId){
   try{
     const res = await fetch(
@@ -765,11 +802,20 @@ function openModal(r){
       await deleteReserva(r.id);
     }
 
-    reservas = await fetchReservas();
-    bloqueios = await fetchBloqueios();
+    const data = r.datafim || r.dataFim;
+const ambiente = r.ambiente || 'Chromebooks';
 
-    await montarCalendario();
-    closeReservationModal();
+const horariosReserva = toArray(r.horarios);
+
+for(const h of horariosReserva){
+  await verificarBloqueio(data, h, ambiente);
+}
+
+reservas = await fetchReservas();
+bloqueios = await fetchBloqueios();
+
+await montarCalendario();
+closeReservationModal();
 
   } catch (e) {
     console.error(e);
@@ -1073,6 +1119,8 @@ window.addEventListener('keydown', (e)=>{
   if(e.key === 'Escape'){
     closeReservationModal();
     closeManualModal();
+    recorrenteModal.setAttribute('aria-hidden','true');
+    recorrenteModal.style.display='none';
   }
 });
 /* =================== FUNÇÕES RECORRÊNCIA =================== */
