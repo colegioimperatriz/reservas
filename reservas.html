@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta name="theme-color" content="#075E54" />
 <meta http-equiv="refresh" content="7200">
-<!-- Desenvolvido e mantido por Cássio Winkler - 2026 -->
 <title>Controle de Reservas - Painel Administrador  — Colégio Imperatriz</title>
 <style>
   :root{
@@ -480,29 +479,7 @@ async function criarBloqueio(body){
 }
 
 async function deleteReserva(id){
-  try{ 
-    await fetch(`${SUPABASE_URL}/rest/v1/reservas?id=eq.${id}`,{
-      method:'DELETE',
-      headers
-    }); 
-  }catch(e){ 
-    console.error('deleteReserva',e); 
-  }
-}
-
-/* apagar bloqueio vinculado à reserva */
-async function deleteBloqueioReserva(reservaId){
-  try{
-    await fetch(
-      `${SUPABASE_URL}/rest/v1/bloqueios?reserva_id=eq.${reservaId}`,
-      {
-        method:'DELETE',
-        headers
-      }
-    );
-  }catch(e){
-    console.error("Erro deletando bloqueio", e);
-  }
+  try{ await fetch(`${SUPABASE_URL}/rest/v1/reservas?id=eq.${id}`,{method:'DELETE',headers}); }catch(e){ console.error('deleteReserva',e); }
 }
 async function deleteSerie(recorrenciaId){
   try{
@@ -756,25 +733,8 @@ function openModal(r){
     perHorarioDiv.appendChild(p);
   });
 
-const cancelBtn = document.getElementById('cancelReservationBtn');
-
-cancelBtn.onclick = async () => {
-
-  if(!confirm("Cancelar esta reserva?")) return;
-
-  try{
-
-    await deleteBloqueioReserva(resId);
-    await deleteReserva(resId);
-
-    await montarCalendario();
-
-  }catch(e){
-    console.error(e);
-    alert("Erro ao cancelar reserva");
-  }
-
-};
+  const cancelBtn = document.getElementById('cancelReservationBtn');
+  cancelBtn.onclick = async () => {
 
   if (!isLoggedIn){
     alert('Ação permitida apenas para administradores autenticados.');
