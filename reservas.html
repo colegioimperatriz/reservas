@@ -763,7 +763,10 @@ function openModal(r){
     }else{
       await deleteReserva(r.id);
     }
-
+await fetch(
+  `${SUPABASE_URL}/rest/v1/bloqueios?datafim=eq.${r.datafim}&ambiente=eq.${r.ambiente}`,
+  { method:'DELETE', headers }
+);
     reservas = await fetchReservas();
     bloqueios = await fetchBloqueios();
 
