@@ -480,7 +480,29 @@ async function criarBloqueio(body){
 }
 
 async function deleteReserva(id){
-  try{ await fetch(`${SUPABASE_URL}/rest/v1/reservas?id=eq.${id}`,{method:'DELETE',headers}); }catch(e){ console.error('deleteReserva',e); }
+  try{ 
+    await fetch(`${SUPABASE_URL}/rest/v1/reservas?id=eq.${id}`,{
+      method:'DELETE',
+      headers
+    }); 
+  }catch(e){ 
+    console.error('deleteReserva',e); 
+  }
+}
+
+/* apagar bloqueio vinculado à reserva */
+async function deleteBloqueioReserva(reservaId){
+  try{
+    await fetch(
+      `${SUPABASE_URL}/rest/v1/bloqueios?reserva_id=eq.${reservaId}`,
+      {
+        method:'DELETE',
+        headers
+      }
+    );
+  }catch(e){
+    console.error("Erro deletando bloqueio", e);
+  }
 }
 async function deleteSerie(recorrenciaId){
   try{
@@ -734,8 +756,25 @@ function openModal(r){
     perHorarioDiv.appendChild(p);
   });
 
-  const cancelBtn = document.getElementById('cancelReservationBtn');
-  cancelBtn.onclick = async () => {
+const cancelBtn = document.getElementById('cancelReservationBtn');
+
+cancelBtn.onclick = async () => {
+
+  if(!confirm("Cancelar esta reserva?")) return;
+
+  try{
+
+    await deleteBloqueioReserva(resId);
+    await deleteReserva(resId);
+
+    await montarCalendario();
+
+  }catch(e){
+    console.error(e);
+    alert("Erro ao cancelar reserva");
+  }
+
+};
 
   if (!isLoggedIn){
     alert('Ação permitida apenas para administradores autenticados.');
