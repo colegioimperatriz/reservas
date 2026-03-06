@@ -97,6 +97,42 @@ h1{margin:0;font-size:38px;}
   .event{font-size:22px;}
   .slot{padding:30px;}
 }
+  /* ALERTA GRANDE */
+.alertaTela{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.85);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+  animation:pulseBg 1s infinite;
+}
+
+.alertaBox{
+  background:#b91c1c;
+  padding:60px 80px;
+  border-radius:20px;
+  text-align:center;
+  box-shadow:0 0 40px red;
+}
+
+.alertaTitulo{
+  font-size:60px;
+  font-weight:900;
+  margin-bottom:20px;
+}
+
+.alertaHora{
+  font-size:80px;
+  font-weight:900;
+}
+
+@keyframes pulseBg{
+  0%{background:rgba(0,0,0,0.85)}
+  50%{background:rgba(120,0,0,0.9)}
+  100%{background:rgba(0,0,0,0.85)}
+}
 </style>
 </head>
 
@@ -120,7 +156,9 @@ const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 const headers={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`};
 
 let reservas=[];
-
+let alertaTocado=null;
+let audioCtx=null;
+  
 function normalizarClasse(txt){return txt.replace(/\s+/g,'').replace(/[^\w]/g,'');}
 function toArray(v){if(!v)return[]; if(Array.isArray(v)) return v; try{return JSON.parse(v)}catch{return v.split(",").map(s=>s.trim())}}
 function minutos(h){const [a,b]=h.split(":").map(Number); return a*60+b;}
@@ -129,12 +167,63 @@ function horarioPassou(h){
   return minutos(h) + 20 < agoraMin();
 }
 
+/* ===== ALERTA SONORO (3 BIPES) ===== */
+function beep3(){
+
+  if(!audioCtx){
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  }
+
+  function beep(delay){
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+
+    osc.type="sine";
+    osc.frequency.value=880;
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(audioCtx.currentTime+delay);
+
+    gain.gain.setValueAtTime(1,audioCtx.currentTime+delay);
+    gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+delay+0.4);
+
+    osc.stop(audioCtx.currentTime+delay+0.4);
+  }
+
+  beep(0);
+  beep(0.5);
+  beep(1);
+}
+
+/* ===== ALERTA VISUAL ===== */
+function mostrarAlerta(horario){
+
+  const tela=document.createElement("div");
+  tela.className="alertaTela";
+
+  tela.innerHTML=`
+    <div class="alertaBox">
+     <div class="alertaTitulo">⚠ PRÓXIMA RESERVA</div>
+    <div class="alertaHora">${horario}</div>
+    </div>
+  `;
+
+  document.body.appendChild(tela);
+
+  setTimeout(()=>{
+    tela.remove();
+  },10000);
+}
+
 /* Relógio */
 function atualizarRelogio(){
   const agora=new Date();
   document.getElementById("clock").textContent=agora.toLocaleTimeString("pt-BR");
 }
 setInterval(atualizarRelogio,1000);
+atualizarRelogio();
 
 /* Data */
 document.getElementById("data").textContent=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
@@ -151,7 +240,8 @@ setInterval(progressoDia,60000);
 
 /* Carregar dados */
 async function carregar(){
-  const r=await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*`,{headers});
+ /* const r=await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*`,{headers});*/
+  const r=await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*&order=datafim`,{headers});
   reservas=await r.json();
   renderizar();
 }
@@ -171,7 +261,20 @@ function renderizar(){
 
   eventos.sort((a,b)=>minutos(a.horario)-minutos(b.horario));
   document.getElementById("stats").textContent=`${eventos.length} reservas restantes hoje`;
+if(eventos.length>0){
 
+  const proximo=eventos[0];
+  const diff=minutos(proximo.horario)-agoraMin();
+
+  if(diff<=5 && diff>=4 && alertaTocado!==proximo.horario){
+
+    beep3();
+    mostrarAlerta(proximo.horario);
+
+    alertaTocado=proximo.horario;
+  }
+
+}
   const grupos={};
   eventos.forEach(ev=>{if(!grupos[ev.horario]) grupos[ev.horario]=[]; grupos[ev.horario].push(ev);});
 
@@ -206,11 +309,13 @@ function renderizar(){
 }
 
 /* Iniciar */
+/* Iniciar */
 carregar();
+renderizar();
 
-/* F5 automático a cada 90 minutos */
+/* F5 automático a cada 90 minutos & Alerta */
 setInterval(()=>{location.reload();},5400000);
-
+setInterval(renderizar,10000);
 </script>
 </body>
 </html>
