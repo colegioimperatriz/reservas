@@ -295,27 +295,75 @@ function nextStep(input){
 async function showProfessorReservations(cpfDigits){
   const reservas = await fetchReservas();
 
-  const hojeStr = new Date().toISOString().split('T')[0];
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
 
-  const matches = reservas.filter(r => {
+  const amanha = new Date(hoje);
+  amanha.setDate(amanha.getDate()+1);
+
+  let lista = [];
+
+  reservas.forEach(r => {
     const ok = (r.cpf && onlyDigits(r.cpf) === cpfDigits) || (r.professor === professor.nome);
-    if (!ok) return false;
+    if (!ok) return;
 
-    return r.datafim >= hojeStr;
+    const dataR = new Date(r.datafim);
+    dataR.setHours(0,0,0,0);
+
+    if(dataR < hoje) return;
+
+    (r.horarios || []).forEach(h=>{
+      lista.push({
+        ambiente: r.ambiente,
+        quantidade: r.quantidade || 1,
+        data: new Date(r.datafim),
+        horario: h
+      });
+    });
   });
 
-  if (matches.length === 0){
+  if(lista.length === 0){
     addMessage('Você ainda não possui reservas futuras.');
     return;
   }
 
-  let text = 'Suas reservas (hoje em diante):\n';
-
-  matches.forEach(r => {
-    text += `${r.ambiente}: ${r.quantidade||1} em ${isoToBR(r.datafim)} - ${(r.horarios||[]).join(', ')}\n`;
+  // ordenar por data e horário
+  lista.sort((a,b)=>{
+    const d = a.data - b.data;
+    if(d !== 0) return d;
+    return a.horario.localeCompare(b.horario);
   });
 
-  addMessage(text);
+  let texto = 'Suas reservas:\n\n';
+
+  let secaoAtual = '';
+
+  lista.forEach(item => {
+
+    const data = new Date(item.data);
+    data.setHours(0,0,0,0);
+
+    let secao = '';
+
+    if(data.getTime() === hoje.getTime()){
+      secao = 'Hoje';
+    } 
+    else if(data.getTime() === amanha.getTime()){
+      secao = 'Amanhã';
+    }
+    else{
+      secao = isoToBR(item.data.toISOString().split('T')[0]);
+    }
+
+    if(secao !== secaoAtual){
+      texto += `${secao}\n`;
+      secaoAtual = secao;
+    }
+
+    texto += `${item.ambiente}: ${item.quantidade} - ${item.horario}\n`;
+  });
+
+  addMessage(texto);
 }
   
 function askSelectAmbiente(){
