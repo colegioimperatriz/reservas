@@ -295,17 +295,13 @@ function nextStep(input){
 async function showProfessorReservations(cpfDigits){
   const reservas = await fetchReservas();
 
-  // Data atual (local do dispositivo)
-  const hoje = new Date();
-  hoje.setHours(0,0,0,0);
+  const hojeStr = new Date().toISOString().split('T')[0];
 
   const matches = reservas.filter(r => {
     const ok = (r.cpf && onlyDigits(r.cpf) === cpfDigits) || (r.professor === professor.nome);
     if (!ok) return false;
 
-    const dataR = new Date(r.datafim);
-    dataR.setHours(0,0,0,0);
-    return dataR >= hoje; // SOMENTE HOJE EM DIANTE
+    return r.datafim >= hojeStr;
   });
 
   if (matches.length === 0){
@@ -313,14 +309,15 @@ async function showProfessorReservations(cpfDigits){
     return;
   }
 
-  let text = 'Suas reservas (apenas futuras):\n';
+  let text = 'Suas reservas (hoje em diante):\n';
+
   matches.forEach(r => {
     text += `${r.ambiente}: ${r.quantidade||1} em ${isoToBR(r.datafim)} - ${(r.horarios||[]).join(', ')}\n`;
   });
 
   addMessage(text);
 }
-
+  
 function askSelectAmbiente(){
   addMessage('Selecione o ambiente:');
   const container=document.createElement('div');
