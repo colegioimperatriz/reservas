@@ -14,7 +14,7 @@
 :root{
     --primary: #075E54;
     --primary-dark: #064940;
-    --bg: #f2f5f7;
+    --bg: #e9edf2;
     --card: #ffffff;
     --text: #1f2933;
     --muted: #6b7280;
@@ -28,7 +28,7 @@
 body{
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    background: var(--bg);
+    background: linear-gradient(180deg,#eef2f6,#e2e7ee);
     color: var(--text);
     padding: 12px;
 }
@@ -97,10 +97,11 @@ select{
 ========================= */
 
 .calendar{
-    background: var(--card);
-    border-radius: 14px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
     overflow: hidden;
+    border: 1px solid #dde3ea;
 }
 
 /* Header */
@@ -161,14 +162,21 @@ select{
 ========================= */
 
 .badge{
-    padding: 4px 6px;
-    border-radius: 6px;
+    padding: 5px 6px;
+    border-radius: 7px;
     font-size: 10px;
     line-height: 1.2;
     color: #fff;
     cursor: pointer;
     word-break: break-word;
     transition: 0.15s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+}
+
+.badge:hover{
+    transform: scale(1.03);
+    opacity: 0.95;
 }
 
 .badge:hover{
@@ -177,14 +185,14 @@ select{
 }
 
 /* Ambientes cores */
-.Chromebooks { background: #1e88e5; }
-.Cozinha { background: #f39c12; }
+.Chromebooks { background: #1976d2; }
+.Cozinha { background: #e67e22; }
 .TeleSala { background: #2e7d32; }
-.SalaDeAtendimentoI { background: #8e44ad; }
+.SaladeAtendimentoI { background: #8e44ad; }
 .SalaDeReunioes { background: #d35400; }
 .Carro { background: #6c757d; }
-.LabQuimica { background: #00796b; }
-.LabFisica { background: #5d4037; }
+.LabQuimica { background: #009688; }
+.LabFisica { background: #6d4c41; }
 .LabBiologia { background: #c2185b; }
 .SalaDoCTC { background: #3949ab; }
 
