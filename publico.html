@@ -195,6 +195,10 @@ select{
 .LabFisica { background: #6d4c41; }
 .LabBiologia { background: #c2185b; }
 .SalaDoCTC { background: #3949ab; }
+/* Correção para nomes sem acento gerados pelo JS */
+.LabQumica { background: #009688; }
+.LabFsica { background: #6d4c41; }
+.SaladoCTC { background: #3949ab; }
 
 .bloqueio{
     background: #444 !important;
@@ -458,9 +462,11 @@ eventosDoDia.sort((a,b) => {
 // 3) Renderiza ordenado
 eventosDoDia.forEach(ev => {
 
-    let className = ev.ambiente
-        .replace(/\s+/g,'')
-        .replace(/[^\w]/g,'');
+let className = ev.ambiente
+.normalize("NFD")
+.replace(/[\u0300-\u036f]/g, "")
+.replace(/\s+/g,'')
+.replace(/[^\w]/g,'');
 
     const badge = document.createElement("div");
     badge.className = `badge ${className}`;
