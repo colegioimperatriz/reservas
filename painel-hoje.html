@@ -164,7 +164,7 @@ function toArray(v){if(!v)return[]; if(Array.isArray(v)) return v; try{return JS
 function minutos(h){const [a,b]=h.split(":").map(Number); return a*60+b;}
 function agoraMin(){const d=new Date();return d.getHours()*60+d.getMinutes();}
 function horarioPassou(h){
-  return minutos(h) + 20 < agoraMin();
+  return minutos(h) + 46 < agoraMin();
 }
 
 /* ===== ALERTA SONORO (3 BIPES) ===== */
@@ -314,7 +314,7 @@ carregar();
 renderizar();
 
 /* F5 automático a cada 90 minutos & Alerta */
-setInterval(()=>{location.reload();},5400000);
+setInterval(()=>{location.reload();},3600000);
 setInterval(renderizar,10000);
 </script>
 </body>
