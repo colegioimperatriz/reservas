@@ -175,30 +175,21 @@ select{
 }
 
 .badge:hover{
-    transform: scale(1.03);
-    opacity: 0.95;
-}
-
-.badge:hover{
     transform: scale(1.02);
     opacity: 0.9;
 }
 
-/* Ambientes cores */
-.Chromebooks { background: #1976d2; }
-.Cozinha { background: #e67e22; }
-.TeleSala { background: #2e7d32; }
-.SaladeAtendimentoI { background: #8e44ad; }
-.SalaDeReunioes { background: #d35400; }
-.Carro { background: #6c757d; }
-.LabQuimica { background: #009688; }
-.LabFisica { background: #6d4c41; }
-.LabBiologia { background: #c2185b; }
-.SalaDoCTC { background: #3949ab; }
-/* Correção para nomes sem acento gerados pelo JS */
-.LabQumica { background: #009688; }
-.LabFsica { background: #6d4c41; }
-.SaladoCTC { background: #3949ab; }
+/* Ambientes cores (normalizados em minúsculo) */
+.chromebooks { background: #1976d2; }
+.cozinha { background: #e67e22; }
+.telesala { background: #2e7d32; }
+.saladeatendimentoi { background: #8e44ad; }
+.saladereunioes { background: #d35400; }
+.carro { background: #6c757d; }
+.labquimica { background: #009688; }
+.labfisica { background: #6d4c41; }
+.labbiologia { background: #c2185b; }
+.saladoctc { background: #3949ab; }
 
 .bloqueio{
     background: #444 !important;
@@ -264,10 +255,11 @@ select{
     }
 	
 	.badge strong{
-    font-size: 11px;
+        font-size: 11px;
+    }
 }
-}
-	/* =========================
+
+/* =========================
    FOOTER
 ========================= */
 
@@ -347,6 +339,22 @@ let reservas = [];
 
 const tooltip = document.getElementById("tooltip");
 
+/* =========================
+   FUNÇÃO GLOBAL PARA NORMALIZAÇÃO
+========================= */
+function normalizar(txt){
+    if (!txt) return "";
+    
+    return txt
+        .toString()
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g,'')
+        .replace(/[^\w]/g,'');
+}
+
 function showTooltip(e) {
     tooltip.innerHTML = e.currentTarget.dataset.tip;
     tooltip.style.left = e.clientX + 12 + "px";
@@ -422,83 +430,69 @@ async function montarCalendarioPublico() {
         num.className="num";
         num.textContent=dia;
         dayDiv.appendChild(num);
-// ===============================
-// COLE ESTE BLOCO NO LUGAR
-// ===============================
 
-// 1) Coleta todos eventos do dia
-let eventosDoDia = [];
+        let eventosDoDia = [];
 
-reservas
-.filter(r => (r.datafim || "").startsWith(dataISO))
-.forEach(r => {
+        reservas
+        .filter(r => (r.datafim || "").startsWith(dataISO))
+        .forEach(r => {
 
-   if (
-    filtro !== "all" &&
-    normalizar(filtro) !== normalizar(r.ambiente)
-) return;
+            if (
+                filtro !== "all" &&
+                normalizar(filtro) !== normalizar(r.ambiente)
+            ) return;
 
-    const horas = toArray(r.horarios);
+            const horas = toArray(r.horarios);
 
-    horas.forEach(h => {
-        eventosDoDia.push({
-            horario: h,
-            ambiente: r.ambiente,
-            quantidade: r.quantidade || 1,
-            professor: r.professor || "—"
+            horas.forEach(h => {
+                eventosDoDia.push({
+                    horario: h,
+                    ambiente: r.ambiente,
+                    quantidade: r.quantidade || 1,
+                    professor: r.professor || "—"
+                });
+            });
         });
-    });
-});
 
-// 2) Ordena por horário (manhã → tarde)
-eventosDoDia.sort((a,b) => {
+        eventosDoDia.sort((a,b) => {
+            const [hA,mA] = a.horario.split(":").map(Number);
+            const [hB,mB] = b.horario.split(":").map(Number);
+            return (hA*60+mA) - (hB*60+mB);
+        });
 
-    const [hA,mA] = a.horario.split(":").map(Number);
-    const [hB,mB] = b.horario.split(":").map(Number);
+        eventosDoDia.forEach(ev => {
 
-    const minutosA = hA*60 + mA;
-    const minutosB = hB*60 + mB;
+            let className = normalizar(ev.ambiente);
 
-    return minutosA - minutosB;
-});
+            const badge = document.createElement("div");
+            badge.className = `badge ${className}`;
 
-// 3) Renderiza ordenado
-eventosDoDia.forEach(ev => {
+            badge.innerHTML = `
+                <strong>${ev.horario}</strong><br>
+                ${ev.ambiente} (${ev.quantidade})<br>
+                <span style="font-size:9px; opacity:.9">
+                    ${ev.professor}
+                </span>
+            `;
 
-let className = ev.ambiente
-.trim()
-.normalize("NFD")
-.replace(/[\u0300-\u036f]/g, "")
-.replace(/\s+/g,'')
-.replace(/[^\w]/g,'');
+            dayDiv.appendChild(badge);
+        });
 
-    const badge = document.createElement("div");
-    badge.className = `badge ${className}`;
-
-    badge.innerHTML = `
-        <strong>${ev.horario}</strong><br>
-        ${ev.ambiente} (${ev.quantidade})<br>
-        <span style="font-size:9px; opacity:.9">
-            ${ev.professor}
-        </span>
-    `;
-
-    dayDiv.appendChild(badge);
-});
-grid.appendChild(dayDiv);
+        grid.appendChild(dayDiv);
+    }
 }
-}
+
 document.getElementById("prevBtn").onclick = () => {
     currentMonth--;
     if(currentMonth<0){currentMonth=11;currentYear--;}
     montarCalendarioPublico();
 };
+
 document.getElementById("nextBtn").onclick = () => {
     currentMonth++;
     if(currentMonth>11){currentMonth=0;currentYear++;}
     montarCalendarioPublico();
 };
-
 
 document.getElementById("filtroAmbiente").onchange = montarCalendarioPublico;
 
@@ -507,6 +501,7 @@ document.getElementById("filtroAmbiente").onchange = montarCalendarioPublico;
     montarCalendarioPublico();
 })();
 </script>
+
 <footer class="footer">
   © 2026 Colégio Imperatriz Dona Leopoldina. Todos os direitos reservados.
 </footer>
