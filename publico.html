@@ -463,6 +463,7 @@ eventosDoDia.sort((a,b) => {
 eventosDoDia.forEach(ev => {
 
 let className = ev.ambiente
+.trim()
 .normalize("NFD")
 .replace(/[\u0300-\u036f]/g, "")
 .replace(/\s+/g,'')
