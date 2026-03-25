@@ -433,7 +433,10 @@ reservas
 .filter(r => (r.datafim || "").startsWith(dataISO))
 .forEach(r => {
 
-    if (filtro !== "all" && filtro !== r.ambiente) return;
+   if (
+    filtro !== "all" &&
+    normalizar(filtro) !== normalizar(r.ambiente)
+) return;
 
     const horas = toArray(r.horarios);
 
