@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <!-- Desenvolvido e mantido por Cássio Winkler - 2026 - cassio.tec.br -->
-<title>Sistema de Reservas - Colégio Imperatriz</title>
+<title>v2.0 - Sistema de Reservas - Colégio Imperatriz</title>
 <style>
   /* Reset + sensible defaults */
   *, *::before, *::after { box-sizing: border-box; }
@@ -246,6 +246,66 @@ function onlyDigits(s){ return (s||'').replace(/\D/g,''); }
 function formatCPF(digits){ return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4'); }
 function brToISO(dateStr){ const [d,m,y]=dateStr.split('/'); return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
 function isoToBR(iso){ if(!iso) return ''; return iso.split('T')[0].split('-').reverse().join('/'); }
+// ==========================
+// 🔥 NOVOS HELPERS DE DATA
+// ==========================
+
+function normalizeDate(input) {
+  let digits = input.replace(/\D/g, '');
+
+  if (digits.length === 8) {
+    const day = digits.slice(0, 2);
+    const month = digits.slice(2, 4);
+    const year = digits.slice(4, 8);
+    return `${day}/${month}/${year}`;
+  }
+
+  if (digits.length === 6) {
+    const day = digits.slice(0, 2);
+    const month = digits.slice(2, 4);
+    const year = '20' + digits.slice(4, 6);
+    return `${day}/${month}/${year}`;
+  }
+
+  return input;
+}
+
+function isValidDateBR(dateStr) {
+  const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+  const match = dateStr.match(regex);
+  if (!match) return false;
+
+  const day = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10);
+  const year = parseInt(match[3], 10);
+
+  const date = new Date(year, month - 1, day);
+
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  );
+}
+
+function isPastDate(dateISO) {
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+
+  const data = new Date(dateISO);
+  data.setHours(0,0,0,0);
+
+  return data < hoje;
+}
+
+function isBeyondLimit(dateISO) {
+  const hoje = new Date();
+  const limite = new Date(hoje.getFullYear(), 11, 31);
+
+  const data = new Date(dateISO);
+
+  return data > limite;
+}
 
 async function cpfInput(cpfRaw){
   const digits=onlyDigits(cpfRaw);
@@ -351,13 +411,42 @@ function askSelectAmbiente(){
 
 function askDate(){
   addMessage('Digite a data (dd/mm/yyyy):');
-  createInput('Data', d=>{
-    reserva.dataFim=brToISO(d);
-    addMessage(d);
+
+  createInput('Data', d => {
+
+    let dataFormatada = normalizeDate(d);
+
+    // valida formato e consistência da data
+    if (!isValidDateBR(dataFormatada)) {
+      addMessage('❌ Favor digitar a data no formato válido: dd/mm/yyyy');
+      askDate();
+      return;
+    }
+
+    const dataISO = brToISO(dataFormatada);
+
+    // bloqueia datas passadas
+    if (isPastDate(dataISO)) {
+      addMessage('❌ Não é permitido reservar datas passadas.');
+      askDate();
+      return;
+    }
+
+    // limita até 31/12 do ano atual
+    if (isBeyondLimit(dataISO)) {
+      addMessage('❌ Só é permitido reservar até 31/12 deste ano.');
+      askDate();
+      return;
+    }
+
+    reserva.dataFim = dataISO;
+    addMessage(dataFormatada);
+
     if(selectedAmbiente==='Chromebooks') askQuantity();
     else askHorariosAmbiente();
   });
 }
+
 function askDateAmbiente(){ askDate(); }
 
 function askQuantity(){
