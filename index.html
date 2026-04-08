@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <!-- Desenvolvido e mantido por Cássio Winkler - 2026 - cassio.tec.br -->
-<title>v2.0 - Sistema de Reservas - Colégio Imperatriz</title>
+<title>v2.1 - Sistema de Reservas - Colégio Imperatriz</title>
 <style>
   /* Reset + sensible defaults */
   *, *::before, *::after { box-sizing: border-box; }
@@ -292,7 +292,8 @@ function isPastDate(dateISO) {
   const hoje = new Date();
   hoje.setHours(0,0,0,0);
 
-  const data = new Date(dateISO);
+  const [y, m, d] = dateISO.split('-');
+  const data = new Date(y, m - 1, d); // FORÇA horário local
   data.setHours(0,0,0,0);
 
   return data < hoje;
@@ -301,8 +302,10 @@ function isPastDate(dateISO) {
 function isBeyondLimit(dateISO) {
   const hoje = new Date();
   const limite = new Date(hoje.getFullYear(), 11, 31);
+  limite.setHours(23,59,59,999);
 
-  const data = new Date(dateISO);
+  const [y, m, d] = dateISO.split('-');
+  const data = new Date(y, m - 1, d);
 
   return data > limite;
 }
