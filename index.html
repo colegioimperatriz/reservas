@@ -620,6 +620,13 @@ addMessage('Olá, eu sou a Leopoldina, sua assistente virtual. Digite seu CPF pa
 state=0; createInput('CPF',cpfInput);
 chatInput.addEventListener('keydown', e=>{ if(e.key==='Enter'&&!sendBtn.disabled){ sendBtn.click(); e.preventDefault(); }});
 
+  // 🔥 força reload ao voltar para a aba
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    location.reload();
+  }
+});
+
 /* helper toArray reused in multiple files */
 function toArray(val){ if(!val) return []; if(Array.isArray(val)) return val; try{ return JSON.parse(val); }catch(e){ if(typeof val==='string') return val.split(',').map(s=>s.trim()).filter(Boolean); return []; } }
 </script>
