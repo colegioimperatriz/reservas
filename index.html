@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <!-- Desenvolvido e mantido por Cássio Winkler - 2026 -->
-<title>Sistema de Reservas - Colégio Imperatriz</title>
+<title>Homologando... - Sistema de Reservas - Colégio Imperatriz</title>
 <style>
   /* Reset + sensible defaults */
   *, *::before, *::after { box-sizing: border-box; }
@@ -166,7 +166,7 @@ let state = 0;
 let professor = {nome:'', cpf:'', telefone:'', email:''};
 let reserva = {quantidade: 0, dataFim: '', horarios: [], ambiente: 'Chromebooks'};
 let selectedAmbiente = 'Chromebooks';
-
+let isConfirming = false; // 🔒 trava contra múltiplos cliques
 // ADICIONE NOVOS AMBIENTES AQUI
 const AMBIENTES = ['Chromebooks','Cozinha','Tele Sala','Sala de Atendimento I',/*'Sala de Reuniões',*/
                    'Carro','Lab. Química','Lab. Física','Lab. Biologia','Sala do CTC'];
@@ -512,10 +512,26 @@ async function askHorarios(){
   confirm.classList.add('option-btn');
   confirm.innerText='Confirmar';
   confirm.style.backgroundColor='#075E54';
-  confirm.onclick=()=>{
-    reserva.horarios=Array.from(reserva.horariosSelecionados);
-    confirmReservation();
-  };
+  confirm.onclick = async () => {
+
+  if (confirm.disabled) return; // segurança extra
+
+  confirm.disabled = true; // 🚫 bloqueia botão
+  confirm.classList.add('disabled');
+
+reserva.horarios = Array.from(reserva.horariosSelecionados);
+
+// 🚫 valida se selecionou pelo menos 1 horário
+if (reserva.horarios.length === 0) {
+  addMessage('❌ Selecione pelo menos um horário.');
+  confirm.disabled = false;
+  confirm.classList.remove('disabled');
+  return;
+}
+
+await confirmReservation();
+
+};
   container.appendChild(confirm);
   messagesEl.appendChild(container);
   messagesEl.scrollTop=messagesEl.scrollHeight;
@@ -524,6 +540,8 @@ async function askHorarios(){
 function askHorariosAmbiente(){ askHorarios(); }
 
 async function confirmReservation(){
+  if (isConfirming) return; // 🚫 impede repetir
+  isConfirming = true;
   reserva.professor = professor.nome;
   reserva.cpf = professor.cpf;
   reserva.telefone = professor.telefone;
@@ -543,6 +561,7 @@ async function confirmReservation(){
 
     if (totalDepois > maxPermitido) {
       addMessage(`❌ Não há disponibilidade no horário ${h} de ${isoToBR(reserva.dataFim)}.\nDisponíveis: ${maxPermitido - ocupados}`);
+      isConfirming = false;
       askSelectAmbiente();
       return;
     }
@@ -557,8 +576,14 @@ async function confirmReservation(){
     }
   }
 
+ try {
   await saveReserva(reserva);
   addMessage('✅ Reserva confirmada!');
+} catch (e) {
+  addMessage('❌ Erro ao salvar reserva. Tente novamente.');
+}
+
+isConfirming = false;
 
   // AQUI está a pergunta que está faltando:
   addMessage('Deseja fazer mais alguma reserva?');
