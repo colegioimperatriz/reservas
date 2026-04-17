@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <!-- Desenvolvido e mantido por Cássio Winkler - 2026 - cassio.tec.br -->
-<title>v2 - Sistema de Reservas - Colégio Imperatriz</title>
+<title>v3 - Sistema de Reservas - Colégio Imperatriz</title>
 <style>
   /* Reset + sensible defaults */
   *, *::before, *::after { box-sizing: border-box; }
@@ -557,47 +557,8 @@ async function confirmReservation(){
     }
   }
 
-await saveReserva(reserva);
-addMessage('✅ Reserva confirmada!');
-
-addMessage('Deseja fazer mais alguma reserva?');
-
-const container = document.createElement('div');
-container.classList.add('option-container');
-
-const btnSim = document.createElement('button');
-btnSim.classList.add('option-btn');
-btnSim.innerText = 'Sim';
-
-const btnNao = document.createElement('button');
-btnNao.classList.add('option-btn');
-btnNao.innerText = 'Não';
-
-// 🔒 função que bloqueia os botões após clique
-function disableOptions(){
-  btnSim.disabled = true;
-  btnNao.disabled = true;
-  btnSim.classList.add('disabled');
-  btnNao.classList.add('disabled');
-}
-
-btnSim.onclick = () => {
-  disableOptions(); // impede múltiplos cliques
-  addMessage('Sim','user');
-  askSelectAmbiente();
-};
-
-btnNao.onclick = () => {
-  disableOptions(); // impede múltiplos cliques
-  addMessage('Não','user');
-  resetChat();
-};
-
-container.appendChild(btnSim);
-container.appendChild(btnNao);
-
-messagesEl.appendChild(container);
-messagesEl.scrollTop = messagesEl.scrollHeight;
+  await saveReserva(reserva);
+  addMessage('✅ Reserva confirmada!');
 
   // AQUI está a pergunta que está faltando:
   addMessage('Deseja fazer mais alguma reserva?');
