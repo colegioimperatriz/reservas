@@ -170,7 +170,7 @@ let selectedAmbiente = 'Chromebooks';
 let isConfirming = false; // 🔒 trava contra múltiplos cliques
 // ADICIONE NOVOS AMBIENTES AQUI
 const AMBIENTES = ['Chromebooks','Cozinha','Tele Sala','Sala de Atendimento I',/*'Sala de Reuniões',*/
-                   'Carro','Lab. Química','Lab. Física','Lab. Biologia','Sala do CTC'];
+                   'Carro','Lab. Química','Lab. Física','Lab. Biologia',/*'Sala do CTC'*/];
 const horarios = ['07:20','08:05','08:50','09:55','10:40','11:25','13:45','14:30','15:35','16:20','17:05'];
 
 async function fetchReservas(){ const r=await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*`,{headers}); return await r.json(); }
