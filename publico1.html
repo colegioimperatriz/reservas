@@ -434,7 +434,7 @@ async function montarCalendarioPublico() {
         let eventosDoDia = [];
 
         reservas
-        .filter(r => (r.datainicio || "").startsWith(dataISO))
+        .filter(r => (r.datafim || "").startsWith(dataISO))
         .forEach(r => {
 
             if (
