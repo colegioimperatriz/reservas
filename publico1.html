@@ -469,6 +469,11 @@ reservasDoDia.forEach(r => {
             });
         });
 
+if (dataISO === "2026-10-10") {
+console.log("Eventos encontrados:", eventosDoDia);
+}
+
+		
         eventosDoDia.sort((a,b) => {
             const [hA,mA] = a.horario.split(":").map(Number);
             const [hB,mB] = b.horario.split(":").map(Number);
