@@ -375,27 +375,7 @@ function toArray(val) {
 function isoToBR(iso) {
     return iso.split("T")[0].split("-").reverse().join("/");
 }
-/* Remover será??
-	async function fetchJson(url) {
-    try {
-        const r = await fetch(url, { headers });
 
-        const texto = await r.text();
-
-        if (!r.ok) {
-            console.error("Erro HTTP:", r.status, texto);
-            return [];
-        }
-
-        return JSON.parse(texto);
-
-    } catch (erro) {
-        console.error("Erro ao buscar dados:", erro);
-        return [];
-    }
-}*/
-
-	
 async function fetchJson(url) {
     try {
         const r = await fetch(url, { headers });
@@ -406,33 +386,8 @@ async function fetchJson(url) {
 }
 
 async function carregarDados() {
-    const primeiroDia = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-01`;
-
-    const ultimoDiaObj = new Date(currentYear, currentMonth + 1, 0);
-    const ultimoDia =
-        `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(ultimoDiaObj.getDate()).padStart(2, "0")}`;
-
-    const url =
-        `${SUPABASE_URL}/rest/v1/reservas` +
-        `?select=*` +
-        `&datafim=gte.${primeiroDia}` +
-        `&datafim=lte.${ultimoDia}`;
-
-    console.log("Buscando:", url);
-
-    reservas = await fetchJson(url);
-
-    console.log(
-        `Reservas de ${primeiroDia} até ${ultimoDia}:`,
-        reservas.length
-    );
-}
-
-
-	/*
-async function carregarDados() {
     reservas = await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*`);
-}*/
+}
 
 async function montarCalendarioPublico() {
 
@@ -479,12 +434,8 @@ async function montarCalendarioPublico() {
         let eventosDoDia = [];
 
         reservas
-.filter(r => String(r.datafim || "").substring(0, 10) === dataISO)
-.forEach(r => {
-		
-		/*reservas
         .filter(r => (r.datafim || "").startsWith(dataISO))
-        .forEach(r => {*/
+        .forEach(r => {
 
             if (
                 filtro !== "all" &&
@@ -531,27 +482,15 @@ async function montarCalendarioPublico() {
     }
 }
 
-document.getElementById("prevBtn").onclick = async () => {
+document.getElementById("prevBtn").onclick = () => {
     currentMonth--;
-
-    if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-    }
-
-    await carregarDados();
+    if(currentMonth<0){currentMonth=11;currentYear--;}
     montarCalendarioPublico();
 };
 
-document.getElementById("nextBtn").onclick = async () => {
+document.getElementById("nextBtn").onclick = () => {
     currentMonth++;
-
-    if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-    }
-
-    await carregarDados();
+    if(currentMonth>11){currentMonth=0;currentYear++;}
     montarCalendarioPublico();
 };
 
