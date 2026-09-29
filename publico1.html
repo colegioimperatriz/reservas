@@ -444,15 +444,35 @@ async function montarCalendarioPublico() {
 		const reservasDoDia = reservas.filter(r => (r.datafim || "").startsWith(dataISO));
  
 if (dataISO === "2026-10-10") {
-console.log("DataISO:", dataISO);
+ 
+console.log("dataISO:", JSON.stringify(dataISO));
  
 reservas.forEach(r => {
-if (r.datafim === "2026-10-10") {
-console.log("Registro encontrado:", r);
+if (String(r.datafim).includes("2026-10-10")) {
+console.log(
+"Registro encontrado",
+JSON.stringify(r.datafim),
+r
+);
 }
 });
 }
+
+		const reservasDoDia = reservas.filter(r => {
  
+const dataRegistro = String(r.datafim).substring(0,10);
+ 
+if (dataISO === "2026-10-10") {
+console.log(
+"Comparando:",
+dataRegistro,
+dataISO,
+dataRegistro === dataISO
+);
+}
+ 
+return dataRegistro === dataISO;
+});
 reservasDoDia.forEach(r => {
 			
             if (
