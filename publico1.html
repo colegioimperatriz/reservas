@@ -384,14 +384,11 @@ async function fetchJson(url) {
         return [];
     }
 }
-/*
+
 async function carregarDados() {
     reservas = await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*`);
-}*/
-async function carregarDados() {
-reservas = await fetchJson(
-`${SUPABASE_URL}/rest/v1/reservas?select=*&order=created_at.desc`
-);
+}
+
  
 	
 async function montarCalendarioPublico() {
