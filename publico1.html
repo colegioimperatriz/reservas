@@ -393,10 +393,6 @@ reservas = await fetchJson(
 `${SUPABASE_URL}/rest/v1/reservas?select=*&order=created_at.desc`
 );
  
-console.log("Total de registros:", reservas.length);
-console.log("10 mais recentes:", reservas.slice(0,10));
-}
-
 	
 async function montarCalendarioPublico() {
 
@@ -443,12 +439,12 @@ async function montarCalendarioPublico() {
 
         let eventosDoDia = [];
 
-       /* reservas
+       reservas
 			
         .filter(r => (r.datafim || "").startsWith(dataISO))
         .forEach(r => {
-*/
-			reservas.forEach(r => {
+
+			
             if (
                 filtro !== "all" &&
                 normalizar(filtro) !== normalizar(r.ambiente)
