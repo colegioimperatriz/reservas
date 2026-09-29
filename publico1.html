@@ -375,7 +375,7 @@ function toArray(val) {
 function isoToBR(iso) {
     return iso.split("T")[0].split("-").reverse().join("/");
 }
-
+/* Remover será??
 	async function fetchJson(url) {
     try {
         const r = await fetch(url, { headers });
@@ -393,9 +393,9 @@ function isoToBR(iso) {
         console.error("Erro ao buscar dados:", erro);
         return [];
     }
-}
+}*/
 
-	/*
+	
 async function fetchJson(url) {
     try {
         const r = await fetch(url, { headers });
@@ -403,7 +403,7 @@ async function fetchJson(url) {
     } catch {
         return [];
     }
-}*/
+}
 
 async function carregarDados() {
     const primeiroDia = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-01`;
