@@ -393,18 +393,9 @@ reservas = await fetchJson(
 `${SUPABASE_URL}/rest/v1/reservas?select=*`
 );
  
-console.log("TOTAL:", reservas.length);
- 
-reservas.forEach(r => {
-console.log(
-r.id,
-r.datainicio,
-r.datafim,
-r.ambiente
-);
-});
+console.log("Total de registros:", reservas.length);
+console.log("Últimos registros:", reservas.slice(-5));
 }
-``
 
 	
 async function montarCalendarioPublico() {
