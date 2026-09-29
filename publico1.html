@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Calendário de Reservas - teste-  Colégio Imperatriz</title>
+<title>Calendário de Reservas - Colégio Imperatriz</title>
 
 <style>
 
@@ -389,11 +389,8 @@ async function carregarDados() {
     reservas = await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*`);
 }
 
- 
-	
 async function montarCalendarioPublico() {
 
-		
     const filtro = document.getElementById("filtroAmbiente").value;
     const headerEl = document.getElementById("calendarHeader");
     const grid = document.getElementById("calendarGrid");
@@ -436,32 +433,10 @@ async function montarCalendarioPublico() {
 
         let eventosDoDia = [];
 
-     /*  reservas
-			
+        reservas
         .filter(r => (r.datafim || "").startsWith(dataISO))
         .forEach(r => {
-*/
-		const reservasDoDia = reservas.filter(r => (r.datafim || "").startsWith(dataISO));
- 
-if (dataISO === "2026-10-10") {
- 
-console.log("dataISO:", JSON.stringify(dataISO));
- 
-reservas.forEach(r => {
-if (String(r.datafim).includes("2026-10-10")) {
-console.log(
-"Registro encontrado",
-JSON.stringify(r.datafim),
-r
-);
-}
-});
-}
- 
-return dataRegistro === dataISO;
 
-reservasDoDia.forEach(r => {
-			
             if (
                 filtro !== "all" &&
                 normalizar(filtro) !== normalizar(r.ambiente)
@@ -479,11 +454,6 @@ reservasDoDia.forEach(r => {
             });
         });
 
-if (dataISO === "2026-10-10") {
-console.log("Eventos encontrados:", eventosDoDia);
-}
-
-		
         eventosDoDia.sort((a,b) => {
             const [hA,mA] = a.horario.split(":").map(Number);
             const [hB,mB] = b.horario.split(":").map(Number);
@@ -533,7 +503,7 @@ document.getElementById("filtroAmbiente").onchange = montarCalendarioPublico;
 </script>
 
 <footer class="footer">
-  © 2026 Colégio Imperatriz Dona TESTEE Todos os direitos reservados.
+  © 2026 Colégio Imperatriz Dona Leopoldina. Todos os direitos reservados.
 </footer>
 </body>
 </html>
