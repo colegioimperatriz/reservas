@@ -457,19 +457,6 @@ r
 }
 });
 }
-
-		const reservasDoDia = reservas.filter(r => {
- 
-const dataRegistro = String(r.datafim).substring(0,10);
- 
-if (dataISO === "2026-10-10") {
-console.log(
-"Comparando:",
-dataRegistro,
-dataISO,
-dataRegistro === dataISO
-);
-}
  
 return dataRegistro === dataISO;
 });
