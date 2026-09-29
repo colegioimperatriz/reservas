@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Calendário de Reservas - Colégio Imperatriz</title>
+<title>Calendário de Reservas - teste-  Colégio Imperatriz</title>
 
 <style>
 
@@ -323,7 +323,6 @@ select{
 
 <div id="tooltip" class="tooltip"></div>
 
-
 <script>
 const SUPABASE_URL = "https://oufiieqxyyqnqpcbuyms.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91ZmlpZXF4eXlxbnFwY2J1eW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNDMwNDgsImV4cCI6MjA3NDkxOTA0OH0.-4QPA1R5y24daAt-WsZuWc8-2bJxCJGhdTR1nq4RnHc";
@@ -339,23 +338,13 @@ let currentMonth = new Date().getMonth();
 let reservas = [];
 
 const tooltip = document.getElementById("tooltip");
-const calendarHeader = document.getElementById("calendarHeader");
-const calendarGrid = document.getElementById("calendarGrid");
-const filtroAmbiente = document.getElementById("filtroAmbiente");
-
-const meses = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-];
-
-const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 /* =========================
-   FUNÇÕES DE AUXÍLIO
+   FUNÇÃO GLOBAL PARA NORMALIZAÇÃO
 ========================= */
 function normalizar(txt){
     if (!txt) return "";
-	
+    
     return txt
         .toString()
         .trim()
@@ -372,7 +361,6 @@ function showTooltip(e) {
     tooltip.style.top = e.clientY + 12 + "px";
     tooltip.classList.add("show");
 }
-
 function hideTooltip() {
     tooltip.classList.remove("show");
 }
@@ -385,7 +373,6 @@ function toArray(val) {
 }
 
 function isoToBR(iso) {
-    if(!iso) return "";
     return iso.split("T")[0].split("-").reverse().join("/");
 }
 
@@ -398,168 +385,125 @@ async function fetchJson(url) {
     }
 }
 
-/* =========================
-   BUSCA E RENDERIZAÇÃO (CORRIGIDO)
-========================= */
 async function carregarDados() {
-    // Busca todas as reservas ordenadas por horário de início
     reservas = await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*`);
-    renderCalendar();
 }
 
-										  
+async function montarCalendarioPublico() {
 
-																   
-															   
-														 
+    const filtro = document.getElementById("filtroAmbiente").value;
+    const headerEl = document.getElementById("calendarHeader");
+    const grid = document.getElementById("calendarGrid");
 
-						  
-																	 
-						  
-						   
-		   
-
-function renderCalendar() {
-    calendarGrid.innerHTML = "";
-    calendarHeader.innerText = `${meses[currentMonth]} de ${currentYear}`;
-
-    // 1. Renderiza os cabeçalhos da semana
-    diasSemana.forEach(dia => {
-        const el = document.createElement("div");
-        el.className = "weekday";
-        el.innerText = dia;
-        calendarGrid.appendChild(el);
-    });
-
-    // 2. Calcula os dias do mês
-    const primeiroDiaMes = new Date(currentYear, currentMonth, 1).getDay();
-    const totalDiasMes = new Date(currentYear, currentMonth + 1, 0).getDate();
-										
-										  
-
-    // 3. Preenche espaços em branco do mês anterior
-    for (let i = 0; i < primeiroDiaMes; i++) {
-        const vázio = document.createElement("div");
-        vázio.className = "day";
-        vázio.style.opacity = "0.3";
-        calendarGrid.appendChild(vázio);
-    }
-
-										   
-
-																												  
-													 
-							   
-
-												  
-							
-							
-								
-
-							  
-
-				
-														   
-					   
-
-				
-								   
-															 
-					 
-
-    // 4. Cria os dias válidos do mês corrente
-    for (let dia = 1; dia <= totalDiasMes; dia++) {
-        const dayCell = document.createElement("div");
-        dayCell.className = "day";
-
-        const numEl = document.createElement("div");
-        numEl.className = "num";
-        numEl.innerText = dia;
-        dayCell.appendChild(numEl);
-												  
-												   
-				   
-			   
-		   
-
-        // Formata a data atual do laço para comparar (YYYY-MM-DD)
-        const mesFormatado = String(currentMonth + 1).padStart(2, '0');
-        const diaFormatado = String(dia).padStart(2, '0');
-        const dataString = `${currentYear}-${mesFormatado}-${diaFormatado}`;
-		   
-
-        // Filtra as reservas correspondentes a este dia específico
-        const reservasDoDia = reservas.filter(r => r.data === dataString);
-        const filtroSelecionado = filtroAmbiente.value;
-
-        reservasDoDia.forEach(res => {
-            // Se houver um filtro de ambiente ativo, pula os que não batem
-            if (filtroSelecionado !== "all" && res.ambiente !== filtroSelecionado) {
-                return;
-            }
-
-            const badge = document.createElement("div");
-            // Aplica a classe de cor normalizada (ex: "chromebooks", "cozinha")
-            const classeAmbiente = normalizar(res.ambiente);
-            badge.className = `badge ${classeAmbiente}`;
-            
-            // Texto curto exibido na célula
-            badge.innerHTML = `<strong>${res.horario_inicio} - ${res.ambiente}</strong>`;
-            
-            // Texto completo gerado para o balão flutuante (Tooltip)
-            const responsavel = res.nome || "Não informado";
-            const motivo = res.motivo || "Uso regular";
-            badge.dataset.tip = `
-                <strong>Ambiente:</strong> ${res.ambiente}<br>
-                <strong>Horário:</strong> ${res.horario_inicio} às ${res.horario_fim}<br>
-                <strong>Professor:</strong> ${responsavel}<br>
-                <strong>Motivo:</strong> ${motivo}
-            `;
-
-            // Eventos do mouse para exibir o Tooltip
-            badge.addEventListener("mousemove", showTooltip);
-            badge.addEventListener("mouseleave", hideTooltip);
-
-            dayCell.appendChild(badge);
+    headerEl.textContent =
+        new Date(currentYear, currentMonth).toLocaleString("pt-BR", {
+            month: "long",
+            year: "numeric"
         });
 
-        calendarGrid.appendChild(dayCell);
+    grid.innerHTML = "";
+
+    const diasSemana = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+    diasSemana.forEach(d => {
+        const div = document.createElement("div");
+        div.className = "weekday";
+        div.textContent = d;
+        grid.appendChild(div);
+    });
+
+    const primeiroDia = new Date(currentYear, currentMonth, 1);
+    const ultimoDia = new Date(currentYear, currentMonth + 1, 0);
+    const blanks = primeiroDia.getDay();
+    const totalDias = ultimoDia.getDate();
+
+    for (let i=0;i<blanks;i++){
+        grid.appendChild(document.createElement("div")).className="day";
+    }
+
+    for (let dia=1; dia<=totalDias; dia++){
+
+        const dataISO = `${currentYear}-${String(currentMonth+1).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
+        const dayDiv = document.createElement("div");
+        dayDiv.className="day";
+
+        const num = document.createElement("div");
+        num.className="num";
+        num.textContent=dia;
+        dayDiv.appendChild(num);
+
+        let eventosDoDia = [];
+
+        reservas
+        .filter(r => (r.datafim || "").startsWith(dataISO))
+        .forEach(r => {
+
+            if (
+                filtro !== "all" &&
+                normalizar(filtro) !== normalizar(r.ambiente)
+            ) return;
+
+            const horas = toArray(r.horarios);
+
+            horas.forEach(h => {
+                eventosDoDia.push({
+                    horario: h,
+                    ambiente: r.ambiente,
+                    quantidade: r.quantidade || 1,
+                    professor: r.professor || "—"
+                });
+            });
+        });
+
+        eventosDoDia.sort((a,b) => {
+            const [hA,mA] = a.horario.split(":").map(Number);
+            const [hB,mB] = b.horario.split(":").map(Number);
+            return (hA*60+mA) - (hB*60+mB);
+        });
+
+        eventosDoDia.forEach(ev => {
+
+            let className = normalizar(ev.ambiente);
+
+            const badge = document.createElement("div");
+            badge.className = `badge ${className}`;
+
+            badge.innerHTML = `
+                <strong>${ev.horario}</strong><br>
+                ${ev.ambiente} (${ev.quantidade})<br>
+                <span style="font-size:9px; opacity:.9">
+                    ${ev.professor}
+                </span>
+            `;
+
+            dayDiv.appendChild(badge);
+        });
+
+        grid.appendChild(dayDiv);
     }
 }
 
-/* =========================
-   CONTROLES E EVENTOS
-========================= */
-document.getElementById("prevBtn").addEventListener("click", () => {
+document.getElementById("prevBtn").onclick = () => {
     currentMonth--;
-    if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-    }
-    renderCalendar();
-});
+    if(currentMonth<0){currentMonth=11;currentYear--;}
+    montarCalendarioPublico();
+};
 
-document.getElementById("nextBtn").addEventListener("click", () => {
+document.getElementById("nextBtn").onclick = () => {
     currentMonth++;
-    if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-    }
-    renderCalendar();
-});
+    if(currentMonth>11){currentMonth=0;currentYear++;}
+    montarCalendarioPublico();
+};
 
-filtroAmbiente.addEventListener("change", renderCalendar);
+document.getElementById("filtroAmbiente").onchange = montarCalendarioPublico;
 
-// Inicializa o sistema ao carregar a página
-carregarDados();
-
-// ATUALIZAÇÃO AUTOMÁTICA (Polling): Busca novos dados do Supabase a cada 30 segundos
-setInterval(carregarDados, 30000);
+(async ()=>{
+    await carregarDados();
+    montarCalendarioPublico();
+})();
 </script>
 
-
 <footer class="footer">
-  © 2026 Colégio Imperatriz - Todos os direitos reservados.
+  © 2026 Colégio Imperatriz Dona TESTEE Todos os direitos reservados.
 </footer>
 </body>
 </html>
