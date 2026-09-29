@@ -403,7 +403,7 @@ async function fetchJson(url) {
 ========================= */
 async function carregarDados() {
     // Busca todas as reservas ordenadas por horário de início
-    reservas = await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*&order=horario_inicio.asc`);
+    reservas = await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*`);
     renderCalendar();
 }
 
