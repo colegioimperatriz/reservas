@@ -1,1 +1,540 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Calendário de Reservas - Colégio Imperatriz</title>
 
+<style>
+
+/* =========================
+   RESET & BASE (Mobile First)
+========================= */
+
+:root{
+    --primary: #075E54;
+    --primary-dark: #064940;
+    --bg: #e9edf2;
+    --card: #ffffff;
+    --text: #1f2933;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+}
+
+*{
+    box-sizing: border-box;
+}
+
+body{
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: linear-gradient(180deg,#eef2f6,#e2e7ee);
+    color: var(--text);
+    padding: 12px;
+}
+
+.container{
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+h2{
+    text-align: center;
+    margin: 10px 0 5px;
+    font-size: 20px;
+}
+
+.muted{
+    text-align: center;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 18px;
+}
+
+/* =========================
+   CONTROLS
+========================= */
+
+.controls{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.btn,
+select{
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.btn{
+    background: var(--primary);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: 0.2s ease;
+}
+
+.btn:hover{
+    background: var(--primary-dark);
+}
+
+select{
+    background: #fff;
+}
+
+/* =========================
+   CALENDAR CARD
+========================= */
+
+.calendar{
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+    overflow: hidden;
+    border: 1px solid #dde3ea;
+}
+
+/* Header */
+.calendar-header{
+    text-align: center;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    font-weight: 600;
+    font-size: 18px;
+    text-transform: capitalize;
+}
+
+/* Scroll container (mobile safety) */
+.calendar-wrapper{
+    overflow-x: auto;
+}
+
+/* Grid */
+.calendar-grid{
+    display: grid;
+    grid-template-columns: repeat(7, minmax(90px, 1fr));
+    min-width: 630px;
+}
+
+/* Weekdays */
+.weekday{
+    background: #f3f4f6;
+    text-align: center;
+    font-weight: 600;
+    padding: 8px 0;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Day cell */
+.day{
+    min-height: 85px;
+    padding: 6px;
+    border: 1px solid var(--border);
+    background: #fafafa;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.day:hover{
+    background: #f0fdf4;
+}
+
+.day .num{
+    font-weight: 700;
+    font-size: 13px;
+}
+
+/* =========================
+   BADGES
+========================= */
+
+.badge{
+    padding: 5px 6px;
+    border-radius: 7px;
+    font-size: 10px;
+    line-height: 1.2;
+    color: #fff;
+    cursor: pointer;
+    word-break: break-word;
+    transition: 0.15s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+}
+
+.badge:hover{
+    transform: scale(1.02);
+    opacity: 0.9;
+}
+
+/* Ambientes cores (normalizados em minúsculo) */
+.chromebooks { background: #1976d2; }
+.cozinha { background: #e67e22; }
+.telesala { background: #2e7d32; }
+.saladeatendimentoi { background: #8e44ad; }
+.saladereunioes { background: #d35400; }
+.carro { background: #6c757d; }
+.labquimica { background: #009688; }
+.labfisica { background: #6d4c41; }
+.labbiologia { background: #c2185b; }
+.saladoctc { background: #3949ab; }
+
+.bloqueio{
+    background: #444 !important;
+}
+
+/* =========================
+   TOOLTIP (touch friendly)
+========================= */
+
+.tooltip{
+    position: fixed;
+    background: #111;
+    color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    max-width: 260px;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: 0.15s ease;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.tooltip.show{
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* =========================
+   DESKTOP
+========================= */
+
+@media (min-width: 768px){
+
+    body{
+        padding: 24px;
+    }
+
+    h2{
+        font-size: 24px;
+    }
+
+    .controls{
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .btn, select{
+        width: auto;
+    }
+
+    .day{
+        min-height: 120px;
+        padding: 8px;
+    }
+
+    .badge{
+        font-size: 11px;
+    }
+	
+	.badge strong{
+        font-size: 11px;
+    }
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+.footer{
+    text-align: center;
+    margin-top: 25px;
+    padding: 15px 10px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.footer a{
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: 0.2s ease;
+}
+
+.footer a:hover{
+    text-decoration: underline;
+    color: var(--primary-dark);
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Calendário Público de Reservas</h2>
+    <p class="muted">
+        Visualize aqui todas as reservas existentes antes de realizar a sua pelo chatbot.
+    </p>
+
+    <div class="controls">
+        <button id="prevBtn" class="btn">◀ Mês Anterior</button>
+        <button id="nextBtn" class="btn">Próximo Mês ▶</button>
+
+        <select id="filtroAmbiente">
+            <option value="all">Todos os Ambientes</option>
+            <option value="Chromebooks">Chromebooks</option>
+            <option value="Cozinha">Cozinha</option>
+            <option value="Tele Sala">Tele Sala</option>
+            <option value="Sala de Atendimento I">Sala de Atendimento I</option>
+            <option value="Sala de Reuniões">Sala de Reuniões</option>
+            <option value="Carro">Carro</option>
+            <option value="Lab. Química">Lab. Química</option>
+            <option value="Lab. Física">Lab. Física</option>
+            <option value="Lab. Biologia">Lab. Biologia</option>
+            <option value="Sala do CTC">Sala do CTC</option>
+        </select>
+    </div>
+
+    <div class="calendar">
+        <div id="calendarHeader" class="calendar-header">Carregando...</div>
+        <div class="calendar-wrapper">
+            <div id="calendarGrid" class="calendar-grid"></div>
+        </div>
+    </div>
+</div>
+
+<div id="tooltip" class="tooltip"></div>
+
+<script>
+const SUPABASE_URL = "https://oufiieqxyyqnqpcbuyms.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91ZmlpZXF4eXlxbnFwY2J1eW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNDMwNDgsImV4cCI6MjA3NDkxOTA0OH0.-4QPA1R5y24daAt-WsZuWc8-2bJxCJGhdTR1nq4RnHc";
+
+const headers = {
+    "Content-Type": "application/json",
+    "apikey": SUPABASE_KEY,
+    "Authorization": `Bearer ${SUPABASE_KEY}`
+};
+
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
+let reservas = [];
+
+const tooltip = document.getElementById("tooltip");
+
+/* =========================
+   FUNÇÃO GLOBAL PARA NORMALIZAÇÃO
+========================= */
+function normalizar(txt){
+    if (!txt) return "";
+    
+    return txt
+        .toString()
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g,'')
+        .replace(/[^\w]/g,'');
+}
+
+function showTooltip(e) {
+    tooltip.innerHTML = e.currentTarget.dataset.tip;
+    tooltip.style.left = e.clientX + 12 + "px";
+    tooltip.style.top = e.clientY + 12 + "px";
+    tooltip.classList.add("show");
+}
+function hideTooltip() {
+    tooltip.classList.remove("show");
+}
+
+function toArray(val) {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    try { return JSON.parse(val) }
+    catch { return val.split(",").map(s=>s.trim()); }
+}
+
+function isoToBR(iso) {
+    return iso.split("T")[0].split("-").reverse().join("/");
+}
+
+async function fetchJson(url) {
+    try {
+        const r = await fetch(url, { headers });
+        return r.ok ? r.json() : [];
+    } catch {
+        return [];
+    }
+}
+
+async function carregarDados() {
+    const primeiroDia = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-01`;
+
+    const ultimoDiaObj = new Date(currentYear, currentMonth + 1, 0);
+    const ultimoDia =
+        `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(ultimoDiaObj.getDate()).padStart(2, "0")}`;
+
+    const url =
+        `${SUPABASE_URL}/rest/v1/reservas` +
+        `?select=*` +
+        `&datafim=gte.${primeiroDia}` +
+        `&datafim=lte.${ultimoDia}`;
+
+    console.log("Buscando:", url);
+
+    reservas = await fetchJson(url);
+
+    console.log(
+        `Reservas de ${primeiroDia} até ${ultimoDia}:`,
+        reservas.length
+    );
+}
+
+async function montarCalendarioPublico() {
+
+    const filtro = document.getElementById("filtroAmbiente").value;
+    const headerEl = document.getElementById("calendarHeader");
+    const grid = document.getElementById("calendarGrid");
+
+    headerEl.textContent =
+        new Date(currentYear, currentMonth).toLocaleString("pt-BR", {
+            month: "long",
+            year: "numeric"
+        });
+
+    grid.innerHTML = "";
+
+    const diasSemana = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+    diasSemana.forEach(d => {
+        const div = document.createElement("div");
+        div.className = "weekday";
+        div.textContent = d;
+        grid.appendChild(div);
+    });
+
+    const primeiroDia = new Date(currentYear, currentMonth, 1);
+    const ultimoDia = new Date(currentYear, currentMonth + 1, 0);
+    const blanks = primeiroDia.getDay();
+    const totalDias = ultimoDia.getDate();
+
+    for (let i=0;i<blanks;i++){
+        grid.appendChild(document.createElement("div")).className="day";
+    }
+
+    for (let dia=1; dia<=totalDias; dia++){
+
+        const dataISO = `${currentYear}-${String(currentMonth+1).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
+        const dayDiv = document.createElement("div");
+        dayDiv.className="day";
+
+        const num = document.createElement("div");
+        num.className="num";
+        num.textContent=dia;
+        dayDiv.appendChild(num);
+
+        let eventosDoDia = [];
+
+        reservas
+        .filter(r => String(r.datafim || "").substring(0, 10) === dataISO)
+        .forEach(r => {
+
+            if (
+                filtro !== "all" &&
+                normalizar(filtro) !== normalizar(r.ambiente)
+            ) return;
+
+            const horas = toArray(r.horarios);
+
+            horas.forEach(h => {
+                eventosDoDia.push({
+                    horario: h,
+                    ambiente: r.ambiente,
+                    quantidade: r.quantidade || 1,
+                    professor: r.professor || "—"
+                });
+            });
+        });
+
+        eventosDoDia.sort((a,b) => {
+            const [hA,mA] = a.horario.split(":").map(Number);
+            const [hB,mB] = b.horario.split(":").map(Number);
+            return (hA*60+mA) - (hB*60+mB);
+        });
+
+        eventosDoDia.forEach(ev => {
+
+            let className = normalizar(ev.ambiente);
+
+            const badge = document.createElement("div");
+            badge.className = `badge ${className}`;
+
+            badge.innerHTML = `
+                <strong>${ev.horario}</strong><br>
+                ${ev.ambiente} (${ev.quantidade})<br>
+                <span style="font-size:9px; opacity:.9">
+                    ${ev.professor}
+                </span>
+            `;
+
+            dayDiv.appendChild(badge);
+        });
+
+        grid.appendChild(dayDiv);
+    }
+}
+
+document.getElementById("prevBtn").onclick = async () => {
+    currentMonth--;
+
+    if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+    }
+
+    await carregarDados();
+    montarCalendarioPublico();
+};
+
+document.getElementById("nextBtn").onclick = async () => {
+    currentMonth++;
+
+    if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+    }
+
+    await carregarDados();
+    montarCalendarioPublico();
+};
+
+document.getElementById("filtroAmbiente").onchange = montarCalendarioPublico;
+
+(async ()=>{
+    await carregarDados();
+    montarCalendarioPublico();
+})();
+</script>
+
+<footer class="footer">
+  © 2026 Colégio Imperatriz Dona Leopoldina. Todos os direitos reservados.
+</footer>
+</body>
+</html>
