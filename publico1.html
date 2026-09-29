@@ -436,11 +436,21 @@ async function montarCalendarioPublico() {
 
         let eventosDoDia = [];
 
-       reservas
+     /*  reservas
 			
         .filter(r => (r.datafim || "").startsWith(dataISO))
         .forEach(r => {
-
+*/
+		const reservasDoDia = reservas.filter(
+r => (r.datafim || "").startsWith(dataISO)
+);
+ 
+if (dataISO === "2026-10-10") {
+console.log("Data da célula:", dataISO);
+console.log("Reservas encontradas:", reservasDoDia);
+}
+ 
+reservasDoDia.forEach(r => {
 			
             if (
                 filtro !== "all" &&
