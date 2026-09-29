@@ -400,6 +400,12 @@ console.log("10 mais recentes:", reservas.slice(0,10));
 	
 async function montarCalendarioPublico() {
 
+	console.log(
+"Procurando data:",
+dataISO
+);
+
+	
     const filtro = document.getElementById("filtroAmbiente").value;
     const headerEl = document.getElementById("calendarHeader");
     const grid = document.getElementById("calendarGrid");
@@ -442,10 +448,12 @@ async function montarCalendarioPublico() {
 
         let eventosDoDia = [];
 
-        reservas
+       /* reservas
+			
         .filter(r => (r.datafim || "").startsWith(dataISO))
         .forEach(r => {
-
+*/
+			reservas.forEach(r => {
             if (
                 filtro !== "all" &&
                 normalizar(filtro) !== normalizar(r.ambiente)
