@@ -376,6 +376,26 @@ function isoToBR(iso) {
     return iso.split("T")[0].split("-").reverse().join("/");
 }
 
+	async function fetchJson(url) {
+    try {
+        const r = await fetch(url, { headers });
+
+        const texto = await r.text();
+
+        if (!r.ok) {
+            console.error("Erro HTTP:", r.status, texto);
+            return [];
+        }
+
+        return JSON.parse(texto);
+
+    } catch (erro) {
+        console.error("Erro ao buscar dados:", erro);
+        return [];
+    }
+}
+
+	/*
 async function fetchJson(url) {
     try {
         const r = await fetch(url, { headers });
@@ -383,7 +403,7 @@ async function fetchJson(url) {
     } catch {
         return [];
     }
-}
+}*/
 
 async function carregarDados() {
     reservas = await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*`);
