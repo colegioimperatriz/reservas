@@ -390,11 +390,11 @@ async function carregarDados() {
 }*/
 async function carregarDados() {
 reservas = await fetchJson(
-`${SUPABASE_URL}/rest/v1/reservas?select=*`
+`${SUPABASE_URL}/rest/v1/reservas?select=*&order=created_at.desc`
 );
  
 console.log("Total de registros:", reservas.length);
-console.log("Últimos registros:", reservas.slice(-5));
+console.log("10 mais recentes:", reservas.slice(0,10));
 }
 
 	
