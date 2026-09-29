@@ -406,31 +406,26 @@ async function fetchJson(url) {
 }*/
 
 async function carregarDados() {
-    const url = `${SUPABASE_URL}/rest/v1/reservas?select=*`;
+    const primeiroDia = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-01`;
 
-    try {
-        const r = await fetch(url, { headers });
+    const ultimoDiaObj = new Date(currentYear, currentMonth + 1, 0);
+    const ultimoDia =
+        `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(ultimoDiaObj.getDate()).padStart(2, "0")}`;
 
-        const texto = await r.text();
+    const url =
+        `${SUPABASE_URL}/rest/v1/reservas` +
+        `?select=*` +
+        `&datafim=gte.${primeiroDia}` +
+        `&datafim=lte.${ultimoDia}`;
 
-        console.log("Status:", r.status);
-        console.log("Resposta:", texto);
+    console.log("Buscando:", url);
 
-        if (!r.ok) {
-            console.error("Erro do Supabase:", texto);
-            reservas = [];
-            return;
-        }
+    reservas = await fetchJson(url);
 
-        reservas = JSON.parse(texto);
-
-        console.log("TOTAL DE RESERVAS:", reservas.length);
-        console.table(reservas);
-
-    } catch (erro) {
-        console.error("Erro:", erro);
-        reservas = [];
-    }
+    console.log(
+        `Reservas de ${primeiroDia} até ${ultimoDia}:`,
+        reservas.length
+    );
 }
 
 
@@ -536,15 +531,27 @@ async function montarCalendarioPublico() {
     }
 }
 
-document.getElementById("prevBtn").onclick = () => {
+document.getElementById("prevBtn").onclick = async () => {
     currentMonth--;
-    if(currentMonth<0){currentMonth=11;currentYear--;}
+
+    if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+    }
+
+    await carregarDados();
     montarCalendarioPublico();
 };
 
-document.getElementById("nextBtn").onclick = () => {
+document.getElementById("nextBtn").onclick = async () => {
     currentMonth++;
-    if(currentMonth>11){currentMonth=0;currentYear++;}
+
+    if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+    }
+
+    await carregarDados();
     montarCalendarioPublico();
 };
 
