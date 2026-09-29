@@ -406,8 +406,38 @@ async function fetchJson(url) {
 }*/
 
 async function carregarDados() {
-    reservas = await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*`);
+    const url = `${SUPABASE_URL}/rest/v1/reservas?select=*`;
+
+    try {
+        const r = await fetch(url, { headers });
+
+        const texto = await r.text();
+
+        console.log("Status:", r.status);
+        console.log("Resposta:", texto);
+
+        if (!r.ok) {
+            console.error("Erro do Supabase:", texto);
+            reservas = [];
+            return;
+        }
+
+        reservas = JSON.parse(texto);
+
+        console.log("TOTAL DE RESERVAS:", reservas.length);
+        console.table(reservas);
+
+    } catch (erro) {
+        console.error("Erro:", erro);
+        reservas = [];
+    }
 }
+
+
+	/*
+async function carregarDados() {
+    reservas = await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*`);
+}*/
 
 async function montarCalendarioPublico() {
 
