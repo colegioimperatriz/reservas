@@ -441,13 +441,16 @@ async function montarCalendarioPublico() {
         .filter(r => (r.datafim || "").startsWith(dataISO))
         .forEach(r => {
 */
-		const reservasDoDia = reservas.filter(
-r => (r.datafim || "").startsWith(dataISO)
-);
+		const reservasDoDia = reservas.filter(r => (r.datafim || "").startsWith(dataISO));
  
 if (dataISO === "2026-10-10") {
-console.log("Data da célula:", dataISO);
-console.log("Reservas encontradas:", reservasDoDia);
+console.log("DataISO:", dataISO);
+ 
+reservas.forEach(r => {
+if (r.datafim === "2026-10-10") {
+console.log("Registro encontrado:", r);
+}
+});
 }
  
 reservasDoDia.forEach(r => {
