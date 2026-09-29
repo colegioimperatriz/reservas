@@ -384,11 +384,29 @@ async function fetchJson(url) {
         return [];
     }
 }
-
+/*
 async function carregarDados() {
     reservas = await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*`);
+}*/
+async function carregarDados() {
+reservas = await fetchJson(
+`${SUPABASE_URL}/rest/v1/reservas?select=*`
+);
+ 
+console.log("TOTAL:", reservas.length);
+ 
+reservas.forEach(r => {
+console.log(
+r.id,
+r.datainicio,
+r.datafim,
+r.ambiente
+);
+});
 }
+``
 
+	
 async function montarCalendarioPublico() {
 
     const filtro = document.getElementById("filtroAmbiente").value;
