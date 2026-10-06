@@ -15,7 +15,9 @@
   --highlight:#22c55e;
 }
 
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
 
 body{
   margin:0;
@@ -34,10 +36,26 @@ header{
   flex-wrap:wrap;
 }
 
-h1{margin:0;font-size:38px;}
-.data{color:var(--muted);font-size:18px;}
-.clock{font-size:28px;font-weight:700;}
-.stats{margin-top:10px;font-size:16px;color:var(--muted);}
+h1{
+  margin:0;
+  font-size:38px;
+}
+
+.data{
+  color:var(--muted);
+  font-size:18px;
+}
+
+.clock{
+  font-size:28px;
+  font-weight:700;
+}
+
+.stats{
+  margin-top:10px;
+  font-size:16px;
+  color:var(--muted);
+}
 
 /* GRID */
 .grid{
@@ -56,18 +74,44 @@ h1{margin:0;font-size:38px;}
   position:relative;
 }
 
-.slot.proximo{border:3px solid var(--highlight);}
-.slot.alerta{animation:alerta 1s infinite;}
-
-@keyframes alerta{
-  0%{box-shadow:0 0 10px red}
-  50%{box-shadow:0 0 25px red}
-  100%{box-shadow:0 0 10px red}
+.slot.proximo{
+  border:3px solid var(--highlight);
 }
 
-.time{font-size:32px;font-weight:700;margin-bottom:12px;}
-.event{padding:10px;border-radius:8px;margin-bottom:8px;color:#fff;font-size:18px;}
-.prof{font-size:15px;opacity:.9;}
+.slot.alerta{
+  animation:alerta 1s infinite;
+}
+
+@keyframes alerta{
+  0%{
+    box-shadow:0 0 10px red;
+  }
+  50%{
+    box-shadow:0 0 25px red;
+  }
+  100%{
+    box-shadow:0 0 10px red;
+  }
+}
+
+.time{
+  font-size:32px;
+  font-weight:700;
+  margin-bottom:12px;
+}
+
+.event{
+  padding:10px;
+  border-radius:8px;
+  margin-bottom:8px;
+  color:#fff;
+  font-size:18px;
+}
+
+.prof{
+  font-size:15px;
+  opacity:.9;
+}
 
 /* PROGRESSO */
 .progressBar{
@@ -79,25 +123,64 @@ h1{margin:0;font-size:38px;}
   transition:width 0.5s ease;
 }
 
-/* cores */
-.Chromebooks{background:#1e88e5}
-.Cozinha{background:#f39c12}
-.TeleSala{background:#2e7d32}
-.SalaDeAtendimentoI{background:#8e44ad}
-.SalaDeReunioes{background:#d35400}
-.Carro{background:#6c757d}
-.LabQuimica{background:#00796b}
-.LabFisica{background:#5d4037}
-.LabBiologia{background:#c2185b}
-.SalaDoCTC{background:#3949ab}
-
-/* MEDIA QUERIES TVs grandes */
-@media(min-width:1920px){
-  .time{font-size:48px;}
-  .event{font-size:22px;}
-  .slot{padding:30px;}
+/* CORES */
+.Chromebooks{
+  background:#1e88e5;
 }
-  /* ALERTA GRANDE */
+
+.Cozinha{
+  background:#f39c12;
+}
+
+.TeleSala{
+  background:#2e7d32;
+}
+
+.SalaDeAtendimentoI{
+  background:#8e44ad;
+}
+
+.SalaDeReunioes{
+  background:#d35400;
+}
+
+.Carro{
+  background:#6c757d;
+}
+
+.LabQuimica{
+  background:#00796b;
+}
+
+.LabFisica{
+  background:#5d4037;
+}
+
+.LabBiologia{
+  background:#c2185b;
+}
+
+.SalaDoCTC{
+  background:#3949ab;
+}
+
+/* MEDIA QUERIES TVs GRANDES */
+@media(min-width:1920px){
+
+  .time{
+    font-size:48px;
+  }
+
+  .event{
+    font-size:22px;
+  }
+
+  .slot{
+    padding:30px;
+  }
+}
+
+/* ALERTA GRANDE */
 .alertaTela{
   position:fixed;
   inset:0;
@@ -129,9 +212,19 @@ h1{margin:0;font-size:38px;}
 }
 
 @keyframes pulseBg{
-  0%{background:rgba(0,0,0,0.85)}
-  50%{background:rgba(120,0,0,0.9)}
-  100%{background:rgba(0,0,0,0.85)}
+
+  0%{
+    background:rgba(0,0,0,0.85);
+  }
+
+  50%{
+    background:rgba(120,0,0,0.9);
+  }
+
+  100%{
+    background:rgba(0,0,0,0.85);
+  }
+
 }
 </style>
 </head>
@@ -139,262 +232,801 @@ h1{margin:0;font-size:38px;}
 <body>
 
 <header>
+
   <div>
+
     <h1>Reservas de Hoje</h1>
+
     <div id="data" class="data"></div>
-    <div id="stats" class="stats"></div>
+
+    <div id="stats" class="stats">
+      Carregando reservas...
+    </div>
+
   </div>
+
   <div id="clock" class="clock"></div>
+
 </header>
 
 <div id="grid" class="grid"></div>
+
 <div id="progress" class="progressBar"></div>
 
 <script>
-const SUPABASE_URL="https://oufiieqxyyqnqpcbuyms.supabase.co";
-const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91ZmlpZXF4eXlxbnFwY2J1eW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNDMwNDgsImV4cCI6MjA3NDkxOTA0OH0.-4QPA1R5y24daAt-WsZuWc8-2bJxCJGhdTR1nq4RnHc";
-const headers={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`};
 
-let reservas=[];
-let alertaTocado=null;
-let audioCtx=null;
-  
-function normalizarClasse(txt){return txt.replace(/\s+/g,'').replace(/[^\w]/g,'');}
-function toArray(v){if(!v)return[]; if(Array.isArray(v)) return v; try{return JSON.parse(v)}catch{return v.split(",").map(s=>s.trim())}}
-function minutos(h){const [a,b]=h.split(":").map(Number); return a*60+b;}
-function agoraMin(){const d=new Date();return d.getHours()*60+d.getMinutes();}
-function horarioPassou(h){
-  return minutos(h) + 46 < agoraMin();
+/* =========================================================
+   SUPABASE
+========================================================= */
+
+const SUPABASE_URL =
+  "https://oufiieqxyyqnqpcbuyms.supabase.co";
+
+const SUPABASE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91ZmlpZXF4eXlxbnFwY2J1eW1zIiwicm9sZSI6IkFub24iLCJpYXQiOjE3NTkzNDMwNDgsImV4cCI6MjA3NDkxOTA0OH0.-4QPA1R5y24daAt-WsZuWc8-2bJxCJGhdTR1nq4RnHc";
+
+const headers = {
+  "Content-Type":"application/json",
+  "apikey":SUPABASE_KEY,
+  "Authorization":`Bearer ${SUPABASE_KEY}`
+};
+
+
+/* =========================================================
+   VARIÁVEIS
+========================================================= */
+
+let reservas = [];
+
+let alertaTocado = null;
+
+let audioCtx = null;
+
+
+/* =========================================================
+   FUNÇÕES AUXILIARES
+========================================================= */
+
+/*
+  Normaliza o nome do ambiente para usar como classe CSS.
+*/
+function normalizarClasse(txt){
+
+  if(!txt) return "";
+
+  return txt
+    .toString()
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/\s+/g,"")
+    .replace(/[^\w]/g,"");
 }
 
-/* ===== ALERTA SONORO (3 BIPES) ===== */
+
+/*
+  Converte o campo horarios para array.
+*/
+function toArray(v){
+
+  if(!v) return [];
+
+  if(Array.isArray(v)){
+    return v;
+  }
+
+  try{
+
+    return JSON.parse(v);
+
+  }catch{
+
+    return v
+      .split(",")
+      .map(s=>s.trim());
+
+  }
+}
+
+
+/*
+  Converte HH:MM para minutos.
+*/
+function minutos(h){
+
+  if(!h) return 0;
+
+  const partes = String(h).split(":");
+
+  const hora = Number(partes[0]) || 0;
+
+  const minuto = Number(partes[1]) || 0;
+
+  return hora * 60 + minuto;
+}
+
+
+/*
+  Retorna o minuto atual usando o horário LOCAL
+  do computador.
+*/
+function agoraMin(){
+
+  const d = new Date();
+
+  return d.getHours() * 60 + d.getMinutes();
+
+}
+
+
+/*
+  Retorna a data local no formato YYYY-MM-DD.
+
+  IMPORTANTE:
+  Não usamos toISOString(), pois ele converte
+  para UTC e pode mudar o dia.
+*/
+function dataLocalISO(){
+
+  const d = new Date();
+
+  return (
+    d.getFullYear() + "-" +
+    String(d.getMonth()+1).padStart(2,"0") + "-" +
+    String(d.getDate()).padStart(2,"0")
+  );
+
+}
+
+
+/*
+  Retorna o dia seguinte no formato YYYY-MM-DD.
+*/
+function proximoDia(){
+
+  const d = new Date();
+
+  d.setDate(d.getDate()+1);
+
+  return (
+    d.getFullYear() + "-" +
+    String(d.getMonth()+1).padStart(2,"0") + "-" +
+    String(d.getDate()).padStart(2,"0")
+  );
+
+}
+
+
+/*
+  Define quando uma reserva deixa de aparecer.
+
+  A reserva continua visível por 46 minutos
+  após seu horário.
+*/
+function horarioPassou(h){
+
+  return minutos(h) + 46 < agoraMin();
+
+}
+
+
+/* =========================================================
+   ALERTA SONORO
+========================================================= */
+
 function beep3(){
 
   if(!audioCtx){
-    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+
+    audioCtx =
+      new (window.AudioContext ||
+           window.webkitAudioContext)();
+
   }
+
+  /*
+    Se o navegador deixou o AudioContext suspenso,
+    tenta reativá-lo.
+  */
+  if(audioCtx.state === "suspended"){
+    audioCtx.resume();
+  }
+
 
   function beep(delay){
-    const osc=audioCtx.createOscillator();
-    const gain=audioCtx.createGain();
 
-    osc.type="sine";
-    osc.frequency.value=880;
+    const osc =
+      audioCtx.createOscillator();
+
+    const gain =
+      audioCtx.createGain();
+
+
+    osc.type = "sine";
+
+    osc.frequency.value = 880;
+
 
     osc.connect(gain);
+
     gain.connect(audioCtx.destination);
 
-    osc.start(audioCtx.currentTime+delay);
 
-    gain.gain.setValueAtTime(1,audioCtx.currentTime+delay);
-    gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+delay+0.4);
+    osc.start(
+      audioCtx.currentTime + delay
+    );
 
-    osc.stop(audioCtx.currentTime+delay+0.4);
+
+    gain.gain.setValueAtTime(
+      1,
+      audioCtx.currentTime + delay
+    );
+
+
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      audioCtx.currentTime + delay + 0.4
+    );
+
+
+    osc.stop(
+      audioCtx.currentTime + delay + 0.4
+    );
+
   }
 
+
   beep(0);
+
   beep(0.5);
+
   beep(1);
+
 }
 
-/* ===== ALERTA VISUAL ===== */
+
+/* =========================================================
+   ALERTA VISUAL
+========================================================= */
+
 function mostrarAlerta(horario){
 
-  const tela=document.createElement("div");
-  tela.className="alertaTela";
+  /*
+    Evita colocar dois alertas simultaneamente.
+  */
+  const alertaExistente =
+    document.querySelector(".alertaTela");
 
-  tela.innerHTML=`
+  if(alertaExistente){
+    alertaExistente.remove();
+  }
+
+
+  const tela =
+    document.createElement("div");
+
+  tela.className = "alertaTela";
+
+
+  tela.innerHTML = `
     <div class="alertaBox">
-     <div class="alertaTitulo">⚠ PRÓXIMA RESERVA</div>
-    <div class="alertaHora">${horario}</div>
+
+      <div class="alertaTitulo">
+        ⚠ PRÓXIMA RESERVA
+      </div>
+
+      <div class="alertaHora">
+        ${horario}
+      </div>
+
     </div>
   `;
 
+
   document.body.appendChild(tela);
 
+
   setTimeout(()=>{
-    tela.remove();
+
+    if(tela.parentNode){
+      tela.remove();
+    }
+
   },10000);
+
 }
 
-/* Relógio */
+
+/* =========================================================
+   RELÓGIO
+========================================================= */
+
 function atualizarRelogio(){
-  const agora=new Date();
-  document.getElementById("clock").textContent=agora.toLocaleTimeString("pt-BR");
-}
-setInterval(atualizarRelogio,1000);
-atualizarRelogio();
-
-/* Data */
-document.getElementById("data").textContent=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
-
-/* Barra de progresso */
-function progressoDia(){
-  const agora=new Date();
-  const minutosAgora=agora.getHours()*60+agora.getMinutes();
-  const perc=(minutosAgora/1440)*100;
-  document.getElementById("progress").style.width=perc+"%";
-}
-progressoDia();
-setInterval(progressoDia,60000);
-
-/* Carregar dados */
-async function carregar(){
- /* const r=await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*`,{headers});*/
-  const r=await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*&order=datafim`,{headers});
-  reservas=await r.json();
-  renderizar();
-}
-
-/* Renderização otimizada */
-function renderizar(){
 
   const agora = new Date();
 
-  const hoje =
-    agora.getFullYear() + "-" +
-    String(agora.getMonth()+1).padStart(2,"0") + "-" +
-    String(agora.getDate()).padStart(2,"0");
+  document.getElementById("clock")
+    .textContent =
+      agora.toLocaleTimeString("pt-BR");
 
-  let eventos=[];
+}
 
-  reservas.forEach(r=>{
+setInterval(atualizarRelogio,1000);
 
-    if(!r.datafim) return;
+atualizarRelogio();
 
-    // Normaliza a data para comparar somente YYYY-MM-DD
-    const dataReserva = String(r.datafim).substring(0,10);
 
-    if(dataReserva !== hoje) return;
+/* =========================================================
+   DATA
+========================================================= */
 
-    const horas=toArray(r.horarios);
+function atualizarData(){
 
-    horas.forEach(h=>{
+  const agora = new Date();
 
-      if(!horarioPassou(h)){
+  document.getElementById("data")
+    .textContent =
+      agora.toLocaleDateString(
+        "pt-BR",
+        {
+          weekday:"long",
+          day:"numeric",
+          month:"long"
+        }
+      );
 
-        eventos.push({
-          horario:h,
-          ambiente:r.ambiente,
-          prof:r.professor || "—",
-          quant:r.quantidade || 1
-        });
+}
 
-      }
+atualizarData();
+
+
+/* =========================================================
+   BARRA DE PROGRESSO
+========================================================= */
+
+function progressoDia(){
+
+  const agora = new Date();
+
+  const minutosAgora =
+    agora.getHours() * 60 +
+    agora.getMinutes();
+
+  const perc =
+    (minutosAgora / 1440) * 100;
+
+  document.getElementById("progress")
+    .style.width =
+      perc + "%";
+
+}
+
+progressoDia();
+
+setInterval(progressoDia,60000);
+
+
+/* =========================================================
+   CARREGAR DADOS
+========================================================= */
+
+async function carregar(){
+
+  const hoje = dataLocalISO();
+
+  const amanha = proximoDia();
+
+
+  /*
+    Busca somente as reservas de hoje.
+
+    Usamos >= hoje e < amanhã para evitar
+    problemas caso datafim possua horário.
+  */
+  const url =
+    `${SUPABASE_URL}/rest/v1/reservas` +
+    `?select=*` +
+    `&datafim=gte.${hoje}` +
+    `&datafim=lt.${amanha}`;
+
+
+  console.log("Buscando reservas:");
+
+  console.log(url);
+
+
+  try{
+
+    const r =
+      await fetch(url,{headers});
+
+
+    if(!r.ok){
+
+      const erro =
+        await r.text();
+
+      console.error(
+        "Erro Supabase:",
+        erro
+      );
+
+      reservas = [];
+
+      document.getElementById("stats")
+        .textContent =
+          "Erro ao carregar reservas";
+
+      renderizar();
+
+      return;
+
+    }
+
+
+    const dados =
+      await r.json();
+
+
+    /*
+      Garantia de que reservas seja sempre array.
+    */
+    reservas =
+      Array.isArray(dados)
+        ? dados
+        : [];
+
+
+    console.log(
+      "Reservas encontradas:",
+      reservas.length
+    );
+
+    console.log(
+      reservas
+    );
+
+
+    renderizar();
+
+
+  }catch(e){
+
+    console.error(
+      "Erro ao carregar reservas:",
+      e
+    );
+
+
+    reservas = [];
+
+
+    document.getElementById("stats")
+      .textContent =
+        "Erro ao carregar reservas";
+
+
+    renderizar();
+
+  }
+
+}
+
+
+/* =========================================================
+   RENDERIZAÇÃO
+========================================================= */
+
+function renderizar(){
+
+  const hoje = dataLocalISO();
+
+  let eventos = [];
+
+
+  /*
+    Filtra novamente pela data local.
+
+    Isso é uma proteção adicional mesmo que
+    a consulta ao Supabase já tenha filtrado.
+  */
+  reservas
+
+    .filter(
+      r =>
+        String(r.datafim || "")
+          .substring(0,10) === hoje
+    )
+
+    .forEach(r=>{
+
+      const horas =
+        toArray(r.horarios);
+
+
+      horas.forEach(h=>{
+
+        /*
+          Normaliza o horário.
+        */
+        const horario =
+          String(h).trim();
+
+
+        /*
+          Só adiciona reservas que ainda
+          estão dentro da janela de exibição.
+        */
+        if(!horarioPassou(horario)){
+
+          eventos.push({
+
+            horario:horario,
+
+            ambiente:
+              r.ambiente || "—",
+
+            prof:
+              r.professor || "—",
+
+            quant:
+              r.quantidade || 1
+
+          });
+
+        }
+
+      });
 
     });
 
-  });
 
-  eventos.sort((a,b)=>
-    minutos(a.horario)-minutos(b.horario)
+  /*
+    Ordena cronologicamente.
+  */
+  eventos.sort(
+    (a,b)=>
+      minutos(a.horario) -
+      minutos(b.horario)
   );
 
-  document.getElementById("stats").textContent =
-    `${eventos.length} reservas restantes hoje`;
 
-  /* ALERTA */
-  if(eventos.length>0){
+  /*
+    Atualiza contador.
+  */
+  document.getElementById("stats")
+    .textContent =
+      `${eventos.length} reservas restantes hoje`;
 
-    const proximo=eventos[0];
-    const diff=minutos(proximo.horario)-agoraMin();
 
+  /* =======================================================
+     PRÓXIMA RESERVA / ALERTA
+  ======================================================= */
+
+  if(eventos.length > 0){
+
+    const proximo = eventos[0];
+
+    const diff =
+      minutos(proximo.horario) -
+      agoraMin();
+
+
+    /*
+      Alerta entre 4 e 5 minutos antes.
+    */
     if(
-      diff<=5 &&
-      diff>=4 &&
-      alertaTocado!==proximo.horario
+      diff <= 5 &&
+      diff >= 4 &&
+      alertaTocado !== proximo.horario
     ){
 
       beep3();
-      mostrarAlerta(proximo.horario);
 
-      alertaTocado=proximo.horario;
+      mostrarAlerta(
+        proximo.horario
+      );
+
+      alertaTocado =
+        proximo.horario;
+
     }
+
   }
 
-  /* AGRUPAR POR HORÁRIO */
 
-  const grupos={};
+  /* =======================================================
+     AGRUPAMENTO POR HORÁRIO
+  ======================================================= */
+
+  const grupos = {};
+
 
   eventos.forEach(ev=>{
 
     if(!grupos[ev.horario]){
-      grupos[ev.horario]=[];
+
+      grupos[ev.horario] = [];
+
     }
 
     grupos[ev.horario].push(ev);
 
   });
 
-  const grid=document.getElementById("grid");
 
-  grid.innerHTML="";
+  /* =======================================================
+     GRID
+  ======================================================= */
 
-  const fragment=document.createDocumentFragment();
+  const grid =
+    document.getElementById("grid");
 
-  const agoraMinutos=agoraMin();
 
+  grid.innerHTML = "";
+
+
+  const fragment =
+    document.createDocumentFragment();
+
+
+  const agora =
+    agoraMin();
+
+
+  /*
+    Garante ordem dos horários.
+  */
   Object.keys(grupos)
-    .sort((a,b)=>minutos(a)-minutos(b))
+
+    .sort(
+      (a,b)=>
+        minutos(a)-minutos(b)
+    )
+
     .forEach((h,i)=>{
 
-      const slot=document.createElement("div");
+      const slot =
+        document.createElement("div");
 
-      slot.className="slot";
 
-      const diff=minutos(h)-agoraMinutos;
+      slot.className =
+        "slot";
 
-      if(i===0){
-        slot.classList.add("proximo");
+
+      const diff =
+        minutos(h)-agora;
+
+
+      /*
+        Primeiro horário é a próxima reserva.
+      */
+      if(i === 0){
+
+        slot.classList.add(
+          "proximo"
+        );
+
       }
 
-      if(diff<=10 && diff>=0){
-        slot.classList.add("alerta");
+
+      /*
+        Reserva começando nos próximos
+        10 minutos recebe animação.
+      */
+      if(
+        diff <= 10 &&
+        diff >= 0
+      ){
+
+        slot.classList.add(
+          "alerta"
+        );
+
       }
 
-      const time=document.createElement("div");
 
-      time.className="time";
+      /* HORÁRIO */
 
-      time.textContent="🕒 "+h;
+      const time =
+        document.createElement("div");
+
+
+      time.className =
+        "time";
+
+
+      time.textContent =
+        "🕒 " + h;
+
 
       slot.appendChild(time);
 
+
+      /* RESERVAS */
+
       grupos[h].forEach(ev=>{
 
-        const e=document.createElement("div");
+        const e =
+          document.createElement("div");
 
-        e.className=
-          "event "+normalizarClasse(ev.ambiente);
 
-        e.innerHTML=`
+        e.className =
+          "event " +
+          normalizarClasse(
+            ev.ambiente
+          );
+
+
+        e.innerHTML = `
           <strong>
             ${ev.ambiente} (${ev.quant})
           </strong>
+
           <div class="prof">
             👤 ${ev.prof}
           </div>
         `;
 
+
         slot.appendChild(e);
 
       });
+
 
       fragment.appendChild(slot);
 
     });
 
+
   grid.appendChild(fragment);
+
 }
 
-/* Iniciar */
-/* Iniciar */
-carregar();
-renderizar();
 
-/* F5 automático a cada 90 minutos & Alerta */
-setInterval(()=>{location.reload();},3600000);
-setInterval(renderizar,10000);
+/* =========================================================
+   INICIAR
+========================================================= */
+
+/*
+  IMPORTANTE:
+  Não chamamos renderizar() aqui antes do carregamento.
+
+  carregar() será responsável por:
+  1. buscar os dados;
+  2. preencher reservas;
+  3. chamar renderizar().
+*/
+carregar();
+
+
+/* =========================================================
+   ATUALIZAÇÃO AUTOMÁTICA
+========================================================= */
+
+/*
+  Atualiza a tela a cada 10 segundos.
+*/
+setInterval(()=>{
+
+  renderizar();
+
+},10000);
+
+
+/*
+  Recarrega a página a cada 1 hora.
+
+  Isso garante também uma nova consulta
+  completa ao Supabase.
+*/
+setInterval(()=>{
+
+  location.reload();
+
+},3600000);
+
 </script>
+
 </body>
 </html>
