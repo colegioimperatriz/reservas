@@ -356,7 +356,7 @@ function nextStep(input){
   }
 }
 
-  async function showProfessorReservations(cpfDigits) {
+async function showProfessorReservations(cpfDigits) {
 
   try {
 
@@ -459,26 +459,6 @@ function nextStep(input){
 
     addMessage('⚠️ Ocorreu um erro ao consultar suas reservas.');
   }
-}
-
-  // ordenar por data
-  matches.sort((a,b)=>{
-    if(a.datafim !== b.datafim){
-      return a.datafim.localeCompare(b.datafim);
-    }
-
-    const hA = (a.horarios || [])[0] || '';
-    const hB = (b.horarios || [])[0] || '';
-    return hA.localeCompare(hB);
-  });
-
-  let text = 'Suas reservas (hoje em diante):\n';
-
-  matches.forEach(r => {
-    text += `${r.ambiente}: ${r.quantidade||1} em ${isoToBR(r.datafim)} - ${(r.horarios||[]).join(', ')}\n`;
-  });
-
-  addMessage(text);
 }
   
 function askSelectAmbiente(){
