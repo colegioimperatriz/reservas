@@ -356,22 +356,110 @@ function nextStep(input){
   }
 }
 
-  async function showProfessorReservations(cpfDigits){
-  const reservas = await fetchReservas();
+  async function showProfessorReservations(cpfDigits) {
 
-  const hojeStr = new Date().toISOString().split('T')[0];
+  try {
 
-  const matches = reservas.filter(r => {
-    const ok = (r.cpf && onlyDigits(r.cpf) === cpfDigits) || (r.professor === professor.nome);
-    if (!ok) return false;
+    const reservas = await fetchReservas();
 
-    return r.datafim >= hojeStr;
-  });
+    if (!Array.isArray(reservas)) {
+      console.error('Retorno inválido do Supabase:', reservas);
+      addMessage('⚠️ Não foi possível consultar suas reservas.');
+      return;
+    }
 
-  if (matches.length === 0){
-    addMessage('Você ainda não possui reservas futuras.');
-    return;
+    // Data atual no horário LOCAL do Brasil
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const matches = reservas.filter(r => {
+
+      // Normaliza CPF
+      const cpfReserva = onlyDigits(r.cpf || '');
+
+      // Só considera o CPF
+      if (!cpfReserva || cpfReserva !== cpfDigits) {
+        return false;
+      }
+
+      // Verifica se existe data
+      if (!r.datafim) {
+        return false;
+      }
+
+      // Normaliza data da reserva
+      let dataReserva;
+
+      if (typeof r.datafim === 'string') {
+
+        const dataParte = r.datafim.split('T')[0];
+
+        const partes = dataParte.split('-');
+
+        if (partes.length === 3) {
+          const ano = parseInt(partes[0], 10);
+          const mes = parseInt(partes[1], 10) - 1;
+          const dia = parseInt(partes[2], 10);
+
+          dataReserva = new Date(ano, mes, dia);
+          dataReserva.setHours(0, 0, 0, 0);
+        }
+      }
+
+      if (!dataReserva || isNaN(dataReserva.getTime())) {
+        console.warn('Data inválida na reserva:', r);
+        return false;
+      }
+
+      // Reserva de hoje ou futura
+      return dataReserva >= hoje;
+    });
+
+    console.log('CPF consultado:', cpfDigits);
+    console.log('Total de reservas encontradas:', matches.length);
+    console.log('Reservas encontradas:', matches);
+
+    if (matches.length === 0) {
+      addMessage('Você ainda não possui reservas futuras.');
+      return;
+    }
+
+    // Ordena por data
+    matches.sort((a, b) => {
+
+      const dataA = a.datafim.split('T')[0];
+      const dataB = b.datafim.split('T')[0];
+
+      if (dataA !== dataB) {
+        return dataA.localeCompare(dataB);
+      }
+
+      const hA = (a.horarios || [])[0] || '';
+      const hB = (b.horarios || [])[0] || '';
+
+      return hA.localeCompare(hB);
+    });
+
+    let text = 'Suas reservas (hoje em diante):\n';
+
+    matches.forEach(r => {
+
+      const data = r.datafim.split('T')[0];
+
+      text += `${r.ambiente || 'Chromebooks'}: ` +
+              `${r.quantidade || 1} em ${isoToBR(data)} - ` +
+              `${(r.horarios || []).join(', ')}\n`;
+    });
+
+    addMessage(text);
+
+  } catch (erro) {
+
+    console.error('Erro ao consultar reservas:', erro);
+
+    addMessage('⚠️ Ocorreu um erro ao consultar suas reservas.');
   }
+}
 
   // ordenar por data
   matches.sort((a,b)=>{
