@@ -248,62 +248,141 @@ async function carregar(){
 
 /* Renderização otimizada */
 function renderizar(){
-  const hoje=new Date().toISOString().split("T")[0];
+
+  const agora = new Date();
+
+  const hoje =
+    agora.getFullYear() + "-" +
+    String(agora.getMonth()+1).padStart(2,"0") + "-" +
+    String(agora.getDate()).padStart(2,"0");
+
   let eventos=[];
-  reservas.filter(r=>(r.datafim||"").startsWith(hoje)).forEach(r=>{
+
+  reservas.forEach(r=>{
+
+    if(!r.datafim) return;
+
+    // Normaliza a data para comparar somente YYYY-MM-DD
+    const dataReserva = String(r.datafim).substring(0,10);
+
+    if(dataReserva !== hoje) return;
+
     const horas=toArray(r.horarios);
+
     horas.forEach(h=>{
+
       if(!horarioPassou(h)){
-        eventos.push({horario:h,ambiente:r.ambiente,prof:r.professor||"—",quant:r.quantidade||1});
+
+        eventos.push({
+          horario:h,
+          ambiente:r.ambiente,
+          prof:r.professor || "—",
+          quant:r.quantidade || 1
+        });
+
       }
+
     });
+
   });
 
-  eventos.sort((a,b)=>minutos(a.horario)-minutos(b.horario));
-  document.getElementById("stats").textContent=`${eventos.length} reservas restantes hoje`;
-if(eventos.length>0){
+  eventos.sort((a,b)=>
+    minutos(a.horario)-minutos(b.horario)
+  );
 
-  const proximo=eventos[0];
-  const diff=minutos(proximo.horario)-agoraMin();
+  document.getElementById("stats").textContent =
+    `${eventos.length} reservas restantes hoje`;
 
-  if(diff<=5 && diff>=4 && alertaTocado!==proximo.horario){
+  /* ALERTA */
+  if(eventos.length>0){
 
-    beep3();
-    mostrarAlerta(proximo.horario);
+    const proximo=eventos[0];
+    const diff=minutos(proximo.horario)-agoraMin();
 
-    alertaTocado=proximo.horario;
+    if(
+      diff<=5 &&
+      diff>=4 &&
+      alertaTocado!==proximo.horario
+    ){
+
+      beep3();
+      mostrarAlerta(proximo.horario);
+
+      alertaTocado=proximo.horario;
+    }
   }
 
-}
+  /* AGRUPAR POR HORÁRIO */
+
   const grupos={};
-  eventos.forEach(ev=>{if(!grupos[ev.horario]) grupos[ev.horario]=[]; grupos[ev.horario].push(ev);});
+
+  eventos.forEach(ev=>{
+
+    if(!grupos[ev.horario]){
+      grupos[ev.horario]=[];
+    }
+
+    grupos[ev.horario].push(ev);
+
+  });
 
   const grid=document.getElementById("grid");
+
   grid.innerHTML="";
+
   const fragment=document.createDocumentFragment();
-  const agora=agoraMin();
 
-  Object.keys(grupos).forEach((h,i)=>{
-    const slot=document.createElement("div");
-    slot.className="slot";
-    const diff=minutos(h)-agora;
-    if(i===0) slot.classList.add("proximo");
-    if(diff<=10 && diff>=0) slot.classList.add("alerta");
+  const agoraMinutos=agoraMin();
 
-    const time=document.createElement("div");
-    time.className="time";
-    time.textContent="🕒 "+h;
-    slot.appendChild(time);
+  Object.keys(grupos)
+    .sort((a,b)=>minutos(a)-minutos(b))
+    .forEach((h,i)=>{
 
-    grupos[h].forEach(ev=>{
-      const e=document.createElement("div");
-      e.className="event "+normalizarClasse(ev.ambiente);
-      e.innerHTML=`<strong>${ev.ambiente} (${ev.quant})</strong><div class="prof">👤 ${ev.prof}</div>`;
-      slot.appendChild(e);
+      const slot=document.createElement("div");
+
+      slot.className="slot";
+
+      const diff=minutos(h)-agoraMinutos;
+
+      if(i===0){
+        slot.classList.add("proximo");
+      }
+
+      if(diff<=10 && diff>=0){
+        slot.classList.add("alerta");
+      }
+
+      const time=document.createElement("div");
+
+      time.className="time";
+
+      time.textContent="🕒 "+h;
+
+      slot.appendChild(time);
+
+      grupos[h].forEach(ev=>{
+
+        const e=document.createElement("div");
+
+        e.className=
+          "event "+normalizarClasse(ev.ambiente);
+
+        e.innerHTML=`
+          <strong>
+            ${ev.ambiente} (${ev.quant})
+          </strong>
+          <div class="prof">
+            👤 ${ev.prof}
+          </div>
+        `;
+
+        slot.appendChild(e);
+
+      });
+
+      fragment.appendChild(slot);
+
     });
-
-    fragment.appendChild(slot);
-  });
 
   grid.appendChild(fragment);
 }
