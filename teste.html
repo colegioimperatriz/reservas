@@ -1,541 +1,327 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Calendário de Reservas - Colégio Imperatriz</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Painel de Reservas - Hoje</title>
 
 <style>
-
-/* =========================
-   RESET & BASE (Mobile First)
-========================= */
-
 :root{
-    --primary: #075E54;
-    --primary-dark: #064940;
-    --bg: #e9edf2;
-    --card: #ffffff;
-    --text: #1f2933;
-    --muted: #6b7280;
-    --border: #e5e7eb;
+  --bg:#0f172a;
+  --card:#1e293b;
+  --text:#f1f5f9;
+  --muted:#94a3b8;
+  --highlight:#22c55e;
 }
 
-*{
-    box-sizing: border-box;
-}
+*{box-sizing:border-box}
 
 body{
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    background: linear-gradient(180deg,#eef2f6,#e2e7ee);
-    color: var(--text);
-    padding: 12px;
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;
+  background:var(--bg);
+  color:var(--text);
+  padding:30px;
 }
 
-.container{
-    max-width: 1200px;
-    margin: 0 auto;
+/* HEADER */
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:30px;
+  flex-wrap:wrap;
 }
 
-/* =========================
-   HEADER
-========================= */
+h1{margin:0;font-size:38px;}
+.data{color:var(--muted);font-size:18px;}
+.clock{font-size:28px;font-weight:700;}
+.stats{margin-top:10px;font-size:16px;color:var(--muted);}
 
-h2{
-    text-align: center;
-    margin: 10px 0 5px;
-    font-size: 20px;
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:30px;
 }
 
-.muted{
-    text-align: center;
-    font-size: 14px;
-    color: var(--muted);
-    margin-bottom: 18px;
+/* SLOT */
+.slot{
+  background:var(--card);
+  border-radius:16px;
+  padding:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,.3);
+  transition:.2s;
+  position:relative;
 }
 
-/* =========================
-   CONTROLS
-========================= */
+.slot.proximo{border:3px solid var(--highlight);}
+.slot.alerta{animation:alerta 1s infinite;}
 
-.controls{
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 15px;
+@keyframes alerta{
+  0%{box-shadow:0 0 10px red}
+  50%{box-shadow:0 0 25px red}
+  100%{box-shadow:0 0 10px red}
 }
 
-.btn,
-select{
-    width: 100%;
-    padding: 12px;
-    font-size: 15px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
+.time{font-size:32px;font-weight:700;margin-bottom:12px;}
+.event{padding:10px;border-radius:8px;margin-bottom:8px;color:#fff;font-size:18px;}
+.prof{font-size:15px;opacity:.9;}
+
+/* PROGRESSO */
+.progressBar{
+  position:fixed;
+  bottom:0;
+  left:0;
+  height:6px;
+  background:#22c55e;
+  transition:width 0.5s ease;
 }
 
-.btn{
-    background: var(--primary);
-    color: #fff;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: 0.2s ease;
+/* cores */
+.Chromebooks{background:#1e88e5}
+.Cozinha{background:#f39c12}
+.TeleSala{background:#2e7d32}
+.SalaDeAtendimentoI{background:#8e44ad}
+.SalaDeReunioes{background:#d35400}
+.Carro{background:#6c757d}
+.LabQuimica{background:#00796b}
+.LabFisica{background:#5d4037}
+.LabBiologia{background:#c2185b}
+.SalaDoCTC{background:#3949ab}
+
+/* MEDIA QUERIES TVs grandes */
+@media(min-width:1920px){
+  .time{font-size:48px;}
+  .event{font-size:22px;}
+  .slot{padding:30px;}
+}
+  /* ALERTA GRANDE */
+.alertaTela{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.85);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+  animation:pulseBg 1s infinite;
 }
 
-.btn:hover{
-    background: var(--primary-dark);
+.alertaBox{
+  background:#b91c1c;
+  padding:60px 80px;
+  border-radius:20px;
+  text-align:center;
+  box-shadow:0 0 40px red;
 }
 
-select{
-    background: #fff;
+.alertaTitulo{
+  font-size:60px;
+  font-weight:900;
+  margin-bottom:20px;
 }
 
-/* =========================
-   CALENDAR CARD
-========================= */
-
-.calendar{
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
-    overflow: hidden;
-    border: 1px solid #dde3ea;
+.alertaHora{
+  font-size:80px;
+  font-weight:900;
 }
 
-/* Header */
-.calendar-header{
-    text-align: center;
-    padding: 16px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: #fff;
-    font-weight: 600;
-    font-size: 18px;
-    text-transform: capitalize;
+@keyframes pulseBg{
+  0%{background:rgba(0,0,0,0.85)}
+  50%{background:rgba(120,0,0,0.9)}
+  100%{background:rgba(0,0,0,0.85)}
 }
-
-/* Scroll container (mobile safety) */
-.calendar-wrapper{
-    overflow-x: auto;
-}
-
-/* Grid */
-.calendar-grid{
-    display: grid;
-    grid-template-columns: repeat(7, minmax(90px, 1fr));
-    min-width: 630px;
-}
-
-/* Weekdays */
-.weekday{
-    background: #f3f4f6;
-    text-align: center;
-    font-weight: 600;
-    padding: 8px 0;
-    font-size: 13px;
-    border-bottom: 1px solid var(--border);
-}
-
-/* Day cell */
-.day{
-    min-height: 85px;
-    padding: 6px;
-    border: 1px solid var(--border);
-    background: #fafafa;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.day:hover{
-    background: #f0fdf4;
-}
-
-.day .num{
-    font-weight: 700;
-    font-size: 13px;
-}
-
-/* =========================
-   BADGES
-========================= */
-
-.badge{
-    padding: 5px 6px;
-    border-radius: 7px;
-    font-size: 10px;
-    line-height: 1.2;
-    color: #fff;
-    cursor: pointer;
-    word-break: break-word;
-    transition: 0.15s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-    border: 1px solid rgba(255,255,255,0.25);
-}
-
-.badge:hover{
-    transform: scale(1.02);
-    opacity: 0.9;
-}
-
-/* Ambientes cores (normalizados em minúsculo) */
-.chromebooks { background: #1976d2; }
-.cozinha { background: #e67e22; }
-.telesala { background: #2e7d32; }
-.saladeatendimentoi { background: #8e44ad; }
-.saladereunioes { background: #d35400; }
-.carro { background: #6c757d; }
-.labquimica { background: #009688; }
-.labfisica { background: #6d4c41; }
-.labbiologia { background: #c2185b; }
-.saladoctc { background: #3949ab; }
-
-.bloqueio{
-    background: #444 !important;
-}
-
-/* =========================
-   TOOLTIP (touch friendly)
-========================= */
-	
-
-.tooltip{
-    position: fixed;
-    background: #111;
-    color: #fff;
-    padding: 10px;
-    border-radius: 8px;
-    font-size: 12px;
-    max-width: 260px;
-    pointer-events: none;
-    z-index: 9999;
-    opacity: 0;
-    transform: translateY(-4px);
-    transition: 0.15s ease;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-}
-
-.tooltip.show{
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* =========================
-   DESKTOP
-========================= */
-
-@media (min-width: 768px){
-
-    body{
-        padding: 24px;
-    }
-
-    h2{
-        font-size: 24px;
-    }
-
-    .controls{
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .btn, select{
-        width: auto;
-    }
-
-    .day{
-        min-height: 120px;
-        padding: 8px;
-    }
-
-    .badge{
-        font-size: 11px;
-    }
-	
-	.badge strong{
-        font-size: 11px;
-    }
-}
-
-/* =========================
-   FOOTER
-========================= */
-
-.footer{
-    text-align: center;
-    margin-top: 25px;
-    padding: 15px 10px;
-    font-size: 13px;
-    color: var(--muted);
-}
-
-.footer a{
-    color: var(--primary);
-    text-decoration: none;
-    font-weight: 500;
-    transition: 0.2s ease;
-}
-
-.footer a:hover{
-    text-decoration: underline;
-    color: var(--primary-dark);
-}
-
 </style>
 </head>
 
 <body>
 
-<div class="container">
-    <h2>Calendário Público de Reservas</h2>
-    <p class="muted">
-        Visualize aqui todas as reservas existentes antes de realizar a sua pelo chatbot.
-    </p>
+<header>
+  <div>
+    <h1>Reservas de Hoje</h1>
+    <div id="data" class="data"></div>
+    <div id="stats" class="stats"></div>
+  </div>
+  <div id="clock" class="clock"></div>
+</header>
 
-    <div class="controls">
-        <button id="prevBtn" class="btn">◀ Mês Anterior</button>
-        <button id="nextBtn" class="btn">Próximo Mês ▶</button>
-
-        <select id="filtroAmbiente">
-            <option value="all">Todos os Ambientes</option>
-            <option value="Chromebooks">Chromebooks</option>
-            <option value="Cozinha">Cozinha</option>
-            <option value="Tele Sala">Tele Sala</option>
-            <option value="Sala de Atendimento I">Sala de Atendimento I</option>
-            <option value="Sala de Reuniões">Sala de Reuniões</option>
-            <option value="Carro">Carro</option>
-            <option value="Lab. Química">Lab. Química</option>
-            <option value="Lab. Física">Lab. Física</option>
-            <option value="Lab. Biologia">Lab. Biologia</option>
-            <option value="Sala do CTC">Sala do CTC</option>
-        </select>
-    </div>
-
-    <div class="calendar">
-        <div id="calendarHeader" class="calendar-header">Carregando...</div>
-        <div class="calendar-wrapper">
-            <div id="calendarGrid" class="calendar-grid"></div>
-        </div>
-    </div>
-</div>
-
-<div id="tooltip" class="tooltip"></div>
+<div id="grid" class="grid"></div>
+<div id="progress" class="progressBar"></div>
 
 <script>
-const SUPABASE_URL = "https://oufiieqxyyqnqpcbuyms.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91ZmlpZXF4eXlxbnFwY2J1eW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNDMwNDgsImV4cCI6MjA3NDkxOTA0OH0.-4QPA1R5y24daAt-WsZuWc8-2bJxCJGhdTR1nq4RnHc";
+const SUPABASE_URL="https://oufiieqxyyqnqpcbuyms.supabase.co";
+const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91ZmlpZXF4eXlxbnFwY2J1eW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNDMwNDgsImV4cCI6MjA3NDkxOTA0OH0.-4QPA1R5y24daAt-WsZuWc8-2bJxCJGhdTR1nq4RnHc";
+const headers={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`};
 
-const headers = {
-    "Content-Type": "application/json",
-    "apikey": SUPABASE_KEY,
-    "Authorization": `Bearer ${SUPABASE_KEY}`
-};
-
-let currentYear = new Date().getFullYear();
-let currentMonth = new Date().getMonth();
-let reservas = [];
-
-const tooltip = document.getElementById("tooltip");
-
-/* =========================
-   FUNÇÃO GLOBAL PARA NORMALIZAÇÃO
-========================= */
-function normalizar(txt){
-    if (!txt) return "";
-    
-    return txt
-        .toString()
-        .trim()
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/\s+/g,'')
-        .replace(/[^\w]/g,'');
+let reservas=[];
+let alertaTocado=null;
+let audioCtx=null;
+  
+function normalizarClasse(txt){return txt.replace(/\s+/g,'').replace(/[^\w]/g,'');}
+function toArray(v){if(!v)return[]; if(Array.isArray(v)) return v; try{return JSON.parse(v)}catch{return v.split(",").map(s=>s.trim())}}
+function minutos(h){const [a,b]=h.split(":").map(Number); return a*60+b;}
+function agoraMin(){const d=new Date();return d.getHours()*60+d.getMinutes();}
+function horarioPassou(h){
+  return minutos(h) + 46 < agoraMin();
 }
 
-function showTooltip(e) {
-    tooltip.innerHTML = e.currentTarget.dataset.tip;
-    tooltip.style.left = e.clientX + 12 + "px";
-    tooltip.style.top = e.clientY + 12 + "px";
-    tooltip.classList.add("show");
-}
-function hideTooltip() {
-    tooltip.classList.remove("show");
-}
+/* ===== ALERTA SONORO (3 BIPES) ===== */
+function beep3(){
 
-function toArray(val) {
-    if (!val) return [];
-    if (Array.isArray(val)) return val;
-    try { return JSON.parse(val) }
-    catch { return val.split(",").map(s=>s.trim()); }
-}
+  if(!audioCtx){
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  }
 
-function isoToBR(iso) {
-    return iso.split("T")[0].split("-").reverse().join("/");
-}
+  function beep(delay){
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
 
-async function fetchJson(url) {
-    try {
-        const r = await fetch(url, { headers });
-        return r.ok ? r.json() : [];
-    } catch {
-        return [];
-    }
-}
+    osc.type="sine";
+    osc.frequency.value=880;
 
-async function carregarDados() {
-    const primeiroDia = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-01`;
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
 
-    const ultimoDiaObj = new Date(currentYear, currentMonth + 1, 0);
-    const ultimoDia =
-        `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(ultimoDiaObj.getDate()).padStart(2, "0")}`;
+    osc.start(audioCtx.currentTime+delay);
 
-    const url =
-        `${SUPABASE_URL}/rest/v1/reservas` +
-        `?select=*` +
-        `&datafim=gte.${primeiroDia}` +
-        `&datafim=lte.${ultimoDia}`;
+    gain.gain.setValueAtTime(1,audioCtx.currentTime+delay);
+    gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+delay+0.4);
 
-    console.log("Buscando:", url);
+    osc.stop(audioCtx.currentTime+delay+0.4);
+  }
 
-    reservas = await fetchJson(url);
-
-    console.log(
-        `Reservas de ${primeiroDia} até ${ultimoDia}:`,
-        reservas.length
-    );
+  beep(0);
+  beep(0.5);
+  beep(1);
 }
 
-async function montarCalendarioPublico() {
+/* ===== ALERTA VISUAL ===== */
+function mostrarAlerta(horario){
 
-    const filtro = document.getElementById("filtroAmbiente").value;
-    const headerEl = document.getElementById("calendarHeader");
-    const grid = document.getElementById("calendarGrid");
+  const tela=document.createElement("div");
+  tela.className="alertaTela";
 
-    headerEl.textContent =
-        new Date(currentYear, currentMonth).toLocaleString("pt-BR", {
-            month: "long",
-            year: "numeric"
-        });
+  tela.innerHTML=`
+    <div class="alertaBox">
+     <div class="alertaTitulo">⚠ PRÓXIMA RESERVA</div>
+    <div class="alertaHora">${horario}</div>
+    </div>
+  `;
 
-    grid.innerHTML = "";
+  document.body.appendChild(tela);
 
-    const diasSemana = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
-    diasSemana.forEach(d => {
-        const div = document.createElement("div");
-        div.className = "weekday";
-        div.textContent = d;
-        grid.appendChild(div);
+  setTimeout(()=>{
+    tela.remove();
+  },10000);
+}
+
+/* Relógio */
+function atualizarRelogio(){
+  const agora=new Date();
+  document.getElementById("clock").textContent=agora.toLocaleTimeString("pt-BR");
+}
+setInterval(atualizarRelogio,1000);
+atualizarRelogio();
+
+/* Data */
+document.getElementById("data").textContent=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
+
+/* Barra de progresso */
+function progressoDia(){
+  const agora=new Date();
+  const minutosAgora=agora.getHours()*60+agora.getMinutes();
+  const perc=(minutosAgora/1440)*100;
+  document.getElementById("progress").style.width=perc+"%";
+}
+progressoDia();
+setInterval(progressoDia,60000);
+
+/* Carregar dados */
+async function carregar(){
+ /* const r=await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*`,{headers});*/
+  const r=await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*&order=datafim`,{headers});
+  reservas=await r.json();
+  renderizar();
+}
+
+/* Renderização otimizada */
+function renderizar(){
+  const agora = new Date();
+
+const hoje =
+  agora.getFullYear() + "-" +
+  String(agora.getMonth() + 1).padStart(2, "0") + "-" +
+  String(agora.getDate()).padStart(2, "0");
+	
+  let eventos=[];
+  reservas.filter(r=>(r.datafim||"").startsWith(hoje)).forEach(r=>{
+    const horas=toArray(r.horarios);
+    horas.forEach(h=>{
+      if(!horarioPassou(h)){
+        eventos.push({horario:h,ambiente:r.ambiente,prof:r.professor||"—",quant:r.quantidade||1});
+      }
+    });
+  });
+
+  eventos.sort((a,b)=>minutos(a.horario)-minutos(b.horario));
+  document.getElementById("stats").textContent=`${eventos.length} reservas restantes hoje`;
+if(eventos.length>0){
+
+  const proximo=eventos[0];
+  const diff=minutos(proximo.horario)-agoraMin();
+
+  if(diff<=5 && diff>=4 && alertaTocado!==proximo.horario){
+
+    beep3();
+    mostrarAlerta(proximo.horario);
+
+    alertaTocado=proximo.horario;
+  }
+
+}
+  const grupos={};
+  eventos.forEach(ev=>{if(!grupos[ev.horario]) grupos[ev.horario]=[]; grupos[ev.horario].push(ev);});
+
+  const grid=document.getElementById("grid");
+  grid.innerHTML="";
+  const fragment=document.createDocumentFragment();
+  const agora=agoraMin();
+
+  Object.keys(grupos).forEach((h,i)=>{
+    const slot=document.createElement("div");
+    slot.className="slot";
+    const diff=minutos(h)-agora;
+    if(i===0) slot.classList.add("proximo");
+    if(diff<=10 && diff>=0) slot.classList.add("alerta");
+
+    const time=document.createElement("div");
+    time.className="time";
+    time.textContent="🕒 "+h;
+    slot.appendChild(time);
+
+    grupos[h].forEach(ev=>{
+      const e=document.createElement("div");
+      e.className="event "+normalizarClasse(ev.ambiente);
+      e.innerHTML=`<strong>${ev.ambiente} (${ev.quant})</strong><div class="prof">👤 ${ev.prof}</div>`;
+      slot.appendChild(e);
     });
 
-    const primeiroDia = new Date(currentYear, currentMonth, 1);
-    const ultimoDia = new Date(currentYear, currentMonth + 1, 0);
-    const blanks = primeiroDia.getDay();
-    const totalDias = ultimoDia.getDate();
+    fragment.appendChild(slot);
+  });
 
-    for (let i=0;i<blanks;i++){
-        grid.appendChild(document.createElement("div")).className="day";
-    }
-
-    for (let dia=1; dia<=totalDias; dia++){
-
-        const dataISO = `${currentYear}-${String(currentMonth+1).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
-        const dayDiv = document.createElement("div");
-        dayDiv.className="day";
-
-        const num = document.createElement("div");
-        num.className="num";
-        num.textContent=dia;
-        dayDiv.appendChild(num);
-
-        let eventosDoDia = [];
-
-        reservas
-        .filter(r => String(r.datafim || "").substring(0, 10) === dataISO)
-        .forEach(r => {
-
-            if (
-                filtro !== "all" &&
-                normalizar(filtro) !== normalizar(r.ambiente)
-            ) return;
-
-            const horas = toArray(r.horarios);
-
-            horas.forEach(h => {
-                eventosDoDia.push({
-                    horario: h,
-                    ambiente: r.ambiente,
-                    quantidade: r.quantidade || 1,
-                    professor: r.professor || "—"
-                });
-            });
-        });
-
-        eventosDoDia.sort((a,b) => {
-            const [hA,mA] = a.horario.split(":").map(Number);
-            const [hB,mB] = b.horario.split(":").map(Number);
-            return (hA*60+mA) - (hB*60+mB);
-        });
-
-        eventosDoDia.forEach(ev => {
-
-            let className = normalizar(ev.ambiente);
-
-            const badge = document.createElement("div");
-            badge.className = `badge ${className}`;
-
-            badge.innerHTML = `
-                <strong>${ev.horario}</strong><br>
-                ${ev.ambiente} (${ev.quantidade})<br>
-                <span style="font-size:9px; opacity:.9">
-                    ${ev.professor}
-                </span>
-            `;
-
-            dayDiv.appendChild(badge);
-        });
-
-        grid.appendChild(dayDiv);
-    }
+  grid.appendChild(fragment);
 }
 
-document.getElementById("prevBtn").onclick = async () => {
-    currentMonth--;
+/* Iniciar */
+/* Iniciar */
+carregar();
+renderizar();
 
-    if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-    }
-
-    await carregarDados();
-    montarCalendarioPublico();
-};
-
-document.getElementById("nextBtn").onclick = async () => {
-    currentMonth++;
-
-    if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-    }
-
-    await carregarDados();
-    montarCalendarioPublico();
-};
-
-document.getElementById("filtroAmbiente").onchange = montarCalendarioPublico;
-
-(async ()=>{
-    await carregarDados();
-    montarCalendarioPublico();
-})();
+/* F5 automático a cada 90 minutos & Alerta */
+setInterval(()=>{location.reload();},3600000);
+setInterval(renderizar,10000);
 </script>
-
-<footer class="footer">
-  © 2026 Colégio Imperatriz Dona Leopoldina. Todos os direitos reservados.
-</footer>
 </body>
 </html>
