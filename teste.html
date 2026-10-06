@@ -173,7 +173,22 @@ const AMBIENTES = ['Chromebooks','Cozinha','Tele Sala','Sala de Atendimento I',/
                    'Carro','Lab. Química','Lab. Física','Lab. Biologia'/*'Sala do CTC'*/];
 const horarios = ['07:20','08:05','08:50','09:55','10:40','11:25','13:45','14:30','15:35','16:20','17:05'];
 
-async function fetchReservas(){ const r=await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*`,{headers}); return await r.json(); }
+async function fetchReservas(){
+
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/reservas?select=*`,
+    { headers }
+  );
+
+  const data = await r.json();
+
+  if (!r.ok) {
+    console.error('Erro Supabase ao buscar reservas:', data);
+    throw new Error(data.message || 'Erro ao consultar reservas');
+  }
+
+  return data;
+}
 async function fetchProfessores(){ const r=await fetch(`${SUPABASE_URL}/rest/v1/professores?select=*`,{headers}); return await r.json(); }
 async function saveProfessor(p){ await fetch(`${SUPABASE_URL}/rest/v1/professores`,{method:"POST",headers,body:JSON.stringify(p)}); }
 
