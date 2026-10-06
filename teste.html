@@ -376,6 +376,11 @@ async function showProfessorReservations(cpfDigits) {
   try {
 
     const reservas = await fetchReservas();
+console.log('CPF consultado:', cpfDigits);
+console.log('Professor:', professor);
+console.log('Total de reservas retornadas:', reservas.length);
+console.log('Reservas retornadas:', reservas);
+    
 
     if (!Array.isArray(reservas)) {
       console.error('Retorno inválido do Supabase:', reservas);
