@@ -379,8 +379,6 @@ async function showProfessorReservations(cpfDigits) {
 
     console.log('CPF consultado:', cpfConsultado);
 
-    const reservas = await fetchReservas();
-
     
 const cpfNumeros = onlyDigits(cpfDigits);
 const cpfFormatado = formatCPF(cpfNumeros);
