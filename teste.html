@@ -435,6 +435,8 @@ console.log(
     }))
 );
 
+    const hoje = new Date();
+hoje.setHours(0, 0, 0, 0);
     
     const matches = reservas.filter(r => {
       const cpfReserva = onlyDigits(r.cpf || '');
