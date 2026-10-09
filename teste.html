@@ -381,26 +381,48 @@ async function showProfessorReservations(cpfDigits) {
 
     const reservas = await fetchReservas();
 
-    if (!Array.isArray(reservas)) {
-      console.error('Retorno inválido do Supabase:', reservas);
-      addMessage('⚠️ Não foi possível consultar as reservas.');
-      return;
-    }
+    
+const cpfNumeros = onlyDigits(cpfDigits);
+const cpfFormatado = formatCPF(cpfNumeros);
 
-    console.log('Total de reservas recebidas:', reservas.length);
+async function buscarPorCPF(cpf) {
+  const url =
+    `${SUPABASE_URL}/rest/v1/reservas?select=*&cpf=eq.${encodeURIComponent(cpf)}`;
 
-    // Data de hoje no horário local
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
+  const resposta = await fetch(url, { headers });
+  const dados = await resposta.json();
 
-console.log('CPF pesquisado:', onlyDigits(cpfDigits));
+  if (!resposta.ok) {
+    console.error('Erro na consulta por CPF:', dados);
+    throw new Error(dados.message || 'Erro ao consultar reservas por CPF');
+  }
 
-console.log(
-  'Reservas com CPF correspondente:',
-  reservas.filter(r =>
-    onlyDigits(r.cpf || '') === onlyDigits(cpfDigits)
-  ).length
+  return dados;
+}
+
+const [reservasFormatadas, reservasSemFormatacao] = await Promise.all([
+  buscarPorCPF(cpfFormatado),
+  buscarPorCPF(cpfNumeros)
+]);
+
+const reservas = [
+  ...reservasFormatadas,
+  ...reservasSemFormatacao
+].filter((r, i, lista) =>
+  lista.findIndex(x => x.id === r.id) === i
 );
+
+console.log('CPF consultado:', cpfNumeros);
+console.log('Reservas encontradas diretamente no Supabase:', reservas);
+console.log(
+  'Datas encontradas:',
+  reservas.map(r => ({
+    datafim: r.datafim,
+    ambiente: r.ambiente,
+    horarios: r.horarios
+  }))
+);
+
 
 console.log(
   'Reservas desse CPF:',
