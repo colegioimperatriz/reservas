@@ -393,6 +393,29 @@ async function showProfessorReservations(cpfDigits) {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
+console.log('CPF pesquisado:', onlyDigits(cpfDigits));
+
+console.log(
+  'Reservas com CPF correspondente:',
+  reservas.filter(r =>
+    onlyDigits(r.cpf || '') === onlyDigits(cpfDigits)
+  ).length
+);
+
+console.log(
+  'Reservas desse CPF:',
+  reservas
+    .filter(r =>
+      onlyDigits(r.cpf || '') === onlyDigits(cpfDigits)
+    )
+    .map(r => ({
+      datafim: r.datafim,
+      ambiente: r.ambiente,
+      horarios: r.horarios
+    }))
+);
+
+    
     const matches = reservas.filter(r => {
       const cpfReserva = onlyDigits(r.cpf || '');
 
