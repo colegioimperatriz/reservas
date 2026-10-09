@@ -1,509 +1,773 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
+<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Calendário de Reservas - Colégio Imperatriz</title>
-
+  
+<title>Sistema de Reservas - Colégio Imperatriz</title>
+  
 <style>
+  /* Reset + sensible defaults */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { font-family: Arial, sans-serif; margin:0; padding:16px; background:#ece5dd; -webkit-font-smoothing:antialiased; }
 
-/* =========================
-   RESET & BASE (Mobile First)
-========================= */
-
-:root{
-    --primary: #075E54;
-    --primary-dark: #064940;
-    --bg: #e9edf2;
-    --card: #ffffff;
-    --text: #1f2933;
-    --muted: #6b7280;
-    --border: #e5e7eb;
-}
-
-*{
-    box-sizing: border-box;
-}
-
-body{
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    background: linear-gradient(180deg,#eef2f6,#e2e7ee);
-    color: var(--text);
-    padding: 12px;
-}
-
-.container{
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-/* =========================
-   HEADER
-========================= */
-
-h2{
-    text-align: center;
-    margin: 10px 0 5px;
-    font-size: 20px;
-}
-
-.muted{
-    text-align: center;
-    font-size: 14px;
-    color: var(--muted);
-    margin-bottom: 18px;
-}
-
-/* =========================
-   CONTROLS
-========================= */
-
-.controls{
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.btn,
-select{
-    width: 100%;
-    padding: 12px;
-    font-size: 15px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-}
-
-.btn{
-    background: var(--primary);
-    color: #fff;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: 0.2s ease;
-}
-
-.btn:hover{
-    background: var(--primary-dark);
-}
-
-select{
-    background: #fff;
-}
-
-/* =========================
-   CALENDAR CARD
-========================= */
-
-.calendar{
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+  /* Container: fluid on small/medium,保持 o visual compacto em telas muito grandes */
+  .chat-container {
+    display:flex;
+    flex-direction:column;
+    width:100%;
+    max-width:720px;      /* permite expandir em telas médias */
+    height: calc(100vh - 32px);
+    margin:0 auto;
+    border:1px solid #ccc;
+    background:#fff;
+    border-radius:10px;
     overflow: hidden;
-    border: 1px solid #dde3ea;
-}
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  }
 
-/* Header */
-.calendar-header{
-    text-align: center;
-    padding: 16px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: #fff;
-    font-weight: 600;
-    font-size: 18px;
-    text-transform: capitalize;
-}
+  /* Para manter o layout original em telas muito grandes (desktop) */
+  @media (min-width: 1024px) {
+    .chat-container { max-width:480px; }
+  }
 
-/* Scroll container (mobile safety) */
-.calendar-wrapper{
-    overflow-x: auto;
-}
+  .messages {
+    flex:1;
+    overflow-y:auto;
+    padding:12px;
+    display:flex;
+    flex-direction:column;
+    background:#e5ddd5;
+    min-height:0; /* importante para que overflow funcione dentro do flex */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    overflow-anchor: none; /* evita saltos estranhos ao inserir elementos */
+  }
 
-/* Grid */
-.calendar-grid{
-    display: grid;
-    grid-template-columns: repeat(7, minmax(90px, 1fr));
-    min-width: 630px;
-}
+  .message {
+    margin:6px 0;
+    padding:10px 14px;
+    border-radius:18px;
+    max-width: calc(100% - 80px); /* garante margem lateral mesmo em telas pequenas */
+    word-wrap:break-word;
+    line-height:1.4;
+    white-space:pre-wrap;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02) inset;
+    font-size: clamp(13px, 1.8vw, 15px);
+  }
 
-/* Weekdays */
-.weekday{
-    background: #f3f4f6;
-    text-align: center;
-    font-weight: 600;
-    padding: 8px 0;
-    font-size: 13px;
-    border-bottom: 1px solid var(--border);
-}
+  .from-system { background:#ffffff; align-self:flex-start; margin-right:auto; }
+  .from-user { background:#dcf8c6; align-self:flex-end; margin-left:auto; }
 
-/* Day cell */
-.day{
-    min-height: 85px;
-    padding: 6px;
-    border: 1px solid var(--border);
-    background: #fafafa;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
+  /* Opções (botões): responsivos e adaptativos */
+  .option-container { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .option-btn {
+    background:#25d366;
+    color:#fff;
+    border:none;
+    border-radius:20px;
+    padding:8px 14px;
+    cursor:pointer;
+    display:inline-block;
+    user-select:none;
+    transition:background-color 0.18s ease, transform 0.08s ease;
+    flex: 0 1 auto; /* não cresce demais, mas encolhe quando necessário */
+    min-width:64px;
+    max-width: 100%;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    overflow:hidden;
+    font-size: clamp(13px, 1.5vw, 15px);
+  }
+  .option-btn:hover { background-color:#128c5e; }
+  .option-btn.disabled { background:#ccc !important; cursor:not-allowed; }
 
-.day:hover{
-    background: #f0fdf4;
-}
+  /* Input area: sticky to bottom of the container */
+  .input-container {
+    display:flex;
+    gap:8px;
+    padding:10px;
+    background:#f0f0f0;
+    border-top:1px solid #ccc;
+    align-items:center;
+    position: relative; /* mantém dentro do container */
+  }
 
-.day .num{
-    font-weight: 700;
-    font-size: 13px;
-}
+  .input-container input {
+    flex:1;
+    border-radius:25px;
+    border:1px solid #ccc;
+    padding:10px 15px;
+    outline:none;
+    font-size:14px;
+    min-width:0; /* importante para evitar overflow em flex */
+  }
+  .input-container input:disabled { background:#e5e5e5; cursor:not-allowed; }
 
-/* =========================
-   BADGES
-========================= */
+  .input-container button {
+    margin-left:0;
+    border:none;
+    background:#25d366;
+    color:white;
+    border-radius:50%;
+    width:44px;
+    height:44px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:18px;
+    flex: 0 0 44px;
+  }
+  .input-container button:disabled { background:#9fd9a0; cursor:not-allowed; }
 
-.badge{
-    padding: 5px 6px;
-    border-radius: 7px;
-    font-size: 10px;
-    line-height: 1.2;
-    color: #fff;
-    cursor: pointer;
-    word-break: break-word;
-    transition: 0.15s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-    border: 1px solid rgba(255,255,255,0.25);
-}
+  /* pequenas melhorias visuais para telas reduzidas */
+  @media (max-width:420px){
+    body{ padding:10px; }
+    .chat-container{ height: calc(100vh - 20px); }
+    .message{ font-size:14px; }
+    .option-btn{ padding:8px 10px; min-width:56px; }
+    .input-container button{ width:40px; height:40px; font-size:16px; }
+  }
 
-.badge:hover{
-    transform: scale(1.02);
-    opacity: 0.9;
-}
-
-/* Ambientes cores (normalizados em minúsculo) */
-.chromebooks { background: #1976d2; }
-.cozinha { background: #e67e22; }
-.telesala { background: #2e7d32; }
-.saladeatendimentoi { background: #8e44ad; }
-.saladereunioes { background: #d35400; }
-.carro { background: #6c757d; }
-.labquimica { background: #009688; }
-.labfisica { background: #6d4c41; }
-.labbiologia { background: #c2185b; }
-.saladoctc { background: #3949ab; }
-
-.bloqueio{
-    background: #444 !important;
-}
-
-/* =========================
-   TOOLTIP (touch friendly)
-========================= */
-
-.tooltip{
-    position: fixed;
-    background: #111;
-    color: #fff;
-    padding: 10px;
-    border-radius: 8px;
-    font-size: 12px;
-    max-width: 260px;
-    pointer-events: none;
-    z-index: 9999;
-    opacity: 0;
-    transform: translateY(-4px);
-    transition: 0.15s ease;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-}
-
-.tooltip.show{
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* =========================
-   DESKTOP
-========================= */
-
-@media (min-width: 768px){
-
-    body{
-        padding: 24px;
-    }
-
-    h2{
-        font-size: 24px;
-    }
-
-    .controls{
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .btn, select{
-        width: auto;
-    }
-
-    .day{
-        min-height: 120px;
-        padding: 8px;
-    }
-
-    .badge{
-        font-size: 11px;
-    }
-	
-	.badge strong{
-        font-size: 11px;
-    }
-}
-
-/* =========================
-   FOOTER
-========================= */
-
-.footer{
-    text-align: center;
-    margin-top: 25px;
-    padding: 15px 10px;
-    font-size: 13px;
-    color: var(--muted);
-}
-
-.footer a{
-    color: var(--primary);
-    text-decoration: none;
-    font-weight: 500;
-    transition: 0.2s ease;
-}
-
-.footer a:hover{
-    text-decoration: underline;
-    color: var(--primary-dark);
-}
+  /* Melhor comportamento quando opções ocupam muitas linhas */
+  .option-container > button { flex-basis: auto; }
 
 </style>
 </head>
-
 <body>
 
-<div class="container">
-    <h2>Calendário Público de Reservas</h2>
-    <p class="muted">
-        Visualize aqui todas as reservas existentes antes de realizar a sua pelo chatbot.
-    </p>
-
-    <div class="controls">
-        <button id="prevBtn" class="btn">◀ Mês Anterior</button>
-        <button id="nextBtn" class="btn">Próximo Mês ▶</button>
-
-        <select id="filtroAmbiente">
-            <option value="all">Todos os Ambientes</option>
-            <option value="Chromebooks">Chromebooks</option>
-            <option value="Cozinha">Cozinha</option>
-            <option value="Tele Sala">Tele Sala</option>
-            <option value="Sala de Atendimento I">Sala de Atendimento I</option>
-            <option value="Sala de Reuniões">Sala de Reuniões</option>
-            <option value="Carro">Carro</option>
-            <option value="Lab. Química">Lab. Química</option>
-            <option value="Lab. Física">Lab. Física</option>
-            <option value="Lab. Biologia">Lab. Biologia</option>
-            <option value="Sala do CTC">Sala do CTC</option>
-        </select>
-    </div>
-
-    <div class="calendar">
-        <div id="calendarHeader" class="calendar-header">Carregando...</div>
-        <div class="calendar-wrapper">
-            <div id="calendarGrid" class="calendar-grid"></div>
-        </div>
-    </div>
+<div class="chat-container">
+  <div id="messages" class="messages"></div>
+  <div id="inputArea" class="input-container">
+    <input id="chatInput" type="text" placeholder="Digite algo para iniciar..." autocomplete="off" />
+    <button id="sendBtn">&#9658;</button>
+  </div>
 </div>
 
-<div id="tooltip" class="tooltip"></div>
-
 <script>
+const messagesEl = document.getElementById('messages');
+const chatInput = document.getElementById('chatInput');
+const sendBtn = document.getElementById('sendBtn');
+
 const SUPABASE_URL = "https://oufiieqxyyqnqpcbuyms.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91ZmlpZXF4eXlxbnFwY2J1eW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNDMwNDgsImV4cCI6MjA3NDkxOTA0OH0.-4QPA1R5y24daAt-WsZuWc8-2bJxCJGhdTR1nq4RnHc";
-
 const headers = {
-    "Content-Type": "application/json",
-    "apikey": SUPABASE_KEY,
-    "Authorization": `Bearer ${SUPABASE_KEY}`
+  "Content-Type": "application/json",
+  "apikey": SUPABASE_KEY,
+  "Authorization": `Bearer ${SUPABASE_KEY}`,
+  "Prefer": "return=representation"
 };
 
-let currentYear = new Date().getFullYear();
-let currentMonth = new Date().getMonth();
-let reservas = [];
+const MAX_CHROMEBOOKS = 84;
+const MAX_DEFAULT = 1; // demais ambientes
 
-const tooltip = document.getElementById("tooltip");
+let state = 0;
+let professor = {nome:'', cpf:'', telefone:'', email:''};
+let reserva = {quantidade: 0, dataFim: '', horarios: [], ambiente: 'Chromebooks'};
+let selectedAmbiente = 'Chromebooks';
+let isConfirming = false; // 🔒 trava contra múltiplos cliques
+// ADICIONE NOVOS AMBIENTES AQUI
+const AMBIENTES = ['Chromebooks','Cozinha','Tele Sala','Sala de Atendimento I',/*'Sala de Reuniões',*/
+                   'Carro','Lab. Química','Lab. Física','Lab. Biologia'/*'Sala do CTC'*/];
+const horarios = ['07:20','08:05','08:50','09:55','10:40','11:25','13:45','14:30','15:35','16:20','17:05'];
 
-/* =========================
-   FUNÇÃO GLOBAL PARA NORMALIZAÇÃO
-========================= */
-function normalizar(txt){
-    if (!txt) return "";
-    
-    return txt
-        .toString()
-        .trim()
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/\s+/g,'')
-        .replace(/[^\w]/g,'');
+async function fetchReservas(){
+
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/reservas?select=*`,
+    { headers }
+  );
+
+  const data = await r.json();
+
+  if (!r.ok) {
+    console.error('Erro Supabase ao buscar reservas:', data);
+    throw new Error(data.message || 'Erro ao consultar reservas');
+  }
+
+  return data;
+}
+async function fetchProfessores(){ const r=await fetch(`${SUPABASE_URL}/rest/v1/professores?select=*`,{headers}); return await r.json(); }
+async function saveProfessor(p){ await fetch(`${SUPABASE_URL}/rest/v1/professores`,{method:"POST",headers,body:JSON.stringify(p)}); }
+
+async function saveReserva(r){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/reservas`, {
+    method:'POST', headers,
+    body: JSON.stringify({
+      professor: r.professor,
+      cpf: r.cpf,
+      telefone: r.telefone,
+      email: r.email,
+      datafim: r.dataFim || r.datafim,
+      horarios: r.horarios,
+      ambiente: r.ambiente || 'Chromebooks',
+      quantidade: r.quantidade
+    })
+  });
+  try { return await res.json(); } catch(e){ return {}; }
 }
 
-function showTooltip(e) {
-    tooltip.innerHTML = e.currentTarget.dataset.tip;
-    tooltip.style.left = e.clientX + 12 + "px";
-    tooltip.style.top = e.clientY + 12 + "px";
-    tooltip.classList.add("show");
-}
-function hideTooltip() {
-    tooltip.classList.remove("show");
-}
 
-function toArray(val) {
-    if (!val) return [];
-    if (Array.isArray(val)) return val;
-    try { return JSON.parse(val) }
-    catch { return val.split(",").map(s=>s.trim()); }
-}
-
-function isoToBR(iso) {
-    return iso.split("T")[0].split("-").reverse().join("/");
-}
-
-async function fetchJson(url) {
-    try {
-        const r = await fetch(url, { headers });
-        return r.ok ? r.json() : [];
-    } catch {
-        return [];
-    }
+async function saveBloqueio(r){
+  // r: { dataFim, horarios, quantidade, ambiente? }
+  const datafim = r.dataFim || r.datafim;
+  const ambiente = r.ambiente || 'Chromebooks';
+  // busca bloqueios já existentes na mesma data e ambiente
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*&datafim=eq.${datafim}&ambiente=eq.${encodeURIComponent(ambiente)}`, {headers});
+  let existentes = [];
+  try { existentes = await resp.json(); } catch(e){ existentes = []; }
+  const jaExiste = existentes.some(b =>
+    (b.datafim === datafim) &&
+    ((b.ambiente || 'Chromebooks') === ambiente) &&
+    (toArray(b.horarios)||[]).some(h => (r.horarios||[]).includes(h))
+  );
+  if(jaExiste) return;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios`, {
+    method:'POST', headers,
+    body: JSON.stringify({
+      datafim: datafim,
+      horarios: r.horarios || [],
+      quantidade: r.quantidade,
+      ambiente: ambiente
+    })
+  });
+  try { return await res.json(); } catch(e){ return {}; }
 }
 
-async function carregarDados() {
-    reservas = await fetchJson(`${SUPABASE_URL}/rest/v1/reservas?select=*`);
+function addMessage(text, from='system'){
+  const div=document.createElement('div');
+  div.classList.add('message', from==='system'?'from-system':'from-user');
+  div.innerText=text;
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop=messagesEl.scrollHeight;
 }
 
-async function montarCalendarioPublico() {
+function createInput(placeholder, callback){
+  chatInput.disabled=false; chatInput.value=''; chatInput.placeholder=placeholder;
+  sendBtn.disabled=false;
+  sendBtn.onclick=()=>{
+    if(chatInput.value.trim()==='') return;
+    const val=chatInput.value.trim();
+    chatInput.value='';
+    chatInput.disabled=true;
+    sendBtn.disabled=true;
+    callback(val);
+  };
+  chatInput.focus();
+}
 
-    const filtro = document.getElementById("filtroAmbiente").value;
-    const headerEl = document.getElementById("calendarHeader");
-    const grid = document.getElementById("calendarGrid");
+function onlyDigits(s){ return (s||'').replace(/\D/g,''); }
+function formatCPF(digits){ return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4'); }
+function brToISO(dateStr){ const [d,m,y]=dateStr.split('/'); return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+function isoToBR(iso){ if(!iso) return ''; return iso.split('T')[0].split('-').reverse().join('/'); }
+// ==========================
+// 🔥 NOVOS HELPERS DE DATA
+// ==========================
 
-    headerEl.textContent =
-        new Date(currentYear, currentMonth).toLocaleString("pt-BR", {
-            month: "long",
-            year: "numeric"
+function normalizeDate(input) {
+  let digits = input.replace(/\D/g, '');
+
+  if (digits.length === 8) {
+    const day = digits.slice(0, 2);
+    const month = digits.slice(2, 4);
+    const year = digits.slice(4, 8);
+    return `${day}/${month}/${year}`;
+  }
+
+  if (digits.length === 6) {
+    const day = digits.slice(0, 2);
+    const month = digits.slice(2, 4);
+    const year = '20' + digits.slice(4, 6);
+    return `${day}/${month}/${year}`;
+  }
+
+  return input;
+}
+
+function isValidDateBR(dateStr) {
+  const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+  const match = dateStr.match(regex);
+  if (!match) return false;
+
+  const day = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10);
+  const year = parseInt(match[3], 10);
+
+  const date = new Date(year, month - 1, day);
+
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  );
+}
+
+function isPastDate(dateISO) {
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+
+  const [y, m, d] = dateISO.split('-');
+  const data = new Date(y, m - 1, d); // FORÇA horário local
+  data.setHours(0,0,0,0);
+
+  return data < hoje;
+}
+
+function isBeyondLimit(dateISO) {
+  const hoje = new Date();
+  const limite = new Date(hoje.getFullYear(), 11, 31);
+  limite.setHours(23,59,59,999);
+
+  const [y, m, d] = dateISO.split('-');
+  const data = new Date(y, m - 1, d);
+
+  return data > limite;
+}
+
+async function cpfInput(cpfRaw){
+  const digits=onlyDigits(cpfRaw);
+  if(digits.length!==11){ addMessage('CPF inválido.'); createInput('CPF',cpfInput); return; }
+  const maskedCPF=formatCPF(digits);
+  let professores=await fetchProfessores();
+  const profExistente=professores.find(p=>onlyDigits(p.cpf||'')===digits);
+  if(profExistente){
+    professor={...profExistente};
+    addMessage(`Olá ${professor.nome}!`);
+    await showProfessorReservations(digits);
+    askSelectAmbiente();
+  } else {
+    professor.cpf=maskedCPF;
+    addMessage(maskedCPF,'user');
+    addMessage('Digite seu nome completo:');
+    state=11;
+    createInput('Nome completo', nome=>nextStep(nome));
+  }
+}
+
+function nextStep(input){
+  switch(state){
+    case 11:
+      professor.nome=input;
+      addMessage(input,'user');
+      addMessage('Telefone:');
+      state=12;
+      createInput('Telefone', tel=>{
+        professor.telefone=tel;
+        addMessage(tel,'user');
+        addMessage('E-mail:');
+        state=13;
+        createInput('E-mail', async email=>{
+          professor.email=email;
+          addMessage(email,'user');
+          addMessage('Cadastro concluído!');
+          await saveProfessor(professor);
+          await showProfessorReservations(onlyDigits(professor.cpf));
+          askSelectAmbiente();
         });
+      });
+      break;
+  }
+}
 
-    grid.innerHTML = "";
+async function showProfessorReservations(cpfDigits) {
+  try {
+    const cpfNumeros = onlyDigits(cpfDigits);
+    const cpfFormatado = formatCPF(cpfNumeros);
 
-    const diasSemana = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
-    diasSemana.forEach(d => {
-        const div = document.createElement("div");
-        div.className = "weekday";
-        div.textContent = d;
-        grid.appendChild(div);
+    // Consulta diretamente pelo CPF para não depender dos primeiros 1.000 registros.
+    async function buscarPorCPF(cpf) {
+      const url =
+        `${SUPABASE_URL}/rest/v1/reservas?select=*&cpf=eq.${encodeURIComponent(cpf)}`;
+
+      const resposta = await fetch(url, { headers });
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        console.error('Erro na consulta de reservas por CPF:', dados);
+        throw new Error(dados.message || 'Erro ao consultar reservas por CPF');
+      }
+
+      if (!Array.isArray(dados)) {
+        throw new Error('O Supabase não retornou uma lista de reservas.');
+      }
+
+      return dados;
+    }
+
+    // O CPF pode estar salvo com pontuação ou somente com números.
+    const [reservasFormatadas, reservasSemFormatacao] = await Promise.all([
+      buscarPorCPF(cpfFormatado),
+      buscarPorCPF(cpfNumeros)
+    ]);
+
+    // Junta os resultados sem duplicar registros.
+    const reservas = [
+      ...reservasFormatadas,
+      ...reservasSemFormatacao
+    ].filter((r, i, lista) =>
+      lista.findIndex(x =>
+        (x.id != null && r.id != null)
+          ? String(x.id) === String(r.id)
+          : JSON.stringify(x) === JSON.stringify(r)
+      ) === i
+    );
+
+    console.log('CPF consultado:', cpfNumeros);
+    console.log('Total de reservas encontradas pelo CPF:', reservas.length);
+    console.log('Reservas desse CPF:', reservas);
+
+    // Data de hoje no horário local; precisa existir antes do filtro.
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const matches = reservas.filter(r => {
+      const cpfReserva = onlyDigits(r.cpf || '');
+
+      if (!cpfReserva || cpfReserva !== cpfNumeros) {
+        return false;
+      }
+
+      if (!r.datafim) {
+        console.warn('Reserva sem data:', r);
+        return false;
+      }
+
+      // Aceita datas ISO como YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss.
+      const dataISO = String(r.datafim).split('T')[0];
+      const partes = dataISO.split('-');
+
+      if (partes.length !== 3) {
+        console.warn('Formato de data inválido:', r.datafim);
+        return false;
+      }
+
+      const [ano, mes, dia] = partes.map(Number);
+      const dataReserva = new Date(ano, mes - 1, dia);
+
+      if (
+        isNaN(dataReserva.getTime()) ||
+        dataReserva.getFullYear() !== ano ||
+        dataReserva.getMonth() !== mes - 1 ||
+        dataReserva.getDate() !== dia
+      ) {
+        console.warn('Data inválida na reserva:', r);
+        return false;
+      }
+
+      dataReserva.setHours(0, 0, 0, 0);
+
+      // Exibe reservas de hoje em diante.
+      return dataReserva >= hoje;
     });
 
-    const primeiroDia = new Date(currentYear, currentMonth, 1);
-    const ultimoDia = new Date(currentYear, currentMonth + 1, 0);
-    const blanks = primeiroDia.getDay();
-    const totalDias = ultimoDia.getDate();
+    console.log('Total de reservas futuras/atuais:', matches.length);
+    console.log('Reservas encontradas para exibição:', matches);
 
-    for (let i=0;i<blanks;i++){
-        grid.appendChild(document.createElement("div")).className="day";
+    if (matches.length === 0) {
+      addMessage('Você ainda não possui reservas futuras.');
+      return;
     }
 
-    for (let dia=1; dia<=totalDias; dia++){
+    // Ordena por data e depois pelo primeiro horário.
+    matches.sort((a, b) => {
+      const dataA = String(a.datafim).split('T')[0];
+      const dataB = String(b.datafim).split('T')[0];
 
-        const dataISO = `${currentYear}-${String(currentMonth+1).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
-        const dayDiv = document.createElement("div");
-        dayDiv.className="day";
+      if (dataA !== dataB) {
+        return dataA.localeCompare(dataB);
+      }
 
-        const num = document.createElement("div");
-        num.className="num";
-        num.textContent=dia;
-        dayDiv.appendChild(num);
+      const horariosA = toArray(a.horarios);
+      const horariosB = toArray(b.horarios);
+      const hA = horariosA[0] || '';
+      const hB = horariosB[0] || '';
 
-        let eventosDoDia = [];
+      return hA.localeCompare(hB);
+    });
 
-        reservas
-        .filter(r => (r.datafim || "").startsWith(dataISO))
-        .forEach(r => {
+    let texto = 'Suas reservas (hoje em diante):\n';
 
-            if (
-                filtro !== "all" &&
-                normalizar(filtro) !== normalizar(r.ambiente)
-            ) return;
+    matches.forEach(r => {
+      const data = String(r.datafim).split('T')[0];
+      const listaHorarios = toArray(r.horarios);
 
-            const horas = toArray(r.horarios);
+      texto += `${r.ambiente || 'Chromebooks'}: ` +
+               `${r.quantidade || 1} em ${isoToBR(data)} - ` +
+               `${listaHorarios.join(', ')}\n`;
+    });
 
-            horas.forEach(h => {
-                eventosDoDia.push({
-                    horario: h,
-                    ambiente: r.ambiente,
-                    quantidade: r.quantidade || 1,
-                    professor: r.professor || "—"
-                });
-            });
-        });
+    addMessage(texto);
 
-        eventosDoDia.sort((a,b) => {
-            const [hA,mA] = a.horario.split(":").map(Number);
-            const [hB,mB] = b.horario.split(":").map(Number);
-            return (hA*60+mA) - (hB*60+mB);
-        });
-
-        eventosDoDia.forEach(ev => {
-
-            let className = normalizar(ev.ambiente);
-
-            const badge = document.createElement("div");
-            badge.className = `badge ${className}`;
-
-            badge.innerHTML = `
-                <strong>${ev.horario}</strong><br>
-                ${ev.ambiente} (${ev.quantidade})<br>
-                <span style="font-size:9px; opacity:.9">
-                    ${ev.professor}
-                </span>
-            `;
-
-            dayDiv.appendChild(badge);
-        });
-
-        grid.appendChild(dayDiv);
-    }
+  } catch (erro) {
+    console.error('Erro ao consultar reservas:', erro);
+    addMessage('⚠️ Ocorreu um erro ao consultar suas reservas. Verifique o console.');
+  }
 }
 
-document.getElementById("prevBtn").onclick = () => {
-    currentMonth--;
-    if(currentMonth<0){currentMonth=11;currentYear--;}
-    montarCalendarioPublico();
+function askSelectAmbiente(){
+  addMessage('Selecione o ambiente:');
+  const container=document.createElement('div');
+  container.classList.add('option-container');
+  AMBIENTES.forEach(a=>{
+    const btn=document.createElement('button');
+    btn.classList.add('option-btn');
+    btn.innerText=a;
+    btn.onclick=()=>{
+      addMessage(a,'user');
+      selectedAmbiente=a;
+      reserva={quantidade:0,dataFim:'',horarios:[],ambiente:a};
+      if(a==='Chromebooks') askDate(); else askDateAmbiente();
+    };
+    container.appendChild(btn);
+  });
+  messagesEl.appendChild(container);
+  messagesEl.scrollTop=messagesEl.scrollHeight;
+}
+
+function askDate(){
+  addMessage('Digite a data (dd/mm/yyyy):');
+
+  createInput('Data', d => {
+
+    let dataFormatada = normalizeDate(d);
+
+    // valida formato e consistência da data
+    if (!isValidDateBR(dataFormatada)) {
+      addMessage('❌ Favor digitar a data no formato válido: dd/mm/yyyy');
+      askDate();
+      return;
+    }
+
+    const dataISO = brToISO(dataFormatada);
+
+    // bloqueia datas passadas
+    if (isPastDate(dataISO)) {
+      addMessage('❌ Não é permitido reservar datas passadas.');
+      askDate();
+      return;
+    }
+
+    // limita até 31/12 do ano atual
+    if (isBeyondLimit(dataISO)) {
+      addMessage('❌ Só é permitido reservar até 31/12 deste ano.');
+      askDate();
+      return;
+    }
+
+    reserva.dataFim = dataISO;
+    addMessage(dataFormatada);
+
+    if(selectedAmbiente==='Chromebooks') askQuantity();
+    else askHorariosAmbiente();
+  });
+}
+
+function askDateAmbiente(){ askDate(); }
+
+function askQuantity(){
+  addMessage('Quantidade de Chromebooks:');
+  createInput('Quantidade', q=>{
+    reserva.quantidade=parseInt(q);
+    addMessage(q);
+    askHorarios();
+  });
+}
+
+async function askHorarios(){
+  addMessage('Selecione horários:');
+  const container=document.createElement('div');
+  container.classList.add('option-container');
+  reserva.horariosSelecionados=new Set();
+
+  const reservas = await fetchReservas();
+  const bloqueiosResp = await fetch(`${SUPABASE_URL}/rest/v1/bloqueios?select=*&datafim=eq.${reserva.dataFim}`, {headers});
+  const bloqueios = await bloqueiosResp.json();
+
+  horarios.forEach(h=>{
+    let ocupado = 0;
+    let max = (selectedAmbiente==='Chromebooks'?MAX_CHROMEBOOKS:MAX_DEFAULT);
+
+    // soma reservas já feitas (filtrando por ambiente, data e horário)
+    ocupado = reservas
+      .filter(r => (r.ambiente||'Chromebooks')===selectedAmbiente && (r.datafim===reserva.dataFim) && (r.horarios||[]).includes(h))
+      .reduce((soma,r)=> soma+(r.quantidade||1), 0);
+
+    // CORREÇÃO IMPORTANTE: verificar bloqueio por data + ambiente + horário
+    const bloqueado = bloqueios.some(b =>
+      (b.datafim === reserva.dataFim) &&
+      ((b.ambiente || 'Chromebooks') === selectedAmbiente) &&
+      ((b.horarios || []).includes(h))
+    );
+
+    const btn=document.createElement('button');
+    btn.classList.add('option-btn');
+    btn.innerText=h;
+
+    if(ocupado >= max || bloqueado){
+      btn.classList.add('disabled');
+      btn.disabled=true;
+    } else {
+      btn.onclick=()=>{
+        if(reserva.horariosSelecionados.has(h)){
+          reserva.horariosSelecionados.delete(h);
+          btn.style.backgroundColor='#25d366';
+        } else {
+          reserva.horariosSelecionados.add(h);
+          btn.style.backgroundColor='#128c5e';
+        }
+      };
+    }
+    container.appendChild(btn);
+  });
+
+  const confirm=document.createElement('button');
+  confirm.classList.add('option-btn');
+  confirm.innerText='Confirmar';
+  confirm.style.backgroundColor='#075E54';
+  confirm.onclick = async () => {
+
+  if (confirm.disabled) return; // segurança extra
+
+  confirm.disabled = true; // 🚫 bloqueia botão
+  confirm.classList.add('disabled');
+
+reserva.horarios = Array.from(reserva.horariosSelecionados);
+
+// 🚫 valida se selecionou pelo menos 1 horário
+if (reserva.horarios.length === 0) {
+  addMessage('❌ Selecione pelo menos um horário.');
+  confirm.disabled = false;
+  confirm.classList.remove('disabled');
+  return;
+}
+
+await confirmReservation();
+
 };
+  container.appendChild(confirm);
+  messagesEl.appendChild(container);
+  messagesEl.scrollTop=messagesEl.scrollHeight;
+}
 
-document.getElementById("nextBtn").onclick = () => {
-    currentMonth++;
-    if(currentMonth>11){currentMonth=0;currentYear++;}
-    montarCalendarioPublico();
-};
+function askHorariosAmbiente(){ askHorarios(); }
 
-document.getElementById("filtroAmbiente").onchange = montarCalendarioPublico;
+async function confirmReservation(){
+  if (isConfirming) return; // 🚫 impede repetir
+  isConfirming = true;
+  reserva.professor = professor.nome;
+  reserva.cpf = professor.cpf;
+  reserva.telefone = professor.telefone;
+  reserva.email = professor.email;
+  reserva.ambiente = selectedAmbiente;
+  if(reserva.quantidade === 0) reserva.quantidade = 1;
 
-(async ()=>{
-    await carregarDados();
-    montarCalendarioPublico();
-})();
+  const reservas = await fetchReservas();
+  const maxPermitido = (selectedAmbiente==='Chromebooks'?MAX_CHROMEBOOKS:MAX_DEFAULT);
+
+  for (let h of reserva.horarios) {
+    const ocupados = reservas
+      .filter(r => (r.ambiente||'Chromebooks') === selectedAmbiente && r.datafim === reserva.dataFim && (r.horarios||[]).includes(h))
+      .reduce((soma, r) => soma + (r.quantidade || 1), 0);
+
+    const totalDepois = ocupados + reserva.quantidade;
+
+    if (totalDepois > maxPermitido) {
+      addMessage(`❌ Não há disponibilidade no horário ${h} de ${isoToBR(reserva.dataFim)}.\nDisponíveis: ${maxPermitido - ocupados}`);
+      isConfirming = false;
+      askSelectAmbiente();
+      return;
+    }
+
+    if (totalDepois === maxPermitido) {
+      await saveBloqueio({
+        dataFim: reserva.dataFim,
+        horarios: [h],
+        quantidade: maxPermitido,
+        ambiente: selectedAmbiente
+      });
+    }
+  }
+
+ try {
+  await saveReserva(reserva);
+  addMessage('✅ Reserva confirmada!');
+} catch (e) {
+  addMessage('❌ Erro ao salvar reserva. Tente novamente.');
+}
+
+isConfirming = false;
+
+  // AQUI está a pergunta que está faltando:
+  addMessage('Deseja fazer mais alguma reserva?');
+
+  // Botões
+  const container = document.createElement('div');
+  container.classList.add('option-container');
+
+  const btnSim = document.createElement('button');
+  btnSim.classList.add('option-btn');
+  btnSim.innerText = 'Sim';
+  btnSim.onclick = () => {
+    addMessage('Sim','user');
+    askSelectAmbiente();
+  };
+
+  const btnNao = document.createElement('button');
+  btnNao.classList.add('option-btn');
+  btnNao.innerText = 'Não';
+  btnNao.onclick = () => {
+    addMessage('Não','user');
+    resetChat();
+  };
+
+  container.appendChild(btnSim);
+  container.appendChild(btnNao);
+
+  messagesEl.appendChild(container);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+
+}
+
+function resetChat(){
+  messagesEl.innerHTML = '';
+  professor = {nome:'', cpf:'', telefone:'', email:''};
+  reserva = {quantidade:0, dataFim:'', horarios:[], ambiente:'Chromebooks'};
+  state = 0;
+
+  addMessage('Olá, eu sou a Leopoldina, sua assistente virtual. Digite seu CPF para começar:');
+
+  chatInput.disabled = false;
+  chatInput.value = '';
+  chatInput.placeholder = 'CPF';
+  sendBtn.disabled = false;
+
+  sendBtn.onclick = () => {
+    if(chatInput.value.trim()==='') return;
+    const val = chatInput.value.trim();
+    chatInput.value = '';
+    chatInput.disabled = true;
+    sendBtn.disabled = true;
+    cpfInput(val);
+  };
+
+  chatInput.focus();
+}
+
+addMessage('Olá, eu sou a Leopoldina, sua assistente virtual. Digite seu CPF para começar:');
+state=0; createInput('CPF',cpfInput);
+chatInput.addEventListener('keydown', e=>{ if(e.key==='Enter'&&!sendBtn.disabled){ sendBtn.click(); e.preventDefault(); }});
+
+  // 🔥 força reload ao voltar para a aba
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    location.reload();
+  }
+});
+
+/* helper toArray reused in multiple files */
+function toArray(val){ if(!val) return []; if(Array.isArray(val)) return val; try{ return JSON.parse(val); }catch(e){ if(typeof val==='string') return val.split(',').map(s=>s.trim()).filter(Boolean); return []; } }
 </script>
-
-<footer class="footer">
-  © 2026 Colégio Imperatriz Dona Leopoldina. Todos os direitos reservados.
-</footer>
 </body>
 </html>
