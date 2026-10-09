@@ -371,115 +371,107 @@ function nextStep(input){
   }
 }
 
-async function showProfessorReservations(cpfDigits) {
 
+async function showProfessorReservations(cpfDigits) {
   try {
+    const cpfConsultado = onlyDigits(cpfDigits);
+
+    console.log('CPF consultado:', cpfConsultado);
 
     const reservas = await fetchReservas();
-console.log('CPF consultado:', cpfDigits);
-console.log('Professor:', professor);
-console.log('Total de reservas retornadas:', reservas.length);
-console.log('Reservas retornadas:', reservas);
-    
 
     if (!Array.isArray(reservas)) {
       console.error('Retorno inválido do Supabase:', reservas);
-      addMessage('⚠️ Não foi possível consultar suas reservas.');
+      addMessage('⚠️ Não foi possível consultar as reservas.');
       return;
     }
 
-    // Data atual no horário LOCAL do Brasil
+    console.log('Total de reservas recebidas:', reservas.length);
+
+    // Data de hoje no horário local
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
     const matches = reservas.filter(r => {
-
-      // Normaliza CPF
       const cpfReserva = onlyDigits(r.cpf || '');
 
-      // Só considera o CPF
-      if (!cpfReserva || cpfReserva !== cpfDigits) {
+      // Confere o CPF independentemente da formatação
+      if (!cpfReserva || cpfReserva !== cpfConsultado) {
         return false;
       }
 
-      // Verifica se existe data
       if (!r.datafim) {
+        console.warn('Reserva sem data:', r);
         return false;
       }
 
-      // Normaliza data da reserva
-      let dataReserva;
+      // Aceita data ISO: YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss
+      const dataISO = String(r.datafim).split('T')[0];
+      const partes = dataISO.split('-');
 
-      if (typeof r.datafim === 'string') {
-
-        const dataParte = r.datafim.split('T')[0];
-
-        const partes = dataParte.split('-');
-
-        if (partes.length === 3) {
-          const ano = parseInt(partes[0], 10);
-          const mes = parseInt(partes[1], 10) - 1;
-          const dia = parseInt(partes[2], 10);
-
-          dataReserva = new Date(ano, mes, dia);
-          dataReserva.setHours(0, 0, 0, 0);
-        }
-      }
-
-      if (!dataReserva || isNaN(dataReserva.getTime())) {
-        console.warn('Data inválida na reserva:', r);
+      if (partes.length !== 3) {
+        console.warn('Formato de data inválido:', r.datafim);
         return false;
       }
 
-      // Reserva de hoje ou futura
+      const [ano, mes, dia] = partes.map(Number);
+      const dataReserva = new Date(ano, mes - 1, dia);
+
+      if (
+        isNaN(dataReserva.getTime()) ||
+        dataReserva.getFullYear() !== ano ||
+        dataReserva.getMonth() !== mes - 1 ||
+        dataReserva.getDate() !== dia
+      ) {
+        console.warn('Data inválida:', r.datafim);
+        return false;
+      }
+
+      dataReserva.setHours(0, 0, 0, 0);
+
+      // Mostra reservas de hoje em diante
       return dataReserva >= hoje;
     });
 
-    console.log('CPF consultado:', cpfDigits);
-    console.log('Total de reservas encontradas:', matches.length);
-    console.log('Reservas encontradas:', matches);
+    console.log('Reservas encontradas para o CPF:', matches);
 
     if (matches.length === 0) {
-      addMessage('Você ainda não possui reservas futuras.');
+      addMessage(
+        'Você ainda não possui reservas futuras ou não foi possível localizar reservas vinculadas ao seu CPF.'
+      );
       return;
     }
 
-    // Ordena por data
+    // Ordena por data e horário
     matches.sort((a, b) => {
-
-      const dataA = a.datafim.split('T')[0];
-      const dataB = b.datafim.split('T')[0];
+      const dataA = String(a.datafim).split('T')[0];
+      const dataB = String(b.datafim).split('T')[0];
 
       if (dataA !== dataB) {
         return dataA.localeCompare(dataB);
       }
 
-      const hA = (a.horarios || [])[0] || '';
-      const hB = (b.horarios || [])[0] || '';
-
-      return hA.localeCompare(hB);
+      return String((a.horarios || [])[0] || '')
+        .localeCompare(String((b.horarios || [])[0] || ''));
     });
 
-    let text = 'Suas reservas (hoje em diante):\n';
+    let texto = 'Suas reservas (hoje em diante):\n';
 
     matches.forEach(r => {
-
-      const data = r.datafim.split('T')[0];
-
-      text += `${r.ambiente || 'Chromebooks'}: ` +
-              `${r.quantidade || 1} em ${isoToBR(data)} - ` +
-              `${(r.horarios || []).join(', ')}\n`;
+      texto +=
+        `${r.ambiente || 'Chromebooks'}: ` +
+        `${r.quantidade || 1} em ${isoToBR(r.datafim)} - ` +
+        `${toArray(r.horarios).join(', ')}\n`;
     });
 
-    addMessage(text);
+    addMessage(texto);
 
   } catch (erro) {
-
     console.error('Erro ao consultar reservas:', erro);
-
-    addMessage('⚠️ Ocorreu um erro ao consultar suas reservas.');
+    addMessage('⚠️ Erro ao consultar reservas. Verifique o console.');
   }
 }
+
   
 function askSelectAmbiente(){
   addMessage('Selecione o ambiente:');
