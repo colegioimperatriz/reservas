@@ -173,7 +173,23 @@ const AMBIENTES = ['Chromebooks','Cozinha','Tele Sala','Sala de Atendimento I',/
                    'Carro','Lab. Química','Lab. Física','Lab. Biologia'/*'Sala do CTC'*/];
 const horarios = ['07:20','08:05','08:50','09:55','10:40','11:25','13:45','14:30','15:35','16:20','17:05'];
 
-async function fetchReservas(){ const r=await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*`,{headers}); return await r.json(); }
+
+async function fetchReservas() {
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/reservas?select=*&limit=5000`,
+    { headers }
+  );
+
+  const data = await r.json();
+
+  if (!r.ok) {
+    console.error('Erro Supabase ao buscar reservas:', data);
+    throw new Error(data.message || 'Erro ao consultar reservas');
+  }
+
+  return data;
+}
+
 async function fetchProfessores(){ const r=await fetch(`${SUPABASE_URL}/rest/v1/professores?select=*`,{headers}); return await r.json(); }
 async function saveProfessor(p){ await fetch(`${SUPABASE_URL}/rest/v1/professores`,{method:"POST",headers,body:JSON.stringify(p)}); }
 
@@ -356,42 +372,152 @@ function nextStep(input){
   }
 }
 
-  async function showProfessorReservations(cpfDigits){
-  const reservas = await fetchReservas();
 
-  const hojeStr = new Date().toISOString().split('T')[0];
+async function showProfessorReservations(cpfDigits) {
+  try {
+    const cpfConsultado = onlyDigits(cpfDigits);
 
-  const matches = reservas.filter(r => {
-    const ok = (r.cpf && onlyDigits(r.cpf) === cpfDigits) || (r.professor === professor.nome);
-    if (!ok) return false;
+    console.log('CPF consultado:', cpfConsultado);
 
-    return r.datafim >= hojeStr;
-  });
+    
+const cpfNumeros = onlyDigits(cpfDigits);
+const cpfFormatado = formatCPF(cpfNumeros);
 
-  if (matches.length === 0){
-    addMessage('Você ainda não possui reservas futuras.');
-    return;
+async function buscarPorCPF(cpf) {
+  const url =
+    `${SUPABASE_URL}/rest/v1/reservas?select=*&cpf=eq.${encodeURIComponent(cpf)}`;
+
+  const resposta = await fetch(url, { headers });
+  const dados = await resposta.json();
+
+  if (!resposta.ok) {
+    console.error('Erro na consulta por CPF:', dados);
+    throw new Error(dados.message || 'Erro ao consultar reservas por CPF');
   }
 
-  // ordenar por data
-  matches.sort((a,b)=>{
-    if(a.datafim !== b.datafim){
-      return a.datafim.localeCompare(b.datafim);
+  return dados;
+}
+
+const [reservasFormatadas, reservasSemFormatacao] = await Promise.all([
+  buscarPorCPF(cpfFormatado),
+  buscarPorCPF(cpfNumeros)
+]);
+
+const reservas = [
+  ...reservasFormatadas,
+  ...reservasSemFormatacao
+].filter((r, i, lista) =>
+  lista.findIndex(x => x.id === r.id) === i
+);
+
+console.log('CPF consultado:', cpfNumeros);
+console.log('Reservas encontradas diretamente no Supabase:', reservas);
+console.log(
+  'Datas encontradas:',
+  reservas.map(r => ({
+    datafim: r.datafim,
+    ambiente: r.ambiente,
+    horarios: r.horarios
+  }))
+);
+
+
+console.log(
+  'Reservas desse CPF:',
+  reservas
+    .filter(r =>
+      onlyDigits(r.cpf || '') === onlyDigits(cpfDigits)
+    )
+    .map(r => ({
+      datafim: r.datafim,
+      ambiente: r.ambiente,
+      horarios: r.horarios
+    }))
+);
+
+    const hoje = new Date();
+hoje.setHours(0, 0, 0, 0);
+    
+    const matches = reservas.filter(r => {
+      const cpfReserva = onlyDigits(r.cpf || '');
+
+      // Confere o CPF independentemente da formatação
+      if (!cpfReserva || cpfReserva !== cpfConsultado) {
+        return false;
+      }
+
+      if (!r.datafim) {
+        console.warn('Reserva sem data:', r);
+        return false;
+      }
+
+      // Aceita data ISO: YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss
+      const dataISO = String(r.datafim).split('T')[0];
+      const partes = dataISO.split('-');
+
+      if (partes.length !== 3) {
+        console.warn('Formato de data inválido:', r.datafim);
+        return false;
+      }
+
+      const [ano, mes, dia] = partes.map(Number);
+      const dataReserva = new Date(ano, mes - 1, dia);
+
+      if (
+        isNaN(dataReserva.getTime()) ||
+        dataReserva.getFullYear() !== ano ||
+        dataReserva.getMonth() !== mes - 1 ||
+        dataReserva.getDate() !== dia
+      ) {
+        console.warn('Data inválida:', r.datafim);
+        return false;
+      }
+
+      dataReserva.setHours(0, 0, 0, 0);
+
+      // Mostra reservas de hoje em diante
+      return dataReserva >= hoje;
+    });
+
+    console.log('Reservas encontradas para o CPF:', matches);
+
+    if (matches.length === 0) {
+      addMessage(
+        'Você ainda não possui reservas futuras ou não foi possível localizar reservas vinculadas ao seu CPF.'
+      );
+      return;
     }
 
-    const hA = (a.horarios || [])[0] || '';
-    const hB = (b.horarios || [])[0] || '';
-    return hA.localeCompare(hB);
-  });
+    // Ordena por data e horário
+    matches.sort((a, b) => {
+      const dataA = String(a.datafim).split('T')[0];
+      const dataB = String(b.datafim).split('T')[0];
 
-  let text = 'Suas reservas (hoje em diante):\n';
+      if (dataA !== dataB) {
+        return dataA.localeCompare(dataB);
+      }
 
-  matches.forEach(r => {
-    text += `${r.ambiente}: ${r.quantidade||1} em ${isoToBR(r.datafim)} - ${(r.horarios||[]).join(', ')}\n`;
-  });
+      return String((a.horarios || [])[0] || '')
+        .localeCompare(String((b.horarios || [])[0] || ''));
+    });
 
-  addMessage(text);
+    let texto = 'Suas reservas (hoje em diante):\n';
+
+    matches.forEach(r => {
+      texto +=
+        `${r.ambiente || 'Chromebooks'}: ` +
+        `${r.quantidade || 1} em ${isoToBR(r.datafim)} - ` +
+        `${toArray(r.horarios).join(', ')}\n`;
+    });
+
+    addMessage(texto);
+
+  } catch (erro) {
+    console.error('Erro ao consultar reservas:', erro);
+    addMessage('⚠️ Erro ao consultar reservas. Verifique o console.');
+  }
 }
+
   
 function askSelectAmbiente(){
   addMessage('Selecione o ambiente:');
